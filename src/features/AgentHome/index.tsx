@@ -4,25 +4,33 @@ import { Flexbox } from '@lobehub/ui';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 
+import WideScreenContainer from '@/features/WideScreenContainer';
 import ToolAuthAlert from '@/routes/(main)/agent/features/Conversation/AgentWelcome/ToolAuthAlert';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 
 import AgentInfo from './AgentInfo';
+import InputArea from './InputArea';
 import OpeningQuestions from './OpeningQuestions';
+import RecentTopics from './RecentTopics';
+import TaskList from './TaskList';
 
 const AgentHome = memo(() => {
   const openingQuestions = useAgentStore(agentSelectors.openingQuestions, isEqual);
 
   return (
-    <>
-      <Flexbox flex={1} />
-      <Flexbox gap={32} style={{ paddingBottom: 'max(4vh, 16px)' }} width={'100%'}>
-        <AgentInfo />
-        {openingQuestions.length > 0 && <OpeningQuestions questions={openingQuestions} />}
-        <ToolAuthAlert />
-      </Flexbox>
-    </>
+    <Flexbox height={'100%'} style={{ overflowY: 'auto', paddingBottom: '8vh' }} width={'100%'}>
+      <WideScreenContainer>
+        <Flexbox gap={32}>
+          <AgentInfo />
+          <InputArea />
+          {openingQuestions.length > 0 && <OpeningQuestions questions={openingQuestions} />}
+          <ToolAuthAlert />
+          <RecentTopics />
+          <TaskList />
+        </Flexbox>
+      </WideScreenContainer>
+    </Flexbox>
   );
 });
 

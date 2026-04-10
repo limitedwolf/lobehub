@@ -1,71 +1,77 @@
 'use client';
 
-import { Block, Flexbox, Text } from '@lobehub/ui';
-import { cssVar } from 'antd-style';
 import { BotMessageSquareIcon } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import useSWR from 'swr';
 
+import GroupBlock from '@/routes/(main)/home/features/components/GroupBlock';
+import GroupSkeleton from '@/routes/(main)/home/features/components/GroupSkeleton';
+import ScrollShadowWithButton from '@/routes/(main)/home/features/components/ScrollShadowWithButton';
+import { RECENT_BLOCK_SIZE } from '@/routes/(main)/home/features/const';
+import ReactTopicItem from '@/routes/(main)/home/features/RecentTopic/Item';
 import { topicService } from '@/services/topic';
-
-import SectionHeader from './SectionHeader';
+import { useAgentStore } from '@/store/agent';
+import { agentSelectors } from '@/store/agent/selectors';
+import { type RecentTopic } from '@/types/topic';
 
 const AgentRecentTopics = memo(() => {
   const { t } = useTranslation('chat');
   const { aid } = useParams<{ aid: string }>();
+  const meta = useAgentStore(agentSelectors.currentAgentMeta);
 
-  const { data: result, isLoading } = useSWR(
-    aid ? ['agentHome.topics', aid] : null,
-    () => topicService.getTopics({ agentId: aid!, current: 0, pageSize: 10 }),
+  const { data: result, isLoading } = useSWR(aid ? ['agentHome.topics', aid] : null, () =>
+    topicService.getTopics({ agentId: aid!, current: 0, pageSize: 10 }),
   );
 
-  const topics = result?.items;
+  const topics: RecentTopic[] = useMemo(() => {
+    if (!result?.items) return [];
+    return result.items.map((topic) => ({
+      agent: {
+        avatar: meta.avatar || null,
+        backgroundColor: meta.backgroundColor || null,
+        id: aid!,
+        title: meta.title || null,
+      },
+      group: null,
+      id: topic.id,
+      title: topic.title || null,
+      type: 'agent' as const,
+      updatedAt: new Date(topic.updatedAt),
+    }));
+  }, [result?.items, meta, aid]);
 
-  if (isLoading || !topics || topics.length === 0) return null;
+  if (isLoading) {
+    return (
+      <GroupBlock icon={BotMessageSquareIcon} title={t('topic.recent')}>
+        <ScrollShadowWithButton>
+          <GroupSkeleton
+            height={RECENT_BLOCK_SIZE.TOPIC.HEIGHT}
+            rows={6}
+            width={RECENT_BLOCK_SIZE.TOPIC.WIDTH}
+          />
+        </ScrollShadowWithButton>
+      </GroupBlock>
+    );
+  }
+
+  if (!topics || topics.length === 0) return null;
 
   return (
-    <Flexbox gap={16}>
-      <SectionHeader
-        icon={BotMessageSquareIcon}
-        title={t('topic.recent')}
-        actionUrl={`/agent/${aid}`}
-        actionLabel={t('topic.viewAll')}
-      />
-      <Flexbox horizontal gap={12} style={{ overflowX: 'auto', paddingBottom: 4 }}>
+    <GroupBlock icon={BotMessageSquareIcon} title={t('topic.recent')}>
+      <ScrollShadowWithButton>
         {topics.map((topic) => (
           <Link
             key={topic.id}
-            to={`/agent/${aid}?topic=${topic.id}`}
             style={{ color: 'inherit', flexShrink: 0, textDecoration: 'none' }}
+            to={`/agent/${aid}?topic=${topic.id}`}
           >
-            <Block
-              clickable
-              flex={'none'}
-              height={80}
-              variant={'outlined'}
-              width={180}
-              style={{
-                borderRadius: cssVar.borderRadiusLG,
-                overflow: 'hidden',
-              }}
-            >
-              <Flexbox gap={4} height={'100%'} justify={'center'} padding={12}>
-                <Text ellipsis weight={500}>
-                  {topic.title || t('topic.defaultTitle')}
-                </Text>
-                <Text ellipsis fontSize={12} type={'secondary'}>
-                  {topic.updatedAt
-                    ? new Date(topic.updatedAt).toLocaleDateString()
-                    : ''}
-                </Text>
-              </Flexbox>
-            </Block>
+            <ReactTopicItem {...topic} />
           </Link>
         ))}
-      </Flexbox>
-    </Flexbox>
+      </ScrollShadowWithButton>
+    </GroupBlock>
   );
 });
 

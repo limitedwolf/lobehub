@@ -4,12 +4,11 @@ import { Block, Flexbox, Tag, Text } from '@lobehub/ui';
 import { CheckSquareIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import useSWR from 'swr';
 
+import GroupBlock from '@/routes/(main)/home/features/components/GroupBlock';
 import { taskService } from '@/services/task';
-
-import SectionHeader from './SectionHeader';
 
 const STATUS_COLORS: Record<string, string> = {
   completed: 'green',
@@ -32,8 +31,18 @@ const AgentTaskList = memo(() => {
   if (isLoading || !tasks || tasks.length === 0) return null;
 
   return (
-    <Flexbox gap={16}>
-      <SectionHeader icon={CheckSquareIcon} title={t('task.title')} />
+    <GroupBlock
+      actionAlwaysVisible
+      icon={CheckSquareIcon}
+      title={t('task.title')}
+      action={
+        <Link style={{ color: 'inherit', textDecoration: 'none' }} to={`/agent/${aid}`}>
+          <Text fontSize={12} type={'secondary'}>
+            {t('task.viewAll')}
+          </Text>
+        </Link>
+      }
+    >
       <Flexbox gap={2}>
         {tasks.map((task: any) => (
           <Block clickable key={task.id} variant={'borderless'}>
@@ -62,7 +71,7 @@ const AgentTaskList = memo(() => {
           </Block>
         ))}
       </Flexbox>
-    </Flexbox>
+    </GroupBlock>
   );
 });
 

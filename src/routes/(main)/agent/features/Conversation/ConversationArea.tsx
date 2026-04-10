@@ -4,7 +4,6 @@ import { Flexbox } from '@lobehub/ui';
 import debug from 'debug';
 import { memo, Suspense, useMemo } from 'react';
 
-import AgentHome from '@/features/AgentHome';
 import ChatMiniMap from '@/features/ChatMiniMap';
 import { ChatList, ConversationProvider, TodoProgress } from '@/features/Conversation';
 import ZenModeToast from '@/features/ZenModeToast';
@@ -71,7 +70,7 @@ const Conversation = memo(() => {
           position: 'relative',
         }}
       >
-        <ChatList welcome={<AgentHome />} />
+        <ChatList />
       </Flexbox>
       <TodoProgress />
       <MainChatInput />

@@ -30,16 +30,18 @@ const AgentInfo = memo(() => {
   }, [openingMessage, displayTitle, t]);
 
   return (
-    <Flexbox gap={12}>
-      <Avatar
-        avatar={isInbox ? meta.avatar || DEFAULT_INBOX_AVATAR : meta.avatar || DEFAULT_AVATAR}
-        background={meta.backgroundColor}
-        shape={'square'}
-        size={64}
-      />
-      <Text fontSize={24} weight={'bold'}>
-        {displayTitle}
-      </Text>
+    <Flexbox gap={16}>
+      <Flexbox horizontal align={'center'} gap={12}>
+        <Avatar
+          avatar={isInbox ? meta.avatar || DEFAULT_INBOX_AVATAR : meta.avatar || DEFAULT_AVATAR}
+          background={meta.backgroundColor}
+          shape={'square'}
+          size={36}
+        />
+        <Text fontSize={18} weight={'bold'}>
+          {displayTitle}
+        </Text>
+      </Flexbox>
       <Flexbox width={'min(100%, 640px)'}>
         <Markdown fontSize={fontSize} variant={'chat'}>
           {message}

@@ -469,6 +469,7 @@ export default {
   'toolAuth.hint':
     'Without authorization or configuration, Skills may not work. This can limit the Agent or cause errors.',
   'task.title': 'Tasks',
+  'task.viewAll': 'View All Tasks',
   'toolAuth.signIn': 'Sign In',
   'toolAuth.title': 'Authorize Skills for this Agent',
   'topic.checkOpenNewTopic': 'Start a new topic?',
