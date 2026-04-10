@@ -76,6 +76,7 @@ const Recents = memo<RecentsProps>(({ itemKey }) => {
       },
       {
         children: pageSizeItems,
+        extra: recentPageSize,
         icon: <Icon icon={Hash} />,
         key: 'displayItems',
         label: t('navPanel.displayItems'),

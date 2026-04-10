@@ -83,6 +83,7 @@ export const useAgentActionsDropdownMenu = ({
       },
       {
         children: pageSizeItems,
+        extra: agentPageSize,
         icon: <Icon icon={Hash} />,
         key: 'displayItems',
         label: t('navPanel.displayItems'),
