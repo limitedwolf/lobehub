@@ -100,7 +100,7 @@ const Recents = memo<RecentsProps>(({ itemKey }) => {
         onClick: () => moveSection('down'),
       },
       {
-        disabled: visibleOrder.length <= 1,
+        disabled: false,
         icon: <Icon icon={EyeOffIcon} />,
         key: 'hideSection',
         label: t('navPanel.hideSection'),

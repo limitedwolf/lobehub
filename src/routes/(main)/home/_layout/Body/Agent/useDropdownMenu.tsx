@@ -84,6 +84,9 @@ export const useAgentActionsDropdownMenu = ({
       createAgentItem,
       createGroupChatItem,
       { type: 'divider' as const },
+      createSessionGroupItem,
+      configItem,
+      { type: 'divider' as const },
       {
         children: pageSizeItems,
         extra: agentPageSize,
@@ -106,7 +109,7 @@ export const useAgentActionsDropdownMenu = ({
         onClick: () => moveSection('down'),
       },
       {
-        disabled: visibleOrder.length <= 1,
+        disabled: false,
         icon: <Icon icon={EyeOffIcon} />,
         key: 'hideSection',
         label: t('navPanel.hideSection'),
@@ -119,9 +122,6 @@ export const useAgentActionsDropdownMenu = ({
         label: t('navPanel.customizeSidebar'),
         onClick: () => openCustomizeSidebarModal(),
       },
-      { type: 'divider' as const },
-      createSessionGroupItem,
-      configItem,
     ].filter(Boolean) as MenuProps['items'];
   }, [
     agentPageSize,

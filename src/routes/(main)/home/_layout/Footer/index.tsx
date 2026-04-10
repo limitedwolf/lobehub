@@ -13,7 +13,6 @@ import {
   FlaskConical,
   Github,
   Rocket,
-  Settings,
   Settings2,
   SlidersHorizontalIcon,
 } from 'lucide-react';
@@ -60,7 +59,7 @@ const Footer = memo(() => {
       s.updateSystemStatus,
     ]);
 
-  const allSectionsHidden =
+  const allAccordionSectionsHidden =
     sidebarSectionOrder.length > 0 &&
     sidebarSectionOrder.every((k) => hiddenSidebarSections.includes(k));
 
@@ -245,26 +244,17 @@ const Footer = memo(() => {
           <ThemeButton placement={'topCenter'} size={16} />
         </Flexbox>
       ) : (
-        <Flexbox horizontal align={'center'} justify={'space-between'} padding={8}>
-          <Flexbox horizontal align={'center'} gap={2}>
-            <DropdownMenu items={helpMenuItems} placement="topLeft">
-              <ActionIcon aria-label={t('userPanel.help')} icon={CircleHelp} size={16} />
-            </DropdownMenu>
-            {isDevMode && !isSettingsPage && (
-              <Link to="/settings">
-                <ActionIcon aria-label={t('userPanel.setting')} icon={Settings} size={16} />
-              </Link>
-            )}
-          </Flexbox>
-          {allSectionsHidden && (
-            <ActionIcon
-              aria-label={t('navPanel.customizeSidebar')}
-              icon={SlidersHorizontalIcon}
-              size={16}
-              title={t('navPanel.customizeSidebar')}
-              onClick={() => openCustomizeSidebarModal()}
-            />
-          )}
+        <Flexbox horizontal align={'center'} gap={2} padding={8}>
+          <DropdownMenu items={helpMenuItems} placement="topLeft">
+            <ActionIcon aria-label={t('userPanel.help')} icon={CircleHelp} size={16} />
+          </DropdownMenu>
+          <ActionIcon
+            aria-label={t('navPanel.customizeSidebar')}
+            icon={SlidersHorizontalIcon}
+            size={16}
+            title={t('navPanel.customizeSidebar')}
+            onClick={() => openCustomizeSidebarModal()}
+          />
         </Flexbox>
       )}
       <ChangelogModal

@@ -4,7 +4,7 @@ import { type ModalInstance } from '@lobehub/ui';
 import { ActionIcon, Block, createModal, Flexbox, Icon, Text } from '@lobehub/ui';
 import { Divider } from 'antd';
 import { t } from 'i18next';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, SettingsIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,10 +18,11 @@ const SECTION_ITEMS: { icon?: any; key: string; labelKey: string }[] = [
   { key: 'agent', labelKey: 'navPanel.agent' },
 ];
 
-// Bottom menu items (Community, Resources)
-const BOTTOM_ITEMS: { key: string; labelKey: string; routeId: string }[] = [
+// Bottom menu items (Community, Resources, Settings)
+const BOTTOM_ITEMS: { key: string; labelKey: string; routeId?: string }[] = [
   { key: 'community', labelKey: 'tab.community', routeId: 'community' },
   { key: 'resource', labelKey: 'tab.resource', routeId: 'resource' },
+  { key: 'settings', labelKey: 'tab.setting' },
 ];
 
 const SectionRow = memo<{
@@ -75,10 +76,11 @@ const CustomizeSidebarContent = memo(() => {
       })}
       <Divider style={{ margin: '8px 0' }} />
       {BOTTOM_ITEMS.map((item) => {
-        const route = getRouteById(item.routeId);
+        const route = item.routeId ? getRouteById(item.routeId) : undefined;
+        const icon = route?.icon || (item.key === 'settings' ? SettingsIcon : undefined);
         return (
           <SectionRow
-            icon={route?.icon}
+            icon={icon}
             isHidden={hiddenSections.includes(item.key)}
             key={item.key}
             label={t(item.labelKey as any)}
