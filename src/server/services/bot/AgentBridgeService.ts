@@ -281,7 +281,7 @@ export class AgentBridgeService {
 
     let decision: 'proceed' | 'queued' | 'duplicate' | 'rejected';
     try {
-      decision = await queue.checkAndEnqueue(ctxKey, queuedMsg);
+      ({ decision } = await queue.checkAndEnqueue(ctxKey, queuedMsg));
     } catch (error) {
       log('guardWithMessageQueue: checkAndEnqueue failed, falling back to legacy gate: %O', error);
       return 'disabled';

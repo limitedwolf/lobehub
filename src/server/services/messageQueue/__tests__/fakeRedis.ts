@@ -147,16 +147,28 @@ export class FakeRedis {
     return removed;
   }
 
+  /**
+   * Serialise all script evaluations so concurrent EVAL/EVALSHA calls mirror
+   * the atomicity of real Redis Lua execution instead of interleaving at
+   * every `await`.
+   */
+  private scriptChain: Promise<unknown> = Promise.resolve();
+  private enqueueScript<T>(fn: () => Promise<T> | T): Promise<T> {
+    const next = this.scriptChain.then(fn);
+    this.scriptChain = next.catch(() => undefined);
+    return next;
+  }
+
   async eval(script: string, numKeys: number, ...rest: (string | number)[]): Promise<unknown> {
     const keys = rest.slice(0, numKeys).map(String);
     const args = rest.slice(numKeys).map(String);
     if (script === CHECK_AND_ENQUEUE_SCRIPT) {
       this.loadedScripts.add(CHECK_AND_ENQUEUE_SHA);
-      return this.runCheckAndEnqueue(keys, args);
+      return this.enqueueScript(() => this.runCheckAndEnqueue(keys, args));
     }
     if (script === DRAIN_ON_COMPLETE_SCRIPT) {
       this.loadedScripts.add(DRAIN_ON_COMPLETE_SHA);
-      return this.runDrainOnComplete(keys, args);
+      return this.enqueueScript(() => this.runDrainOnComplete(keys, args));
     }
     throw new Error(`FakeRedis: unknown EVAL script`);
   }
@@ -168,8 +180,12 @@ export class FakeRedis {
     }
     const keys = rest.slice(0, numKeys).map(String);
     const args = rest.slice(numKeys).map(String);
-    if (sha === CHECK_AND_ENQUEUE_SHA) return this.runCheckAndEnqueue(keys, args);
-    if (sha === DRAIN_ON_COMPLETE_SHA) return this.runDrainOnComplete(keys, args);
+    if (sha === CHECK_AND_ENQUEUE_SHA) {
+      return this.enqueueScript(() => this.runCheckAndEnqueue(keys, args));
+    }
+    if (sha === DRAIN_ON_COMPLETE_SHA) {
+      return this.enqueueScript(() => this.runDrainOnComplete(keys, args));
+    }
     throw new Error(`FakeRedis: unknown EVALSHA sha=${sha}`);
   }
 
@@ -179,9 +195,12 @@ export class FakeRedis {
 
   private async runCheckAndEnqueue(keys: string[], args: string[]): Promise<string> {
     const [activeKey, queueKey, dedupKey] = keys;
-    const [msgJson, msgId, maxLenStr, queueTtlStr, dedupTtlStr] = args;
+    const [msgJson, msgId, maxLenStr, queueTtlStr, dedupTtlStr, placeholderId, activeTtlStr] = args;
 
-    if ((await this.exists(activeKey)) === 0) return 'proceed';
+    if ((await this.exists(activeKey)) === 0) {
+      await this.set(activeKey, placeholderId, 'EX', Number(activeTtlStr));
+      return 'proceed';
+    }
     if ((await this.sismember(dedupKey, msgId)) === 1) return 'duplicate';
 
     const maxLen = Number(maxLenStr);

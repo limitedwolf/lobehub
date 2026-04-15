@@ -7,16 +7,22 @@ const log = debug('lobe-server:message-queue:lua');
 
 /**
  * checkAndEnqueue: atomically decide whether a new inbound message can proceed
- * immediately or must be queued behind the current active run.
+ * immediately or must be queued behind the current active run. On 'proceed'
+ * the script claims the active slot with a caller-supplied placeholder so a
+ * second invocation racing in between receives 'queued' — closing the
+ * window between the gate returning 'proceed' and the caller setting the
+ * real operationId.
  *
  * KEYS[1] = active, KEYS[2] = queue, KEYS[3] = dedup
  * ARGV[1] = msgJson, ARGV[2] = msgId, ARGV[3] = maxLen (<=0 disables cap),
- * ARGV[4] = queueTtl (s), ARGV[5] = dedupTtl (s)
+ * ARGV[4] = queueTtl (s), ARGV[5] = dedupTtl (s),
+ * ARGV[6] = placeholderActiveId, ARGV[7] = activeTtl (s)
  *
  * Returns: 'proceed' | 'queued' | 'duplicate' | 'rejected'
  */
 export const CHECK_AND_ENQUEUE_SCRIPT = `
 if redis.call('EXISTS', KEYS[1]) == 0 then
+  redis.call('SET', KEYS[1], ARGV[6], 'EX', tonumber(ARGV[7]))
   return 'proceed'
 end
 

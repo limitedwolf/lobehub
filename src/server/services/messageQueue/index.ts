@@ -1,5 +1,6 @@
 import debug from 'debug';
 import type Redis from 'ioredis';
+import { nanoid } from 'nanoid';
 
 import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 
@@ -54,12 +55,22 @@ export class MessageQueueService {
 
   /**
    * Atomically decide whether a new message can run now or must be queued.
+   * On 'proceed' the active slot is claimed in the same Lua round-trip
+   * with a placeholder id; the caller MUST overwrite it with the real
+   * operationId via `markActive` once execution starts.
    *
    * @param ctxKey - Context key from `buildServerCtxKey`.
    * @param msg    - The inbound message to enqueue if active.
+   * @returns `{ decision, placeholderActiveId }` — the placeholder is
+   *          populated only when decision === 'proceed' so callers can
+   *          match it later during abort/failure handling.
    */
-  async checkAndEnqueue(ctxKey: string, msg: QueuedInboundMessage): Promise<EnqueueDecision> {
+  async checkAndEnqueue(
+    ctxKey: string,
+    msg: QueuedInboundMessage,
+  ): Promise<{ decision: EnqueueDecision; placeholderActiveId: string }> {
     const keys = buildMessageQueueRedisKeys(ctxKey);
+    const placeholderActiveId = `pending-${nanoid(10)}`;
     const result = await evalScript<string>(
       this.redis,
       CHECK_AND_ENQUEUE_SCRIPT,
@@ -71,6 +82,8 @@ export class MessageQueueService {
         this.config.maxQueueLen,
         this.config.queueTtlSec,
         this.config.dedupTtlSec,
+        placeholderActiveId,
+        this.config.activeTtlSec,
       ],
     );
 
@@ -80,7 +93,7 @@ export class MessageQueueService {
       throw new Error(`MessageQueueService: unexpected decision ${String(result)}`);
     }
     log('checkAndEnqueue(%s, %s) -> %s', ctxKey, msg.id, decision);
-    return decision;
+    return { decision, placeholderActiveId };
   }
 
   /**
