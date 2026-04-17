@@ -56,7 +56,10 @@ export class OnboardingActionHintInjector extends BaseVirtualLastUserContentProv
       );
     } else if (phase.includes('User Identity')) {
       hints.push(
-        'THIS TURN, once you learn the user\'s name and role: (1) call saveUserQuestion with fullName, and (2) persist the persona document immediately — if empty use writeDocument(type="persona") with a short initial draft (name, role, one-liner context), if already non-empty use updateDocument(type="persona", hunks=[{search, replace}]) to add the new lines. Do NOT defer persistence until later turns.',
+        'THIS TURN, as soon as the user tells you their name, call saveUserQuestion with fullName — do NOT wait until you also know their role. Persist the name immediately.',
+      );
+      hints.push(
+        'Seed the persona document the moment you have ANY useful fact about the user (just a name, just a role, or both). If empty, call writeDocument(type="persona") with a short initial draft containing whatever you know so far (even one line). If already non-empty, call updateDocument(type="persona", hunks=[{search, replace}]) to add the new lines. Do NOT defer persistence until more facts arrive.',
       );
     } else if (phase.includes('Discovery')) {
       hints.push(
