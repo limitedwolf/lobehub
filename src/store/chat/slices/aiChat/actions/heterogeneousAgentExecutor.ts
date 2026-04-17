@@ -255,10 +255,14 @@ const createSubagentTaskAndThread = async (
       content: '',
       metadata: {
         instruction,
+        // Marker the renderer branches on — CC-spawned tasks render inline
+        // inside the parent assistant bubble instead of as a standalone
+        // ChatItem (the GTD / callAgent path still uses the standalone style).
+        subagentSource: 'claude-code',
         taskTitle: title,
-        // `ClientTaskItem` reads targetAgentId to show the subagent's label.
-        // For CC we stash the `subagent_type` string here instead of a real
-        // agent id — UI just displays it verbatim.
+        // The renderer reads this to show the subagent's type label
+        // (Explore / Plan / code-reviewer / …). For CC we stash the
+        // `subagent_type` string verbatim — it's not a real agent id.
         ...(subagentType ? { targetAgentId: subagentType } : {}),
       } as any,
       parentId: parentAssistantMessageId,

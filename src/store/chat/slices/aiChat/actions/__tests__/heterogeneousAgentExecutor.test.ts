@@ -1115,6 +1115,7 @@ describe('heterogeneousAgentExecutor DB persistence', () => {
       expect(taskCreate).toBeDefined();
       expect(taskCreate![0].metadata).toMatchObject({
         instruction: 'Find all TS files',
+        subagentSource: 'claude-code',
         taskTitle: 'Explore the repo',
         targetAgentId: 'Explore',
       });

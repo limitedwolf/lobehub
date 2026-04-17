@@ -18,6 +18,7 @@ import AssistantMessage from './Assistant';
 import AssistantGroupMessage from './AssistantGroup';
 import CompressedGroupMessage from './CompressedGroup';
 import GroupTasksMessage from './GroupTasks';
+import InlineSubagentTask from './InlineSubagentTask';
 import SupervisorMessage from './Supervisor';
 import TaskMessage from './Task';
 import TasksMessage from './Tasks';
@@ -152,6 +153,12 @@ const MessageItem = memo<MessageItemProps>(
         }
 
         case 'task': {
+          // Claude Code subagent spawns (Agent tool) render inline inside
+          // the parent assistant's bubble instead of as a standalone ChatItem.
+          // GTD / callAgent tasks still use the standalone `TaskMessage`.
+          if ((message?.metadata as any)?.subagentSource === 'claude-code') {
+            return <InlineSubagentTask id={id} />;
+          }
           return (
             <TaskMessage
               disableEditing={disableEditing}
