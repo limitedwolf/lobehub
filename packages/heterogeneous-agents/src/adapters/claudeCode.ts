@@ -111,6 +111,16 @@ export class ClaudeCodeAdapter implements AgentEventAdapter {
 
     const events: HeterogeneousAgentEvent[] = [];
     const messageId = raw.message?.id;
+    /**
+     * CC marks subagent-side events (Agent tool spawn) with
+     * `parent_tool_use_id` pointing at the Agent tool_use id on the parent
+     * turn. These events are a subagent's own internal steps, NOT a new
+     * step of the main agent — so we keep the main agent's message boundary
+     * tracking stable across them. Tool calls still flow through but carry
+     * the parent pointer so UI can nest them.
+     */
+    const parentToolUseId: string | undefined = raw.parent_tool_use_id;
+    const isSubagentEvent = !!parentToolUseId;
 
     if (!this.started) {
       this.started = true;
@@ -121,7 +131,7 @@ export class ClaudeCodeAdapter implements AgentEventAdapter {
           provider: 'claude-code',
         }),
       );
-    } else if (messageId && messageId !== this.currentMessageId) {
+    } else if (!isSubagentEvent && messageId && messageId !== this.currentMessageId) {
       if (this.currentMessageId === undefined) {
         // First assistant message after init — just record the ID, no step boundary.
         // The init stream_start already primed the executor with the pre-created
@@ -147,7 +157,15 @@ export class ClaudeCodeAdapter implements AgentEventAdapter {
     // metadata event so executor can track latest model and accumulated usage.
     // DEDUP: same message.id carries identical usage on every content block
     // (thinking, text, tool_use). Only emit once per message.id.
-    if ((raw.message?.model || raw.message?.usage) && messageId !== this.usageEmittedForMessageId) {
+    //
+    // Skip for subagent events: their usage is already rolled into the
+    // authoritative `result` event total, and accumulating the per-turn
+    // metadata would double-count against the main agent's mid-stream view.
+    if (
+      !isSubagentEvent &&
+      (raw.message?.model || raw.message?.usage) &&
+      messageId !== this.usageEmittedForMessageId
+    ) {
       this.usageEmittedForMessageId = messageId;
       events.push(
         this.makeEvent('step_complete', {
@@ -180,6 +198,8 @@ export class ClaudeCodeAdapter implements AgentEventAdapter {
             arguments: JSON.stringify(block.input || {}),
             id: block.id,
             identifier: 'claude-code',
+            // Preserve the subagent pointer so downstream can nest it in UI.
+            ...(parentToolUseId ? { parentToolCallId: parentToolUseId } : {}),
             type: 'default',
           };
           newToolCalls.push(toolPayload);
@@ -189,13 +209,20 @@ export class ClaudeCodeAdapter implements AgentEventAdapter {
       }
     }
 
-    if (textParts.length > 0) {
-      events.push(this.makeChunkEvent({ chunkType: 'text', content: textParts.join('') }));
-    }
-    if (reasoningParts.length > 0) {
-      events.push(
-        this.makeChunkEvent({ chunkType: 'reasoning', reasoning: reasoningParts.join('') }),
-      );
+    // Subagent text / reasoning aren't streamed into the main assistant bubble —
+    // CC packages the subagent's final answer into the outer Agent tool_result,
+    // and subagent assistant events only carry intermediate tool_use blocks in
+    // practice (verified against real CC trace). Dropping any stray text here
+    // keeps the main agent's accumulator uncorrupted.
+    if (!isSubagentEvent) {
+      if (textParts.length > 0) {
+        events.push(this.makeChunkEvent({ chunkType: 'text', content: textParts.join('') }));
+      }
+      if (reasoningParts.length > 0) {
+        events.push(
+          this.makeChunkEvent({ chunkType: 'reasoning', reasoning: reasoningParts.join('') }),
+        );
+      }
     }
     if (newToolCalls.length > 0) {
       events.push(this.makeChunkEvent({ chunkType: 'tools_calling', toolsCalling: newToolCalls }));
