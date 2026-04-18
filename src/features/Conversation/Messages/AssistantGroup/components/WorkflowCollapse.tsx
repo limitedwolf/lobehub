@@ -334,6 +334,21 @@ const WorkflowCollapse = memo<WorkflowCollapseProps>(
       }
     };
 
+    // When only 1 tool and not streaming, render flat without Accordion wrapper
+    // Only flatten after streaming completes to avoid layout shifts during generation
+    const shouldRenderFlat = allComplete && allTools.length === 1;
+
+    if (shouldRenderFlat) {
+      return (
+        <WorkflowExpandedList
+          assistantId={assistantMessageId}
+          blocks={blocks}
+          constrained={false}
+          disableEditing={disableEditing}
+        />
+      );
+    }
+
     const title = (
       <Flexbox horizontal align="center" gap={6} width="100%">
         <Block
