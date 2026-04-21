@@ -33,10 +33,9 @@ If you don't have it, please run \`openssl rand -base64 32\` to create one.
     return nodeDrizzle(client, { schema });
   }
 
-  if (process.env.MIGRATION_DB === '1') {
-    // https://github.com/neondatabase/serverless/blob/main/CONFIG.md#websocketconstructor-typeof-websocket--undefined
-    neonConfig.webSocketConstructor = ws;
-  }
+  // Node 22+ global WebSocket drops Neon pool connections on idle — force `ws`.
+  neonConfig.webSocketConstructor = ws;
+  neonConfig.poolQueryViaFetch = true;
 
   const client = new NeonPool({ connectionString });
   return neonDrizzle(client, { schema });
