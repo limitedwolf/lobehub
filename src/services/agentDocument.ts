@@ -66,7 +66,11 @@ class AgentDocumentService {
     return lambdaClient.agentDocument.listDocuments.query(params);
   };
 
-  readDocumentByFilename = async (params: { agentId: string; filename: string }) => {
+  readDocumentByFilename = async (params: {
+    agentId: string;
+    filename: string;
+    format?: 'xml' | 'markdown' | 'both';
+  }) => {
     return lambdaClient.agentDocument.readDocumentByFilename.query(params);
   };
 
@@ -107,13 +111,48 @@ class AgentDocumentService {
     return result;
   };
 
-  readDocument = async (params: { agentId: string; id: string }) => {
+  readDocument = async (params: {
+    agentId: string;
+    format?: 'xml' | 'markdown' | 'both';
+    id: string;
+  }) => {
     return lambdaClient.agentDocument.readDocument.query(params);
   };
 
   editDocument = async (params: { agentId: string; content: string; id: string }) => {
     const result = await lambdaClient.agentDocument.editDocument.mutate(params);
     await revalidateAgentDocuments(params.agentId);
+
+    return result;
+  };
+
+  modifyNodes = async (params: {
+    agentId: string;
+    id: string;
+    operations: Array<
+      | {
+          action: 'insert';
+          afterId: string;
+          litexml: string;
+        }
+      | {
+          action: 'insert';
+          beforeId: string;
+          litexml: string;
+        }
+      | {
+          action: 'modify';
+          litexml: string | string[];
+        }
+      | {
+          action: 'remove';
+          id: string;
+        }
+    >;
+  }) => {
+    const result = await lambdaClient.agentDocument.modifyNodes.mutate(params);
+    await revalidateAgentDocuments(params.agentId);
+    await revalidateReadDocument(params.agentId, params.id);
 
     return result;
   };

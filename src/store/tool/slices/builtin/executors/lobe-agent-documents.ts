@@ -35,9 +35,12 @@ const runtime = new AgentDocumentsExecutionRuntime({
       title: d.title,
     }));
   },
-  readDocument: ({ agentId, id }) => agentDocumentService.readDocument({ agentId, id }),
-  readDocumentByFilename: ({ agentId, filename }) =>
-    agentDocumentService.readDocumentByFilename({ agentId, filename }),
+  modifyNodes: ({ agentId, id, operations }) =>
+    agentDocumentService.modifyNodes({ agentId, id, operations }),
+  readDocument: ({ agentId, format, id }) =>
+    agentDocumentService.readDocument({ agentId, format: format ?? 'xml', id }),
+  readDocumentByFilename: ({ agentId, filename, format }) =>
+    agentDocumentService.readDocumentByFilename({ agentId, filename, format: format ?? 'xml' }),
   removeDocument: async ({ agentId, id }) =>
     (await agentDocumentService.removeDocument({ agentId, id })).deleted,
   renameDocument: ({ agentId, id, newTitle }) =>

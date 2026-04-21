@@ -39,9 +39,11 @@ export const agentDocumentsRuntime: ServerRuntimeRegistration = {
           title: d.title,
         }));
       },
-      readDocument: ({ agentId, id }) => service.getDocumentById(id, agentId),
+      modifyNodes: ({ agentId, id, operations }) =>
+        service.modifyDocumentNodesById(id, operations, agentId),
+      readDocument: ({ agentId, id }) => service.getDocumentSnapshotById(id, agentId),
       readDocumentByFilename: ({ agentId, filename }) =>
-        service.getDocumentByFilename(agentId, filename),
+        service.getDocumentSnapshotByFilename(agentId, filename),
       removeDocument: ({ agentId, id }) => service.removeDocumentById(id, agentId),
       renameDocument: ({ agentId, id, newTitle }) =>
         service.renameDocumentById(id, newTitle, agentId),

@@ -29,6 +29,32 @@ vi.mock('./document', () => ({
   DocumentService: vi.fn(),
 }));
 
+vi.mock('@lobehub/editor/headless', () => ({
+  createHeadlessEditor: vi.fn(() => {
+    let markdown = '';
+    let litexml = '<p id="node-1">content</p>';
+
+    return {
+      applyLiteXMLBatch: vi.fn(async () => {
+        markdown = 'xml updated';
+        litexml = '<p id="node-1">xml updated</p>';
+      }),
+      destroy: vi.fn(),
+      export: vi.fn((options?: { litexml?: boolean }) => ({
+        editorData: { root: { children: [] } },
+        litexml: options?.litexml ? litexml : undefined,
+        markdown,
+      })),
+      hydrateEditorData: vi.fn(() => {
+        markdown = 'projected';
+      }),
+      hydrateMarkdown: vi.fn((content: string) => {
+        markdown = content;
+      }),
+    };
+  }),
+}));
+
 describe('AgentDocumentsService', () => {
   const db = {} as LobeChatDatabase;
   const userId = 'user-1';
@@ -75,6 +101,7 @@ describe('AgentDocumentsService', () => {
       expect(mockModel.findByFilename).toHaveBeenNthCalledWith(1, 'agent-1', 'note');
       expect(mockModel.findByFilename).toHaveBeenNthCalledWith(2, 'agent-1', 'note-2');
       expect(mockModel.create).toHaveBeenCalledWith('agent-1', 'note-2', 'content', {
+        editorData: { root: { children: [] } },
         title: 'note',
       });
       expect(result).toEqual({ id: 'new-doc', filename: 'note-2' });
@@ -104,6 +131,7 @@ describe('AgentDocumentsService', () => {
 
       expect(vi.mocked(buildDocumentFilename)).toHaveBeenCalledWith('My Title');
       expect(mockModel.create).toHaveBeenCalledWith('agent-1', 'My Title', 'body', {
+        editorData: { root: { children: [] } },
         title: 'My Title',
       });
     });
@@ -272,7 +300,9 @@ describe('AgentDocumentsService', () => {
         filename: 'f.md',
       });
 
-      expect(mockModel.upsert).toHaveBeenCalledWith('agent-1', 'f.md', 'new');
+      expect(mockModel.upsert).toHaveBeenCalledWith('agent-1', 'f.md', 'new', {
+        editorData: { root: { children: [] } },
+      });
       expect(result).toEqual({ content: 'new', filename: 'f.md', id: 'doc-1' });
     });
 
@@ -348,7 +378,10 @@ describe('AgentDocumentsService', () => {
         'documents-1',
         'llm_call',
       );
-      expect(mockModel.update).toHaveBeenCalledWith('agent-doc-1', { content: 'new' });
+      expect(mockModel.update).toHaveBeenCalledWith('agent-doc-1', {
+        content: 'new',
+        editorData: { root: { children: [] } },
+      });
       expect(
         mockDocumentService.trySaveCurrentDocumentHistory.mock.invocationCallOrder[0],
       ).toBeLessThan(mockModel.update.mock.invocationCallOrder[0]);
@@ -382,7 +415,47 @@ describe('AgentDocumentsService', () => {
       await service.editDocumentById('agent-doc-1', 'same', 'agent-1');
 
       expect(mockDocumentService.trySaveCurrentDocumentHistory).not.toHaveBeenCalled();
-      expect(mockModel.update).toHaveBeenCalledWith('agent-doc-1', { content: 'same' });
+      expect(mockModel.update).toHaveBeenCalledWith('agent-doc-1', {
+        content: 'same',
+        editorData: { root: { children: [] } },
+      });
+    });
+
+    it('should apply LiteXML operations against editor data', async () => {
+      mockModel.findById
+        .mockResolvedValueOnce({
+          agentId: 'agent-1',
+          content: 'old',
+          documentId: 'documents-1',
+          editorData: { root: { children: [{ text: 'old' }] } },
+          id: 'agent-doc-1',
+          title: 'Doc',
+        })
+        .mockResolvedValueOnce({
+          agentId: 'agent-1',
+          content: 'xml updated',
+          documentId: 'documents-1',
+          editorData: { root: { children: [] } },
+          id: 'agent-doc-1',
+          title: 'Doc',
+        });
+
+      const service = new AgentDocumentsService(db, userId);
+      const result = await service.modifyDocumentNodesById(
+        'agent-doc-1',
+        [{ action: 'modify', litexml: '<p id="node-1">xml updated</p>' }],
+        'agent-1',
+      );
+
+      expect(mockDocumentService.trySaveCurrentDocumentHistory).toHaveBeenCalledWith(
+        'documents-1',
+        'llm_call',
+      );
+      expect(mockModel.update).toHaveBeenCalledWith('agent-doc-1', {
+        content: 'xml updated',
+        editorData: { root: { children: [] } },
+      });
+      expect(result?.content).toBe('projected');
     });
   });
 

@@ -8,7 +8,7 @@ import {
   type CreateDocumentArgs,
   type EditDocumentArgs,
   type ListDocumentsArgs,
-  type PatchDocumentArgs,
+  type ModifyDocumentNodesArgs,
   type ReadDocumentArgs,
   type ReadDocumentByFilenameArgs,
   type RemoveDocumentArgs,
@@ -96,11 +96,11 @@ export class AgentDocumentsExecutor extends BaseExecutor<typeof AgentDocumentsAp
     });
   };
 
-  patchDocument = async (
-    params: PatchDocumentArgs,
+  modifyNodes = async (
+    params: ModifyDocumentNodesArgs,
     ctx: BuiltinToolContext,
   ): Promise<BuiltinToolResult> => {
-    return this.runtime.patchDocument(params, {
+    return this.runtime.modifyNodes(params, {
       agentId: ctx.agentId,
       currentDocumentId: ctx.documentId,
       scope: ctx.scope,
@@ -159,6 +159,7 @@ const fallbackRuntime = new AgentDocumentsExecutionRuntime({
   editDocument: async ({ agentId: _agentId }) => undefined,
   listDocuments: async () => [],
   listTopicDocuments: async () => [],
+  modifyNodes: async ({ agentId: _agentId }) => undefined,
   readDocument: async ({ agentId: _agentId }) => undefined,
   readDocumentByFilename: async () => undefined,
   removeDocument: async ({ agentId: _agentId }) => false,

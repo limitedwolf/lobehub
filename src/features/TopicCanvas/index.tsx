@@ -142,18 +142,7 @@ const TopicCanvasPageAgentBridge = memo<
         documentId,
         hasEditor: !!editor,
       });
-      if (!documentId || !editor) return;
-
-      try {
-        const editorData = editor.getDocument('json');
-        documentHistoryQueueService.enqueue({
-          documentId,
-          editorData: JSON.stringify(editorData),
-          saveSource: 'llm_call',
-        });
-      } catch (error) {
-        console.error('[TopicCanvas] Failed to capture history snapshot before mutation:', error);
-      }
+      documentHistoryQueueService.enqueueEditorSnapshot({ documentId, editor });
     });
 
     return () => {

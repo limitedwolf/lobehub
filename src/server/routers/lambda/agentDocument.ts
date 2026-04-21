@@ -32,6 +32,29 @@ const toolLoadRuleSchema = z.object({
   timeRange: z.object({ from: z.string().optional(), to: z.string().optional() }).optional(),
 });
 
+const readFormatSchema = z.enum(['xml', 'markdown', 'both']).optional();
+
+const liteXMLOperationSchema = z.union([
+  z.object({
+    action: z.literal('insert'),
+    beforeId: z.string(),
+    litexml: z.string(),
+  }),
+  z.object({
+    action: z.literal('insert'),
+    afterId: z.string(),
+    litexml: z.string(),
+  }),
+  z.object({
+    action: z.literal('modify'),
+    litexml: z.union([z.string(), z.array(z.string())]),
+  }),
+  z.object({
+    action: z.literal('remove'),
+    id: z.string(),
+  }),
+]);
+
 const agentDocumentProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
 
@@ -220,11 +243,14 @@ export const agentDocumentRouter = router({
     .input(
       z.object({
         agentId: z.string(),
+        format: readFormatSchema,
         filename: z.string(),
       }),
     )
     .query(async ({ ctx, input }) => {
-      return ctx.agentDocumentService.getDocumentByFilename(input.agentId, input.filename);
+      return input.format
+        ? ctx.agentDocumentService.getDocumentSnapshotByFilename(input.agentId, input.filename)
+        : ctx.agentDocumentService.getDocumentByFilename(input.agentId, input.filename);
     }),
 
   /**
@@ -308,11 +334,33 @@ export const agentDocumentRouter = router({
     .input(
       z.object({
         agentId: z.string(),
+        format: readFormatSchema,
         id: z.string(),
       }),
     )
     .query(async ({ ctx, input }) => {
-      return ctx.agentDocumentService.getDocumentById(input.id, input.agentId);
+      return input.format
+        ? ctx.agentDocumentService.getDocumentSnapshotById(input.id, input.agentId)
+        : ctx.agentDocumentService.getDocumentById(input.id, input.agentId);
+    }),
+
+  /**
+   * Tool-oriented: modify document nodes by id through LiteXML.
+   */
+  modifyNodes: agentDocumentProcedure
+    .input(
+      z.object({
+        agentId: z.string(),
+        id: z.string(),
+        operations: z.array(liteXMLOperationSchema).min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.agentDocumentService.modifyDocumentNodesById(
+        input.id,
+        input.operations,
+        input.agentId,
+      );
     }),
 
   /**

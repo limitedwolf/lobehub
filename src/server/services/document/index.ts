@@ -9,6 +9,7 @@ import isEqual from 'fast-deep-equal';
 import { DocumentModel } from '@/database/models/document';
 import { FileModel } from '@/database/models/file';
 import { isValidEditorData } from '@/libs/editor/isValidEditorData';
+import { normalizeEditorDataDiffNodes } from '@/libs/editor/normalizeDiffNodes';
 import { type LobeDocument } from '@/types/document';
 
 import { FileService } from '../file';
@@ -204,10 +205,11 @@ export class DocumentService {
       throw new Error(`Document not found: ${documentId}`);
     }
 
+    const normalizedEditorData = normalizeEditorDataDiffNodes(editorData);
     const savedAt = new Date();
     await this.documentHistoryService.createHistory({
       documentId,
-      editorData,
+      editorData: normalizedEditorData,
       saveSource,
       savedAt,
     });
@@ -227,10 +229,11 @@ export class DocumentService {
       const editorData = currentDocument?.editorData;
       if (!isValidEditorData(editorData)) return undefined;
 
+      const normalizedEditorData = normalizeEditorDataDiffNodes(editorData);
       const savedAt = new Date();
       await this.documentHistoryService.createHistory({
         documentId,
-        editorData,
+        editorData: normalizedEditorData,
         saveSource,
         savedAt,
       });
@@ -302,8 +305,13 @@ export class DocumentService {
         throw new Error(`Document not found: ${id}`);
       }
 
-      const currentEditorData = (currentDocument.editorData ?? {}) as Record<string, any>;
-      const nextEditorData = params.editorData;
+      const currentEditorData = normalizeEditorDataDiffNodes(
+        (currentDocument.editorData ?? {}) as Record<string, any>,
+      );
+      const nextEditorData =
+        params.editorData === undefined
+          ? undefined
+          : normalizeEditorDataDiffNodes(params.editorData);
       const historyAppended =
         nextEditorData !== undefined && !isEqual(nextEditorData, currentEditorData);
 
@@ -315,8 +323,8 @@ export class DocumentService {
         updates.totalLineCount = params.content.split('\n').length;
       }
 
-      if (params.editorData !== undefined) {
-        updates.editorData = params.editorData;
+      if (nextEditorData !== undefined) {
+        updates.editorData = nextEditorData;
       }
 
       if (params.fileType !== undefined) {

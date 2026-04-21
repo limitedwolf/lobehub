@@ -21,6 +21,40 @@ vi.mock('debug', () => ({
 
 const { loadFile } = await import('@lobechat/file-loaders');
 
+const createEditorDataWithDiffNode = () => ({
+  root: {
+    children: [
+      {
+        children: [
+          { children: [{ text: 'origin', type: 'text' }], type: 'paragraph' },
+          { children: [{ text: 'modified', type: 'text' }], type: 'paragraph' },
+        ],
+        diffType: 'modify',
+        type: 'diff',
+      },
+      {
+        children: [{ children: [{ text: 'added', type: 'text' }], type: 'paragraph' }],
+        diffType: 'add',
+        type: 'diff',
+      },
+      {
+        children: [{ children: [{ text: 'removed', type: 'text' }], type: 'paragraph' }],
+        diffType: 'remove',
+        type: 'diff',
+      },
+    ],
+  },
+});
+
+const normalizedEditorDataFromDiffNode = {
+  root: {
+    children: [
+      { children: [{ text: 'origin', type: 'text' }], type: 'paragraph' },
+      { children: [{ text: 'removed', type: 'text' }], type: 'paragraph' },
+    ],
+  },
+};
+
 describe('DocumentService', () => {
   let service: DocumentService;
   let mockDb: LobeChatDatabase;
@@ -568,6 +602,52 @@ describe('DocumentService', () => {
       expect(result.savedAt).toBeInstanceOf(Date);
     });
 
+    it('should normalize diff nodes before appending history and updating editorData', async () => {
+      const editorData = {
+        root: {
+          children: [
+            {
+              children: [
+                { children: [{ text: 'next origin', type: 'text' }], type: 'paragraph' },
+                { children: [{ text: 'next modified', type: 'text' }], type: 'paragraph' },
+              ],
+              diffType: 'modify',
+              type: 'diff',
+            },
+            {
+              children: [{ children: [{ text: 'next added', type: 'text' }], type: 'paragraph' }],
+              diffType: 'add',
+              type: 'diff',
+            },
+          ],
+        },
+      };
+      const normalizedEditorData = {
+        root: {
+          children: [{ children: [{ text: 'next origin', type: 'text' }], type: 'paragraph' }],
+        },
+      };
+      mockDocumentModel.update.mockResolvedValue({ id: 'doc-1' });
+      mockDocumentModel.findById.mockResolvedValue(
+        createCurrentDocument({ editorData: createEditorDataWithDiffNode() }),
+      );
+
+      const result = await service.updateDocument('doc-1', { editorData, saveSource: 'manual' });
+
+      expect(mockDocumentModel.update).toHaveBeenCalledWith(
+        'doc-1',
+        expect.objectContaining({ editorData: normalizedEditorData }),
+      );
+      expect(mockDocumentHistoryService.createHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          documentId: 'doc-1',
+          editorData: normalizedEditorDataFromDiffNode,
+          saveSource: 'manual',
+        }),
+      );
+      expect(result.historyAppended).toBe(true);
+    });
+
     it('should skip history when editorData is unchanged', async () => {
       const editorData = { blocks: [] };
       mockDocumentModel.update.mockResolvedValue({ id: 'doc-1' });
@@ -702,6 +782,21 @@ describe('DocumentService', () => {
       expect(result.savedAt).toBeInstanceOf(Date);
     });
 
+    it('should create history with diff nodes normalized to their origin content', async () => {
+      mockDocumentModel.findById.mockResolvedValue({ id: 'doc-1', editorData: { blocks: [] } });
+      mockDocumentHistoryService.createHistory.mockResolvedValue(undefined);
+
+      await service.saveDocumentHistory('doc-1', createEditorDataWithDiffNode(), 'llm_call');
+
+      expect(mockDocumentHistoryService.createHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          documentId: 'doc-1',
+          editorData: normalizedEditorDataFromDiffNode,
+          saveSource: 'llm_call',
+        }),
+      );
+    });
+
     it('should throw when document does not exist', async () => {
       mockDocumentModel.findById.mockResolvedValue(undefined);
 
@@ -726,6 +821,25 @@ describe('DocumentService', () => {
           editorData,
           saveSource: 'llm_call',
           savedAt: expect.any(Date),
+        }),
+      );
+      expect(result?.savedAt).toBeInstanceOf(Date);
+    });
+
+    it('should snapshot current document history with diff nodes normalized to origin content', async () => {
+      mockDocumentModel.findById.mockResolvedValue({
+        editorData: createEditorDataWithDiffNode(),
+        id: 'doc-1',
+      });
+      mockDocumentHistoryService.createHistory.mockResolvedValue(undefined);
+
+      const result = await service.trySaveCurrentDocumentHistory('doc-1', 'llm_call');
+
+      expect(mockDocumentHistoryService.createHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          documentId: 'doc-1',
+          editorData: normalizedEditorDataFromDiffNode,
+          saveSource: 'llm_call',
         }),
       );
       expect(result?.savedAt).toBeInstanceOf(Date);

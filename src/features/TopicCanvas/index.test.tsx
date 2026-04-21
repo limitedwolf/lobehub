@@ -3,6 +3,8 @@ import type * as React from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { documentHistoryQueueService } from '@/services/documentHistoryQueue';
+
 import TopicCanvas from './index';
 
 const mockEditor = {
@@ -99,6 +101,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('@/services/documentHistoryQueue', () => ({
   documentHistoryQueueService: {
     enqueue: vi.fn(),
+    enqueueEditorSnapshot: vi.fn(),
     flush: vi.fn(),
   },
 }));
@@ -126,6 +129,16 @@ describe('TopicCanvas', () => {
       expect(runtimeSpies.setCurrentDocId).toHaveBeenCalledWith('doc-1');
       expect(runtimeSpies.setTitleHandlers).toHaveBeenCalledTimes(1);
       expect(runtimeSpies.setBeforeMutateHandler).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    const beforeMutateHandler = runtimeSpies.setBeforeMutateHandler.mock.calls.find(
+      ([handler]) => typeof handler === 'function',
+    )?.[0] as (() => void) | undefined;
+    beforeMutateHandler?.();
+
+    expect(documentHistoryQueueService.enqueueEditorSnapshot).toHaveBeenCalledWith({
+      documentId: 'doc-1',
+      editor: mockEditor,
     });
 
     unmount();

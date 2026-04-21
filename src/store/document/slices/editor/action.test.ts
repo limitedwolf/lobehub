@@ -486,6 +486,65 @@ describe('DocumentStore - Editor Actions', () => {
       expect(result.current.documents['doc-1'].isDirty).toBe(false);
     });
 
+    it('should save and write back origin editorData when the editor contains diff nodes', async () => {
+      const { result } = renderHook(() => useDocumentStore());
+      const editorData = {
+        root: {
+          children: [
+            {
+              children: [
+                { children: [{ text: 'origin', type: 'text' }], type: 'paragraph' },
+                { children: [{ text: 'modified', type: 'text' }], type: 'paragraph' },
+              ],
+              diffType: 'modify',
+              type: 'diff',
+            },
+            {
+              children: [{ children: [{ text: 'added', type: 'text' }], type: 'paragraph' }],
+              diffType: 'add',
+              type: 'diff',
+            },
+          ],
+        },
+      };
+      const normalizedEditorData = {
+        root: {
+          children: [{ children: [{ text: 'origin', type: 'text' }], type: 'paragraph' }],
+        },
+      };
+      const mockEditor = {
+        getDocument: vi.fn((type: string) => {
+          if (type === 'markdown') return '# Test';
+          if (type === 'json') return editorData;
+          return null;
+        }),
+        setDocument: vi.fn(),
+      } as any;
+
+      act(() => {
+        result.current.initDocumentWithEditor({
+          content: '# Test',
+          documentId: 'doc-1',
+          editor: mockEditor,
+          sourceType: 'page',
+        });
+        result.current.markDirty('doc-1');
+      });
+
+      await act(async () => {
+        await result.current.performSave('doc-1');
+      });
+
+      expect(documentService.updateDocument).toHaveBeenCalledWith(
+        expect.objectContaining({
+          editorData: JSON.stringify(normalizedEditorData),
+          id: 'doc-1',
+        }),
+      );
+      expect(result.current.documents['doc-1'].editorData).toEqual(normalizedEditorData);
+      expect(result.current.documents['doc-1'].lastSavedEditorData).toEqual(normalizedEditorData);
+    });
+
     it('should pass restore metadata through updateDocument', async () => {
       const { result } = renderHook(() => useDocumentStore());
       const mockEditor = createMockEditor() as any;

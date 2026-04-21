@@ -6,6 +6,7 @@ import isEqual from 'fast-deep-equal';
 
 import { EMPTY_EDITOR_STATE } from '@/libs/editor/constants';
 import { isValidEditorData } from '@/libs/editor/isValidEditorData';
+import { normalizeEditorDataDiffNodes } from '@/libs/editor/normalizeDiffNodes';
 import { documentService } from '@/services/document';
 import type { StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
@@ -180,10 +181,12 @@ export class EditorActionImpl {
         return;
       }
 
+      const normalizedEditorData = normalizeEditorDataDiffNodes(currentEditorData);
+
       // Save document
       const result = await documentService.updateDocument({
         content: currentContent,
-        editorData: JSON.stringify(currentEditorData),
+        editorData: JSON.stringify(normalizedEditorData),
         id,
         metadata: metadata?.emoji ? { emoji: metadata.emoji } : undefined,
         restoreFromHistoryId: options?.restoreFromHistoryId,
@@ -196,11 +199,11 @@ export class EditorActionImpl {
         id,
         type: 'updateDocument',
         value: {
-          editorData: structuredClone(currentEditorData),
+          editorData: structuredClone(normalizedEditorData),
 
           isDirty: false,
           lastSavedContent: currentContent,
-          lastSavedEditorData: structuredClone(currentEditorData),
+          lastSavedEditorData: structuredClone(normalizedEditorData),
           lastUpdatedTime: result.savedAt ? new Date(result.savedAt) : new Date(),
           saveStatus: 'saved',
         },
