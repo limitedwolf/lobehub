@@ -129,6 +129,18 @@ export class PluginTypesActionImpl {
       );
 
       // Call Tool Store's invokeBuiltinTool
+      console.info('[BuiltinToolCall] invoke:start', {
+        agentId,
+        apiName: payload.apiName,
+        documentId,
+        identifier: payload.identifier,
+        messageId: id,
+        operationId,
+        rootRuntimeOperationId,
+        scope,
+        topicId,
+      });
+
       const result = await useToolStore
         .getState()
         .invokeBuiltinTool(payload.identifier, payload.apiName, params, {
@@ -144,6 +156,15 @@ export class PluginTypesActionImpl {
           stepContext,
           topicId,
         });
+
+      console.info('[BuiltinToolCall] invoke:end', {
+        apiName: payload.apiName,
+        errorType: result.error?.type,
+        identifier: payload.identifier,
+        messageId: id,
+        operationId,
+        success: result.success,
+      });
 
       // When error exists but content is empty, backfill error message into content
       const content = result.content || result.error?.message || '';

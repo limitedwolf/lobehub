@@ -55,6 +55,7 @@ const DocumentIdMode = memo<DocumentIdModeProps>(
     autoSave = true,
     sourceType = 'page',
     onContentChange,
+    onInit,
     unsavedChangesGuard,
     style,
     ...editorProps
@@ -80,6 +81,15 @@ const DocumentIdMode = memo<DocumentIdModeProps>(
     }, [documentId, handleContentChangeStore, performSave]);
 
     useSaveDocumentHotkey(handleManualSave);
+
+    const handleEditorInit = useCallback(
+      (editorInstance: IEditor) => {
+        void onEditorInit(editorInstance).finally(() => {
+          onInit?.(editorInstance);
+        });
+      },
+      [onEditorInit, onInit],
+    );
 
     // Use SWR hook for document fetching (auto-initializes via onSuccess in DocumentStore)
     const { error } = useFetchDocument(documentId, { autoSave, editor, sourceType });
@@ -138,6 +148,7 @@ const DocumentIdMode = memo<DocumentIdModeProps>(
         contentChangeLockRef.current = true;
 
         void onEditorInit(editor).finally(() => {
+          onInit?.(editor);
           queueMicrotask(() => {
             if (initRunIdRef.current === runId) {
               contentChangeLockRef.current = false;
@@ -145,7 +156,7 @@ const DocumentIdMode = memo<DocumentIdModeProps>(
           });
         });
       }
-    }, [documentId, editor, isEditorInitialized, isLoading, onEditorInit]);
+    }, [documentId, editor, isEditorInitialized, isLoading, onEditorInit, onInit]);
 
     // Show loading state
     if (isLoading) {
@@ -169,7 +180,7 @@ const DocumentIdMode = memo<DocumentIdModeProps>(
           placeholder={editorProps.placeholder || t('pageEditor.editorPlaceholder')}
           style={style}
           onContentChange={handleChange}
-          onInit={onEditorInit}
+          onInit={handleEditorInit}
           {...editorProps}
         />
       </>

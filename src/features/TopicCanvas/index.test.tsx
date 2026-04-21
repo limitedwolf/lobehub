@@ -1,12 +1,19 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import type * as React from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import TopicCanvas from './index';
 
 const mockEditor = {
+  dataTypeMap: new Map([
+    ['json', {}],
+    ['litexml', {}],
+    ['markdown', {}],
+  ]),
   focus: vi.fn(),
   getDocument: vi.fn(() => ({ root: true })),
+  getLexicalEditor: vi.fn(() => ({})),
 } as const;
 
 const runtimeSpies = vi.hoisted(() => ({
@@ -16,9 +23,11 @@ const runtimeSpies = vi.hoisted(() => ({
   setTitleHandlers: vi.fn(),
 }));
 
+const useEditorMock = vi.hoisted(() => vi.fn(() => mockEditor));
+
 vi.mock('@lobehub/editor/react', () => ({
   EditorProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  useEditor: () => mockEditor,
+  useEditor: useEditorMock,
 }));
 
 vi.mock('@lobehub/ui', () => ({
@@ -40,22 +49,40 @@ vi.mock('@lobehub/ui', () => ({
   ),
 }));
 
-vi.mock('@/features/EditorCanvas', () => ({
-  DiffAllToolbar: ({ documentId, editor }: { documentId: string; editor: typeof mockEditor }) => (
-    <div
-      data-document-id={documentId}
-      data-editor={editor === mockEditor ? 'shared' : 'other'}
-      data-testid="diff-toolbar"
-    />
-  ),
-  EditorCanvas: ({ documentId, editor }: { documentId?: string; editor?: typeof mockEditor }) => (
-    <div
-      data-document-id={documentId ?? ''}
-      data-editor={editor === mockEditor ? 'shared' : 'other'}
-      data-testid="editor-canvas"
-    />
-  ),
-}));
+vi.mock('@/features/EditorCanvas', async () => {
+  const ReactActual = (await vi.importActual('react')) as typeof React;
+
+  return {
+    DiffAllToolbar: ({ documentId, editor }: { documentId: string; editor: typeof mockEditor }) => (
+      <div
+        data-document-id={documentId}
+        data-editor={editor === mockEditor ? 'shared' : 'other'}
+        data-testid="diff-toolbar"
+      />
+    ),
+    EditorCanvas: ({
+      documentId,
+      editor,
+      onInit,
+    }: {
+      documentId?: string;
+      editor?: typeof mockEditor;
+      onInit?: (editor: typeof mockEditor) => void;
+    }) => {
+      ReactActual.useEffect(() => {
+        if (editor) onInit?.(editor);
+      }, [editor, onInit]);
+
+      return (
+        <div
+          data-document-id={documentId ?? ''}
+          data-editor={editor === mockEditor ? 'shared' : 'other'}
+          data-testid="editor-canvas"
+        />
+      );
+    },
+  };
+});
 
 vi.mock('@/features/WideScreenContainer', () => ({
   default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -85,7 +112,7 @@ afterEach(() => {
 });
 
 describe('TopicCanvas', () => {
-  it('mounts diff toolbar and page-agent runtime bridge for the current document', () => {
+  it('mounts diff toolbar and page-agent runtime bridge for the current document', async () => {
     const { unmount } = render(
       <TopicCanvas documentId="doc-1" title="Topic Title" onTitleChange={vi.fn()} />,
     );
@@ -94,10 +121,12 @@ describe('TopicCanvas', () => {
     expect(screen.getByTestId('diff-toolbar')).toHaveAttribute('data-document-id', 'doc-1');
     expect(screen.getByTestId('diff-toolbar')).toHaveAttribute('data-editor', 'shared');
 
-    expect(runtimeSpies.setEditor).toHaveBeenCalledWith(mockEditor);
-    expect(runtimeSpies.setCurrentDocId).toHaveBeenCalledWith('doc-1');
-    expect(runtimeSpies.setTitleHandlers).toHaveBeenCalledTimes(1);
-    expect(runtimeSpies.setBeforeMutateHandler).toHaveBeenCalledWith(expect.any(Function));
+    await waitFor(() => {
+      expect(runtimeSpies.setEditor).toHaveBeenCalledWith(mockEditor);
+      expect(runtimeSpies.setCurrentDocId).toHaveBeenCalledWith('doc-1');
+      expect(runtimeSpies.setTitleHandlers).toHaveBeenCalledTimes(1);
+      expect(runtimeSpies.setBeforeMutateHandler).toHaveBeenCalledWith(expect.any(Function));
+    });
 
     unmount();
 

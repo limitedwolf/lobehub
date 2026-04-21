@@ -128,11 +128,12 @@ const TopicPage = memo(() => {
         </HeaderSlot>
       )}
       <Flexbox
+        align={'center'}
         flex={1}
-        style={{ maxWidth: MAX_PANEL_WIDTH, minHeight: 0, paddingBlockEnd: 16 }}
+        style={{ minHeight: 0, overflowX: 'hidden', overflowY: 'auto' }}
         width={'100%'}
       >
-        <Flexbox flex={1} style={{ minHeight: 0 }} width={'100%'}>
+        <Flexbox style={{ maxWidth: MAX_PANEL_WIDTH, paddingBlockEnd: 16 }} width={'100%'}>
           <TopicCanvas
             agentId={aid}
             documentId={docId}
@@ -141,6 +142,8 @@ const TopicPage = memo(() => {
             onTitleChange={handleTitleChange}
           />
         </Flexbox>
+      </Flexbox>
+      <Flexbox style={{ maxWidth: MAX_PANEL_WIDTH }} width={'100%'}>
         <FloatingChatPanel
           agentId={aid}
           documentId={docId}

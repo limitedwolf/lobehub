@@ -105,7 +105,27 @@ export class ClientToolExecutionActionImpl {
           topicId: operation?.context?.topicId ?? undefined,
         };
 
+        console.info('[ClientToolCall] execute:start', {
+          agentId: ctx.agentId,
+          apiName,
+          documentId: ctx.documentId,
+          identifier,
+          operationId,
+          scope: ctx.scope,
+          toolCallId,
+          topicId: ctx.topicId,
+        });
+
         const result = await invokeExecutor(identifier, apiName, params, ctx);
+
+        console.info('[ClientToolCall] execute:end', {
+          apiName,
+          errorType: result.error?.type,
+          identifier,
+          operationId,
+          success: result.success,
+          toolCallId,
+        });
 
         if (result.error) {
           send({

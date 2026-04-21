@@ -1,10 +1,11 @@
 'use client';
 
+import type { IEditor } from '@lobehub/editor';
 import { EditorProvider, useEditor } from '@lobehub/editor/react';
 import { Flexbox } from '@lobehub/ui';
 import { cssVar } from 'antd-style';
 import type { CSSProperties } from 'react';
-import { memo, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import { DiffAllToolbar, EditorCanvas as SharedEditorCanvas } from '@/features/EditorCanvas';
 import WideScreenContainer from '@/features/WideScreenContainer';
@@ -18,7 +19,6 @@ import TitleSection, { type TitleSectionProps } from './TitleSection';
 const styles = StyleSheet.create({
   contentWrapper: {
     display: 'flex',
-    overflowY: 'auto',
     position: 'relative',
   },
   editorContainer: {
@@ -26,7 +26,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   editorContent: {
-    overflowY: 'auto',
     paddingBlock: 16,
     position: 'relative',
   },
@@ -47,10 +46,53 @@ export interface TopicCanvasProps extends TitleSectionProps {
 
 type PageAgentEditor = NonNullable<Parameters<typeof pageAgentRuntime.setEditor>[0]>;
 
+const PAGE_AGENT_DATA_SOURCE_TYPES = ['json', 'litexml', 'markdown'] as const;
+const PAGE_AGENT_READY_RETRY_LIMIT = 30;
+const PAGE_AGENT_READY_RETRY_INTERVAL = 16;
+
+interface InspectableEditor extends IEditor {
+  dataTypeMap?: Map<string, unknown> | Record<string, unknown>;
+}
+
+const getEditorDataSourceTypes = (editor: InspectableEditor): string[] => {
+  const dataTypeMap = editor.dataTypeMap;
+
+  if (!dataTypeMap) return [];
+
+  if (dataTypeMap instanceof Map) {
+    return [...dataTypeMap.keys()].sort();
+  }
+
+  return Object.keys(dataTypeMap).sort();
+};
+
+const getPageAgentEditorSnapshot = (editor: IEditor | undefined) => {
+  if (!editor) {
+    return {
+      dataSourceTypes: [],
+      hasLexicalEditor: false,
+      isReady: false,
+    };
+  }
+
+  const dataSourceTypes = getEditorDataSourceTypes(editor as InspectableEditor);
+  const hasLexicalEditor = !!editor.getLexicalEditor?.();
+
+  return {
+    dataSourceTypes,
+    hasLexicalEditor,
+    isReady:
+      hasLexicalEditor &&
+      PAGE_AGENT_DATA_SOURCE_TYPES.every((type) => dataSourceTypes.includes(type)),
+  };
+};
+
 const TopicCanvasPageAgentBridge = memo<
-  Pick<TopicCanvasProps, 'documentId' | 'onTitleChange' | 'title'>
->(({ documentId, onTitleChange, title }) => {
-  const editor = useEditor();
+  Pick<TopicCanvasProps, 'documentId' | 'onTitleChange' | 'title'> & {
+    editor: IEditor | undefined;
+    editorReady: boolean;
+  }
+>(({ documentId, editor, editorReady, onTitleChange, title }) => {
   const pageAgentEditor = editor as unknown as PageAgentEditor | undefined;
   const titleRef = useRef(title ?? '');
   const onTitleChangeRef = useRef(onTitleChange);
@@ -64,16 +106,28 @@ const TopicCanvasPageAgentBridge = memo<
   }, [onTitleChange]);
 
   useEffect(() => {
-    if (pageAgentEditor) {
+    if (editorReady && pageAgentEditor) {
+      console.info('[TopicCanvas/PageAgentBridge] setEditor', {
+        dataSourceTypes: getPageAgentEditorSnapshot(editor).dataSourceTypes,
+        documentId,
+        editorReady,
+        hasLexicalEditor: !!pageAgentEditor.getLexicalEditor?.(),
+      });
       pageAgentRuntime.setEditor(pageAgentEditor);
     }
 
     return () => {
+      console.info('[TopicCanvas/PageAgentBridge] clearEditor', { documentId });
       pageAgentRuntime.setEditor(null);
     };
-  }, [pageAgentEditor]);
+  }, [documentId, editor, editorReady, pageAgentEditor]);
 
   useEffect(() => {
+    console.info('[TopicCanvas/PageAgentBridge] bindDocumentContext', {
+      dataSourceTypes: getPageAgentEditorSnapshot(editor).dataSourceTypes,
+      documentId,
+      hasEditor: !!editor,
+    });
     pageAgentRuntime.setCurrentDocId(documentId);
     pageAgentRuntime.setTitleHandlers(
       (nextTitle) => {
@@ -83,6 +137,11 @@ const TopicCanvasPageAgentBridge = memo<
       () => titleRef.current,
     );
     pageAgentRuntime.setBeforeMutateHandler(() => {
+      console.info('[TopicCanvas/PageAgentBridge] beforeMutate', {
+        dataSourceTypes: getPageAgentEditorSnapshot(editor).dataSourceTypes,
+        documentId,
+        hasEditor: !!editor,
+      });
       if (!documentId || !editor) return;
 
       try {
@@ -98,6 +157,7 @@ const TopicCanvasPageAgentBridge = memo<
     });
 
     return () => {
+      console.info('[TopicCanvas/PageAgentBridge] clearDocumentContext', { documentId });
       pageAgentRuntime.setCurrentDocId(undefined);
       pageAgentRuntime.setTitleHandlers(null, null);
       pageAgentRuntime.setBeforeMutateHandler(null);
@@ -113,24 +173,87 @@ TopicCanvasPageAgentBridge.displayName = 'TopicCanvasPageAgentBridge';
 const TopicCanvasBody = memo<TopicCanvasProps>(
   ({ placeholder, style, title, documentId, onTitleChange }) => {
     const editor = useEditor();
+    const [editorReady, setEditorReady] = useState(false);
+    const readyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const previousEditorContextRef = useRef<{ documentId?: string; editor?: IEditor } | undefined>(
+      undefined,
+    );
 
     useRegisterFilesHotkeys();
+
+    useEffect(() => {
+      const previous = previousEditorContextRef.current;
+
+      if (previous && (previous.documentId !== documentId || previous.editor !== editor)) {
+        setEditorReady(false);
+        if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+      }
+
+      previousEditorContextRef.current = { documentId, editor };
+    }, [documentId, editor]);
+
+    useEffect(() => {
+      return () => {
+        if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+      };
+    }, []);
+
+    const handleEditorInit = useCallback(
+      (editorInstance: IEditor) => {
+        let retryCount = 0;
+
+        if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+
+        const markReadyWhenAvailable = () => {
+          const snapshot = getPageAgentEditorSnapshot(editorInstance);
+
+          console.info('[TopicCanvas] editor:onInit', {
+            ...snapshot,
+            documentId,
+            retryCount,
+          });
+
+          if (snapshot.isReady) {
+            setEditorReady(true);
+            return;
+          }
+
+          if (retryCount >= PAGE_AGENT_READY_RETRY_LIMIT) {
+            console.warn('[TopicCanvas] Page agent editor is not ready:', {
+              ...snapshot,
+              documentId,
+            });
+            return;
+          }
+
+          retryCount += 1;
+          readyTimerRef.current = setTimeout(
+            markReadyWhenAvailable,
+            PAGE_AGENT_READY_RETRY_INTERVAL,
+          );
+        };
+
+        markReadyWhenAvailable();
+      },
+      [documentId],
+    );
 
     return (
       <>
         <TopicCanvasPageAgentBridge
           documentId={documentId}
+          editor={editor}
+          editorReady={editorReady}
           title={title}
           onTitleChange={onTitleChange}
         />
         <Flexbox
           horizontal
-          height={'100%'}
           style={styles.contentWrapper}
           width={'100%'}
           onClick={() => editor?.focus()}
         >
-          <Flexbox flex={1} height={'100%'} style={styles.editorContainer}>
+          <Flexbox flex={1} style={styles.editorContainer}>
             <WideScreenContainer wrapperStyle={{ cursor: 'text' }}>
               <Flexbox flex={1} style={styles.editorContent}>
                 <TitleSection title={title} onTitleChange={onTitleChange} />
@@ -140,6 +263,7 @@ const TopicCanvasBody = memo<TopicCanvasProps>(
                   placeholder={placeholder}
                   sourceType={'notebook'}
                   style={style}
+                  onInit={handleEditorInit}
                 />
               </Flexbox>
             </WideScreenContainer>
@@ -163,7 +287,7 @@ TopicCanvasBody.displayName = 'TopicCanvasBody';
  */
 const TopicCanvas = memo<TopicCanvasProps>((props) => {
   return (
-    <Flexbox flex={1} height={'100%'} style={styles.root} width={'100%'}>
+    <Flexbox style={styles.root} width={'100%'}>
       <EditorProvider>
         <TopicCanvasBody {...props} />
       </EditorProvider>

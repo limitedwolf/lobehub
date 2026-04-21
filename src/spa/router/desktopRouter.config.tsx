@@ -8,6 +8,8 @@ import {
 } from '@/business/client/BusinessDesktopRoutes';
 import { dynamicElement, dynamicLayout, ErrorBoundary, redirectElement } from '@/utils/router';
 
+const agentChatElement = dynamicElement(() => import('@/routes/(main)/agent'), 'Desktop > Chat');
+
 // Desktop router configuration (declarative mode)
 export const desktopRoutes: RouteObject[] = [
   {
@@ -24,19 +26,13 @@ export const desktopRoutes: RouteObject[] = [
               {
                 children: [
                   {
-                    element: dynamicElement(
-                      () => import('@/routes/(main)/agent'),
-                      'Desktop > Chat',
-                    ),
+                    element: agentChatElement,
                     index: true,
                   },
                   {
                     children: [
                       {
-                        element: dynamicElement(
-                          () => import('@/routes/(main)/agent/[topicId]'),
-                          'Desktop > Chat > Topic',
-                        ),
+                        element: agentChatElement,
                         index: true,
                       },
                       {
