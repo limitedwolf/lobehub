@@ -100,10 +100,7 @@ const DocumentIdMode = memo<DocumentIdModeProps>(
       topicId,
     });
     const remoteDocumentUpdatedAt = remoteDocument?.updatedAt;
-    const remoteDocumentVersion =
-      remoteDocumentUpdatedAt instanceof Date
-        ? remoteDocumentUpdatedAt.toISOString()
-        : remoteDocumentUpdatedAt?.toString();
+    const remoteDocumentVersion = remoteDocumentUpdatedAt?.toISOString();
 
     // Check loading state via selector (document not yet in store)
     const isLoading = useDocumentStore(editorSelectors.isDocumentLoading(documentId));

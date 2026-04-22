@@ -43,6 +43,7 @@ const createEditorDataWithDiffNode = () => ({
         type: 'diff',
       },
     ],
+    type: 'root',
   },
 });
 
@@ -52,6 +53,7 @@ const normalizedEditorDataFromDiffNode = {
       { children: [{ text: 'origin', type: 'text' }], type: 'paragraph' },
       { children: [{ text: 'removed', type: 'text' }], type: 'paragraph' },
     ],
+    type: 'root',
   },
 };
 
@@ -809,7 +811,9 @@ describe('DocumentService', () => {
 
   describe('trySaveCurrentDocumentHistory', () => {
     it('should create a history entry from the current document editor data', async () => {
-      const editorData = { root: { children: [{ type: 'paragraph' }] } };
+      const editorData = {
+        root: { children: [{ children: [], type: 'paragraph' }], type: 'root' },
+      };
       mockDocumentModel.findById.mockResolvedValue({ editorData, id: 'doc-1' });
       mockDocumentHistoryService.createHistory.mockResolvedValue(undefined);
 
@@ -857,7 +861,7 @@ describe('DocumentService', () => {
     it('should not block the caller when history creation fails', async () => {
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockDocumentModel.findById.mockResolvedValue({
-        editorData: { root: { children: [] } },
+        editorData: { root: { children: [{ children: [], type: 'paragraph' }], type: 'root' } },
         id: 'doc-1',
       });
       mockDocumentHistoryService.createHistory.mockRejectedValueOnce(new Error('history failed'));

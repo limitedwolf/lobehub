@@ -29,6 +29,17 @@ const createMockEditor = () => ({
   setDocument: vi.fn(),
 });
 
+const createValidMockEditor = () => ({
+  getDocument: vi.fn((type: string) => {
+    if (type === 'markdown') return '# Test';
+    if (type === 'json') {
+      return { root: { children: [{ children: [], type: 'paragraph' }], type: 'root' } };
+    }
+    return null;
+  }),
+  setDocument: vi.fn(),
+});
+
 describe('DocumentStore - Editor Actions', () => {
   beforeEach(() => {
     vi.mocked(documentService.updateDocument).mockResolvedValue({
@@ -452,7 +463,7 @@ describe('DocumentStore - Editor Actions', () => {
 
     it('should save metadata-only updates when history is not appended', async () => {
       const { result } = renderHook(() => useDocumentStore());
-      const mockEditor = createMockEditor() as any;
+      const mockEditor = createValidMockEditor() as any;
 
       vi.mocked(documentService.updateDocument).mockResolvedValue({
         historyAppended: false,
@@ -505,11 +516,13 @@ describe('DocumentStore - Editor Actions', () => {
               type: 'diff',
             },
           ],
+          type: 'root',
         },
       };
       const normalizedEditorData = {
         root: {
           children: [{ children: [{ text: 'origin', type: 'text' }], type: 'paragraph' }],
+          type: 'root',
         },
       };
       const mockEditor = {
@@ -547,7 +560,7 @@ describe('DocumentStore - Editor Actions', () => {
 
     it('should pass restore metadata through updateDocument', async () => {
       const { result } = renderHook(() => useDocumentStore());
-      const mockEditor = createMockEditor() as any;
+      const mockEditor = createValidMockEditor() as any;
 
       vi.mocked(documentService.updateDocument).mockResolvedValue({
         historyAppended: true,
