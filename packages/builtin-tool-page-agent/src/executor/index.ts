@@ -59,6 +59,29 @@ const getRuntimeDebugSnapshot = (runtime: EditorRuntime) => {
   return candidate.getDebugSnapshot?.();
 };
 
+const PAGE_EDITOR_NOT_MOUNTED_MESSAGE =
+  'Page editor is not currently mounted. This topic was started in the page editor, but the editor is not active in the current view. ' +
+  'Do not retry initPage / editTitle / modifyNodes / replaceText / getPageContent here — they require a mounted editor. ' +
+  'To read or modify the topic document, use lobe-agent-documents (readDocument / editDocument / modifyNodes / upsertDocumentByFilename).';
+
+const buildEditorNotMountedResult = (
+  runtime: EditorRuntime,
+  apiName: string,
+): BuiltinToolResult => ({
+  content: PAGE_EDITOR_NOT_MOUNTED_MESSAGE,
+  error: {
+    body: {
+      apiName,
+      code: 'PAGE_EDITOR_NOT_MOUNTED',
+      kind: 'replan',
+      runtime: getRuntimeDebugSnapshot(runtime),
+    },
+    message: PAGE_EDITOR_NOT_MOUNTED_MESSAGE,
+    type: 'PageEditorNotMounted',
+  },
+  success: false,
+});
+
 /**
  * Page Agent Executor
  *
@@ -81,6 +104,22 @@ class PageAgentExecutor extends BaseExecutor<typeof PageAgentApiName> {
   constructor(runtime: EditorRuntime) {
     super();
     this.runtime = runtime;
+
+    // scope is topic-bound, not route-bound: navigating away from the page
+    // editor keeps scope==='page' on the same topic, so without this guard
+    // the LLM can still call page-agent APIs against a stale editor ref.
+    const baseInvoke = this.invoke;
+    this.invoke = async (apiName, params, ctx) => {
+      if (this.hasApi(apiName) && !this.runtime.isReady()) {
+        console.warn('[PageAgentToolCall] blocked: editor not mounted', {
+          apiName,
+          runtime: getRuntimeDebugSnapshot(this.runtime),
+        });
+        return buildEditorNotMountedResult(this.runtime, apiName);
+      }
+
+      return baseInvoke(apiName, params, ctx);
+    };
   }
 
   // ==================== Initialize ====================

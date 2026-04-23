@@ -135,6 +135,17 @@ export class EditorRuntime {
     };
   }
 
+  isReady(): boolean {
+    if (!this.editor) return false;
+
+    const inspectableEditor = this.editor as InspectableEditor;
+    try {
+      return !!inspectableEditor.getLexicalEditor?.();
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Get the current editor instance
    */
