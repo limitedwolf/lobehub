@@ -59,21 +59,25 @@ export const useChatItemContextMenu = ({
 
   const storeApi = useConversationStoreApi();
 
-  const [role, error, isCollapsed, hasThread, isRegenerating] = useConversationStore((s) => {
-    const item = dataSelectors.getDisplayMessageById(id)(s);
-    return [
-      item?.role,
-      item?.error,
-      messageStateSelectors.isMessageCollapsed(id)(s),
-      messageStateSelectors.hasThreadBySourceMsgId(id)(s),
-      messageStateSelectors.isMessageRegenerating(id)(s),
-    ];
-  }, isEqual);
+  const [role, error, isCollapsed, hasThread, isProcessing, isRegenerating] = useConversationStore(
+    (s) => {
+      const item = dataSelectors.getDisplayMessageById(id)(s);
+      return [
+        item?.role,
+        item?.error,
+        messageStateSelectors.isMessageCollapsed(id)(s),
+        messageStateSelectors.hasThreadBySourceMsgId(id)(s),
+        messageStateSelectors.isMessageProcessing(id)(s),
+        messageStateSelectors.isMessageRegenerating(id)(s),
+      ];
+    },
+    isEqual,
+  );
 
   const isThreadMode = useConversationStore(messageStateSelectors.isThreadMode);
   const isGroupSession = useSessionStore(sessionSelectors.isCurrentSessionGroupSession);
   const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
-  const actionsBar = useChatListActionsBar({ hasThread, isRegenerating });
+  const actionsBar = useChatListActionsBar({ hasThread, isProcessing, isRegenerating });
   const inThread = isThreadMode || inPortalThread;
 
   const [
@@ -218,6 +222,7 @@ export const useChatItemContextMenu = ({
 
       switch (action.key) {
         case 'edit': {
+          if (isProcessing) break;
           toggleMessageEditing(id, true);
           break;
         }
@@ -287,6 +292,7 @@ export const useChatItemContextMenu = ({
       handleShare,
       id,
       inPortalThread,
+      isProcessing,
       message,
       openThreadCreator,
       regenerateAssistantMessage,

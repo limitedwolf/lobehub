@@ -2,7 +2,7 @@ import { Edit } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useConversationStore } from '../../../../store';
+import { messageStateSelectors, useConversationStore } from '../../../../store';
 import { defineAction } from '../defineAction';
 
 export const editAction = defineAction({
@@ -10,20 +10,22 @@ export const editAction = defineAction({
   useBuild: (ctx) => {
     const { t } = useTranslation('common');
     const toggleMessageEditing = useConversationStore((s) => s.toggleMessageEditing);
+    const targetId = ctx.role === 'group' ? ctx.contentBlock?.id : ctx.id;
+    const isMessageProcessing = useConversationStore(
+      messageStateSelectors.isMessageProcessing(targetId || ''),
+    );
 
     return useMemo(() => {
-      // group edits the inner content block; other roles edit the message itself
-      const targetId = ctx.role === 'group' ? ctx.contentBlock?.id : ctx.id;
-
       return {
+        disabled: !targetId || isMessageProcessing,
         handleClick: () => {
-          if (!targetId) return;
+          if (!targetId || isMessageProcessing) return;
           toggleMessageEditing(targetId, true);
         },
         icon: Edit,
         key: 'edit',
         label: t('edit'),
       };
-    }, [t, ctx.role, ctx.id, ctx.contentBlock?.id, toggleMessageEditing]);
+    }, [isMessageProcessing, t, targetId, toggleMessageEditing]);
   },
 });

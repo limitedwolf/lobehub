@@ -47,10 +47,12 @@ interface ChatListActionsBar {
 export const useChatListActionsBar = ({
   hasThread,
   isContinuing,
+  isProcessing,
   isRegenerating,
 }: {
   hasThread?: boolean;
   isContinuing?: boolean;
+  isProcessing?: boolean;
   isRegenerating?: boolean;
 } = {}): ChatListActionsBar => {
   const { t } = useTranslation(['common', 'chat']);
@@ -98,6 +100,7 @@ export const useChatListActionsBar = ({
         type: 'divider',
       },
       edit: {
+        disabled: isProcessing,
         icon: Edit,
         key: 'edit',
         label: t('edit'),
@@ -140,6 +143,6 @@ export const useChatListActionsBar = ({
         label: t('tts.action', { ns: 'chat' }),
       },
     }),
-    [hasThread, isContinuing, isRegenerating],
+    [hasThread, isContinuing, isProcessing, isRegenerating],
   );
 };

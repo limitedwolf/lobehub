@@ -30,6 +30,15 @@ const getDisplayMessageById = (id: string) => (s: State) => {
 const getDbMessageById = (id: string) => (s: State) => s.dbMessages.find((m) => m.id === id);
 const getDbMessageByToolCallId = (id: string) => (s: State) =>
   s.dbMessages.find((m) => m.tool_call_id === id);
+const isLatestUserMessage = (id: string) => (s: State) => {
+  for (let index = s.displayMessages.length - 1; index >= 0; index -= 1) {
+    const message = s.displayMessages[index];
+
+    if (message.role === 'user') return message.id === id;
+  }
+
+  return false;
+};
 
 /**
  * Helper to find last message ID in an AssistantContentBlock
@@ -132,6 +141,7 @@ export const dataSelectors = {
   getDbMessageByToolCallId,
   getDisplayMessageById,
   getGroupLatestMessageWithoutTools,
+  isLatestUserMessage,
   messagesInit,
   pendingInterventions,
   skipFetch,

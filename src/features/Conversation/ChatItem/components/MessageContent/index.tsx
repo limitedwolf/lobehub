@@ -2,8 +2,14 @@ import { Flexbox } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { type ReactNode } from 'react';
 import { memo, Suspense, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { dataSelectors, useConversationStore } from '@/features/Conversation/store';
+import {
+  dataSelectors,
+  messageStateSelectors,
+  useConversationStore,
+  useConversationStoreApi,
+} from '@/features/Conversation/store';
 import dynamic from '@/libs/next/dynamic';
 
 import { type ChatItemProps } from '../../type';
@@ -59,18 +65,60 @@ const MessageContent = memo<MessageContentProps>(
     className,
     variant,
   }) => {
-    const [toggleMessageEditing, updateMessageContent] = useConversationStore((s) => [
-      s.toggleMessageEditing,
-      s.updateMessageContent,
-    ]);
+    const { t } = useTranslation('common');
+    const storeApi = useConversationStoreApi();
+    const [deleteMessage, regenerateUserMessage, toggleMessageEditing, updateMessageContent] =
+      useConversationStore((s) => [
+        s.deleteMessage,
+        s.regenerateUserMessage,
+        s.toggleMessageEditing,
+        s.updateMessageContent,
+      ]);
 
     const editorData = useConversationStore(
       (s) => dataSelectors.getDisplayMessageById(id)(s)?.editorData,
     );
+    const hasMessageError = useConversationStore(
+      (s) => !!dataSelectors.getDisplayMessageById(id)(s)?.error,
+    );
+    const isLatestUserMessage = useConversationStore(dataSelectors.isLatestUserMessage(id));
+    const isMessageProcessing = useConversationStore(messageStateSelectors.isMessageProcessing(id));
 
     const onEditingChange = useCallback(
       (edit: boolean) => toggleMessageEditing(id, edit),
       [id, toggleMessageEditing],
+    );
+
+    const handleConfirm = useCallback(
+      async (value: string, newEditorData?: unknown) => {
+        await updateMessageContent(id, value, {
+          editorData: newEditorData as Record<string, any> | undefined,
+        });
+
+        onEditingChange(false);
+
+        const currentState = storeApi.getState();
+        const shouldSendEditedMessage =
+          dataSelectors.isLatestUserMessage(id)(currentState) &&
+          !messageStateSelectors.isMessageProcessing(id)(currentState);
+
+        if (!shouldSendEditedMessage) return;
+
+        const regeneratePromise = regenerateUserMessage(id);
+
+        if (hasMessageError) await deleteMessage(id);
+
+        await regeneratePromise;
+      },
+      [
+        deleteMessage,
+        hasMessageError,
+        id,
+        onEditingChange,
+        regenerateUserMessage,
+        storeApi,
+        updateMessageContent,
+      ],
     );
 
     return (
@@ -93,15 +141,11 @@ const MessageContent = memo<MessageContentProps>(
           {editing && (
             <EditorModal
               editorData={editorData}
+              okText={isLatestUserMessage && !isMessageProcessing ? t('send') : t('save')}
               open={editing}
               value={message ? String(message) : ''}
               onCancel={() => onEditingChange(false)}
-              onConfirm={async (value, newEditorData) => {
-                await updateMessageContent(id, value, {
-                  editorData: newEditorData as Record<string, any> | undefined,
-                });
-                onEditingChange(false);
-              }}
+              onConfirm={handleConfirm}
             />
           )}
         </Suspense>

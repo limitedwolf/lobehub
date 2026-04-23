@@ -1,7 +1,7 @@
 import { type MouseEventHandler } from 'react';
 import { useCallback } from 'react';
 
-import { useConversationStore } from '../store';
+import { messageStateSelectors, useConversationStore } from '../store';
 
 interface UseDoubleClickEditProps {
   disableEditing?: boolean;
@@ -17,6 +17,7 @@ export const useDoubleClickEdit = ({
   id,
 }: UseDoubleClickEditProps) => {
   const toggleMessageEditing = useConversationStore((s) => s.toggleMessageEditing);
+  const isMessageProcessing = useConversationStore(messageStateSelectors.isMessageProcessing(id));
 
   return useCallback<MouseEventHandler<HTMLDivElement>>(
     (e) => {
@@ -24,6 +25,7 @@ export const useDoubleClickEdit = ({
         disableEditing ||
         error ||
         id === 'default' ||
+        isMessageProcessing ||
         !e.altKey ||
         !['assistant', 'user'].includes(role)
       )
@@ -31,6 +33,6 @@ export const useDoubleClickEdit = ({
 
       toggleMessageEditing(id, true);
     },
-    [role, disableEditing, toggleMessageEditing, id],
+    [role, disableEditing, error, id, isMessageProcessing, toggleMessageEditing],
   );
 };
