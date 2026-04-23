@@ -28,6 +28,6 @@ export interface SPAServerConfig {
   analyticsConfig: AnalyticsConfig;
   clientEnv: SPAClientEnv;
   config: GlobalServerConfig;
-  featureFlags: Partial<IFeatureFlags>;
+  featureFlags?: Partial<IFeatureFlags>;
   isMobile: boolean;
 }

@@ -1,7 +1,6 @@
 import { BRANDING_NAME, ORG_NAME } from '@lobechat/business-const';
 import { OG_URL } from '@lobechat/const';
 
-import { getServerFeatureFlagsValue } from '@/config/featureFlags';
 import { OFFICIAL_URL } from '@/const/url';
 import { isCustomORG, isDesktop } from '@/const/version';
 import { analyticsEnv } from '@/envs/analytics';
@@ -206,7 +205,6 @@ export async function GET(
   const { locale, isMobile } = RouteVariants.deserializeVariants(variants);
 
   const serverConfig = await getServerGlobalConfig();
-  const featureFlags = getServerFeatureFlagsValue();
   const analyticsConfig = buildAnalyticsConfig();
   const clientEnv = buildClientEnv();
 
@@ -214,7 +212,6 @@ export async function GET(
     analyticsConfig,
     clientEnv,
     config: serverConfig,
-    featureFlags,
     isMobile,
   };
 
