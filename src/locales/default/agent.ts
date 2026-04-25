@@ -129,7 +129,7 @@ export default {
     'Operator-defined secret. Paste the same value into the Meta Cloud API webhook configuration so the GET verification handshake succeeds.',
   'channel.whatsapp.appSecret': 'App Secret',
   'channel.whatsapp.appSecretHint':
-    'Meta App Secret. Optional but strongly recommended — when set, every webhook delivery is rejected unless its X-Hub-Signature-256 header matches.',
+    'Meta App Secret. Required — used to verify the X-Hub-Signature-256 header on every inbound webhook. Webhooks with a missing or mismatched signature are rejected.',
   'channel.whatsapp.webhookManualSetup':
     'WhatsApp does not allow programmatic webhook registration. Copy this URL into the Meta App dashboard ("WhatsApp → Configuration → Webhooks → Callback URL"), set the Verify Token to match, and subscribe to the `messages` field.',
   'channel.testConnection': 'Test Connection',

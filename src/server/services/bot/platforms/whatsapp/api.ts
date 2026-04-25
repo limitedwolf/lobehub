@@ -1,32 +1,60 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
-
-import type {
-  WhatsAppMediaUrlResponse,
-  WhatsAppSendResponse,
-  WhatsAppSendTextRequest,
-} from './types';
+/**
+ * Thin server-side WhatsApp Cloud API client.
+ *
+ * The official `@chat-adapter/whatsapp` adapter handles inbound webhooks,
+ * but it does not expose a separately-importable HTTP client for outbound
+ * calls. We therefore keep this minimal wrapper for the server-side code
+ * paths that don't have an initialized `Chat` instance — chiefly:
+ *
+ *   - `start()` lifecycle credential check
+ *   - `validateCredentials()` UI flow
+ *   - `messenger.createMessage` / `triggerTyping` / reactions outbound
+ *   - `extractFiles` two-step media download
+ *
+ * Stateless — instances are cheap to create and reuse.
+ */
 
 export const DEFAULT_GRAPH_API_BASE_URL = 'https://graph.facebook.com';
 export const DEFAULT_GRAPH_API_VERSION = 'v21.0';
 
-/**
- * Cloud API REST client. Stateless — instances are cheap to create and reuse.
- *
- * All methods throw on HTTP failure with the Cloud API `error.message` so
- * callers can surface meaningful diagnostics back to the operator.
- */
+export interface WhatsAppApiClientOptions {
+  accessToken: string;
+  baseUrl?: string;
+  phoneNumberId: string;
+  version?: string;
+}
+
+interface CloudApiErrorEnvelope {
+  error?: {
+    code?: number;
+    error_data?: { details?: string };
+    fbtrace_id?: string;
+    message?: string;
+    type?: string;
+  };
+}
+
+export interface WhatsAppSendResponse extends CloudApiErrorEnvelope {
+  contacts?: Array<{ input: string; wa_id: string }>;
+  messages?: Array<{ id: string; message_status?: string }>;
+}
+
+export interface WhatsAppMediaUrlResponse extends CloudApiErrorEnvelope {
+  file_size?: number;
+  id?: string;
+  messaging_product?: 'whatsapp';
+  mime_type?: string;
+  sha256?: string;
+  url?: string;
+}
+
 export class WhatsAppApiClient {
   readonly accessToken: string;
   readonly phoneNumberId: string;
   readonly baseUrl: string;
   readonly version: string;
 
-  constructor(options: {
-    accessToken: string;
-    baseUrl?: string;
-    phoneNumberId: string;
-    version?: string;
-  }) {
+  constructor(options: WhatsAppApiClientOptions) {
     this.accessToken = options.accessToken;
     this.phoneNumberId = options.phoneNumberId;
     this.baseUrl = stripTrailingSlashes(options.baseUrl || DEFAULT_GRAPH_API_BASE_URL);
@@ -44,22 +72,20 @@ export class WhatsAppApiClient {
     };
   }
 
-  /** Send a plain text message to a recipient. */
+  /** Send a plain-text message. */
   async sendText(to: string, body: string, previewUrl = false): Promise<WhatsAppSendResponse> {
-    const payload: WhatsAppSendTextRequest = {
+    return this.postMessages({
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       text: { body, preview_url: previewUrl },
       to,
       type: 'text',
-    };
-    return this.postMessages(payload as unknown as Record<string, unknown>);
+    });
   }
 
   /**
-   * Mark an inbound user message as read. WhatsApp Cloud API combines this
-   * with the typing indicator: when called with `typingIndicator=true`, the
-   * client UI shows the bot is "typing…" until the next outbound message
+   * Mark an inbound user message as read. When `typingIndicator` is true the
+   * client UI shows a "typing…" bubble until the next outbound message
    * (max ~25s). This is the only typing primitive Cloud API exposes.
    * @see https://developers.facebook.com/docs/whatsapp/cloud-api/guides/mark-message-as-read
    */
@@ -74,6 +100,24 @@ export class WhatsAppApiClient {
   }
 
   /**
+   * Send a reaction to a previously-received message.
+   * @see https://developers.facebook.com/docs/whatsapp/cloud-api/messages/reaction-messages
+   */
+  async sendReaction(to: string, messageId: string, emoji: string): Promise<void> {
+    await this.postMessages({
+      messaging_product: 'whatsapp',
+      reaction: { emoji, message_id: messageId },
+      to,
+      type: 'reaction',
+    });
+  }
+
+  /** Remove a reaction by sending an empty `emoji` string per Cloud API spec. */
+  async removeReaction(to: string, messageId: string): Promise<void> {
+    return this.sendReaction(to, messageId, '');
+  }
+
+  /**
    * Resolve a media id into a short-lived signed URL plus metadata. The url
    * must be downloaded with the same `Authorization` bearer header.
    */
@@ -85,10 +129,7 @@ export class WhatsAppApiClient {
     return parseResponse<WhatsAppMediaUrlResponse>(res, 'getMediaUrl');
   }
 
-  /**
-   * Download media bytes by media id. Combines `getMediaUrl` + a second GET
-   * with the bearer header (the URL refuses anonymous access).
-   */
+  /** Two-step media download: resolve URL then GET the bytes with the bearer header. */
   async downloadMedia(mediaId: string): Promise<Buffer> {
     const meta = await this.getMediaUrl(mediaId);
     if (!meta.url) {
@@ -104,9 +145,8 @@ export class WhatsAppApiClient {
   }
 
   /**
-   * Verify that the phone number id + access token combo is usable. Issues a
-   * cheap GET against the phone number node and surfaces the human-readable
-   * Cloud API error string when the request fails.
+   * Verify the credentials with a cheap GET against the phone-number node.
+   * Used by `start()` and `validateCredentials` to fail fast on bad tokens.
    */
   async verifyCredentials(): Promise<{ display_phone_number?: string; verified_name?: string }> {
     const res = await fetch(`${this.root}/${encodeURIComponent(this.phoneNumberId)}`, {
@@ -126,36 +166,6 @@ export class WhatsAppApiClient {
   }
 }
 
-/**
- * Compute the expected HMAC-SHA256 signature for an inbound webhook body.
- * WhatsApp signs the raw bytes with the App Secret.
- *
- * @returns The hex digest, prefixed with `sha256=` (matches the header value).
- */
-export function computeSignature(body: string, appSecret: string): string {
-  const hmac = createHmac('sha256', appSecret);
-  hmac.update(body, 'utf8');
-  return `sha256=${hmac.digest('hex')}`;
-}
-
-/**
- * Validate an `X-Hub-Signature-256` header against the request body using
- * timing-safe comparison. Returns `false` whenever the signature is missing,
- * malformed, or doesn't match — never throws.
- */
-export function verifySignature(
-  body: string,
-  signatureHeader: string | null | undefined,
-  appSecret: string,
-): boolean {
-  if (!signatureHeader || !appSecret) return false;
-  const expected = computeSignature(body, appSecret);
-  const expectedBuf = Buffer.from(expected);
-  const actualBuf = Buffer.from(signatureHeader);
-  if (expectedBuf.length !== actualBuf.length) return false;
-  return timingSafeEqual(expectedBuf, actualBuf);
-}
-
 function stripTrailingSlashes(url: string): string {
   let end = url.length;
   while (end > 0 && url[end - 1] === '/') end--;
@@ -173,7 +183,7 @@ async function parseResponse<T>(response: Response, label: string): Promise<T> {
 
   if (!response.ok) {
     const errMsg =
-      (payload as { error?: { message?: string } } | undefined)?.error?.message ??
+      (payload as CloudApiErrorEnvelope | undefined)?.error?.message ??
       `${label} failed with HTTP ${response.status}`;
     throw new Error(errMsg);
   }

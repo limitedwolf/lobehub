@@ -152,7 +152,7 @@
   "channel.whatsapp.accessToken": "Access Token",
   "channel.whatsapp.accessTokenHint": "拥有 `whatsapp_business_messaging` 和 `whatsapp_business_management` 权限的系统用户长期 Access Token，将被加密存储。",
   "channel.whatsapp.appSecret": "App Secret",
-  "channel.whatsapp.appSecretHint": "Meta App Secret，可选但强烈建议。配置后每条 Webhook 都会校验 X-Hub-Signature-256 签名，签名不匹配将被拒绝。",
+  "channel.whatsapp.appSecretHint": "Meta App Secret，必填。用于校验每条入站 Webhook 的 X-Hub-Signature-256 头，签名缺失或不匹配将被拒绝。",
   "channel.whatsapp.description": "通过 Meta Cloud API 将助手接入 WhatsApp，与用户进行 1 对 1 对话。",
   "channel.whatsapp.phoneNumberId": "Phone Number ID",
   "channel.whatsapp.phoneNumberIdHint": "Meta App 控制台 WhatsApp 选项卡中的数字 Phone Number ID。它同时作为机器人标识符，用于 Webhook URL。",

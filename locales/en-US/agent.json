@@ -152,7 +152,7 @@
   "channel.whatsapp.accessToken": "Access Token",
   "channel.whatsapp.accessTokenHint": "Long-lived System User access token with `whatsapp_business_messaging` and `whatsapp_business_management` scopes. Token will be encrypted and stored securely.",
   "channel.whatsapp.appSecret": "App Secret",
-  "channel.whatsapp.appSecretHint": "Meta App Secret. Optional but strongly recommended — when set, every webhook delivery is rejected unless its X-Hub-Signature-256 header matches.",
+  "channel.whatsapp.appSecretHint": "Meta App Secret. Required — used to verify the X-Hub-Signature-256 header on every inbound webhook. Webhooks with a missing or mismatched signature are rejected.",
   "channel.whatsapp.description": "Connect this assistant to WhatsApp via the Meta Cloud API for direct user chats.",
   "channel.whatsapp.phoneNumberId": "Phone Number ID",
   "channel.whatsapp.phoneNumberIdHint": "Numeric Phone Number ID from the WhatsApp tab in your Meta App dashboard. This is the bot identifier and is used in the webhook URL.",
