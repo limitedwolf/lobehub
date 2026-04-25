@@ -34,7 +34,7 @@ export const schema: FieldSchema[] = [
         key: 'appSecret',
         description: 'channel.whatsapp.appSecretHint',
         label: 'channel.whatsapp.appSecret',
-        required: false,
+        required: true,
         type: 'password',
       },
     ],
