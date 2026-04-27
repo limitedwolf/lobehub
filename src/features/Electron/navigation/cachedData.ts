@@ -9,6 +9,7 @@ import { usePageStore } from '@/store/page';
 import { listSelectors } from '@/store/page/slices/list/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionGroupSelectors } from '@/store/session/slices/sessionGroup/selectors';
+import { useTaskStore } from '@/store/task';
 
 /**
  * Get cached display data for a page reference
@@ -80,6 +81,16 @@ export const getCachedDataForReference = (reference: PageReference): CachedPageD
       if (!document) return undefined;
 
       return { title: document.title || '' };
+    }
+
+    case 'task': {
+      const taskId = 'taskId' in reference.params ? reference.params.taskId : undefined;
+      if (!taskId) return undefined;
+
+      const task = useTaskStore.getState().taskDetailMap[taskId];
+      if (!task?.name) return undefined;
+
+      return { title: task.name };
     }
 
     default: {

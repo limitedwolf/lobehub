@@ -10,6 +10,7 @@ import { usePageStore } from '@/store/page';
 import { listSelectors } from '@/store/page/slices/list/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionGroupSelectors } from '@/store/session/slices/sessionGroup/selectors';
+import { useTaskStore } from '@/store/task';
 import { type ChatTopic } from '@/types/topic';
 
 import { type PluginContext } from '../plugins/types';
@@ -39,6 +40,7 @@ export const usePluginContext = (): PluginContext => {
   const topicDataMap = useChatStore((s) => s.topicDataMap);
   const sessionGroups = useSessionStore((s) => s.sessionGroups);
   const documents = usePageStore((s) => s.documents);
+  const taskDetailMap = useTaskStore((s) => s.taskDetailMap);
 
   return useMemo<PluginContext>(
     () => ({
@@ -57,6 +59,8 @@ export const usePluginContext = (): PluginContext => {
         return sessionGroupSelectors.getGroupById(groupId)(state);
       },
 
+      getTask: (taskId: string) => useTaskStore.getState().taskDetailMap[taskId],
+
       getTopic: (topicId: string) => {
         // Search across ALL entries in topicDataMap, not just current session
         // This ensures we can find topics even after navigating away from the agent page
@@ -67,6 +71,6 @@ export const usePluginContext = (): PluginContext => {
       t: (key: string, options?: Record<string, unknown>) =>
         t(key as any, options as any) as string,
     }),
-    [agentMap, topicDataMap, sessionGroups, documents, t],
+    [agentMap, topicDataMap, sessionGroups, documents, taskDetailMap, t],
   );
 };

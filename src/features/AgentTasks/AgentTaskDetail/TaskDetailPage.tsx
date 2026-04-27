@@ -3,6 +3,7 @@ import { memo, useEffect } from 'react';
 
 import AutoSaveHint from '@/components/Editor/AutoSaveHint';
 import Loading from '@/components/Loading/BrandTextLoading';
+import PageTitle from '@/components/PageTitle';
 import NavHeader from '@/features/NavHeader';
 import ToggleRightPanelButton from '@/features/RightPanel/ToggleRightPanelButton';
 import WideScreenContainer from '@/features/WideScreenContainer';
@@ -34,6 +35,7 @@ const TaskDetailPage = memo<TaskDetailPageProps>(({ agentId, taskId }) => {
   const useFetchTaskDetail = useTaskStore((s) => s.useFetchTaskDetail);
   const isLoading = useTaskStore(taskDetailSelectors.isTaskDetailLoading);
   const saveStatus = useTaskStore(taskDetailSelectors.taskSaveStatus);
+  const taskName = useTaskStore(taskDetailSelectors.activeTaskName);
 
   useEffect(() => {
     setActiveTaskId(taskId);
@@ -57,6 +59,7 @@ const TaskDetailPage = memo<TaskDetailPageProps>(({ agentId, taskId }) => {
 
   return (
     <Flexbox flex={1} height={'100%'} style={{ minHeight: 0 }}>
+      <PageTitle title={taskName || ''} />
       <NavHeader
         right={<ToggleRightPanelButton hideWhenExpanded />}
         left={

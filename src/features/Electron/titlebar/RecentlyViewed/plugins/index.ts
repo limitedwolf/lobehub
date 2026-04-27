@@ -11,6 +11,8 @@ import { pagePlugin } from './pagePlugin';
 import { pluginRegistry } from './registry';
 import { resourcePlugin } from './resourcePlugin';
 import { settingsPlugin } from './settingsPlugin';
+import { taskPlugin } from './taskPlugin';
+import { tasksPlugin } from './tasksPlugin';
 
 export { pluginRegistry } from './registry';
 export * from './types';
@@ -29,5 +31,5 @@ export const loadAllRecentlyViewedPlugins = () => {
     pagePlugin,
     resourcePlugin,
   ]);
-  pluginRegistry.register([settingsPlugin]);
+  pluginRegistry.register([settingsPlugin, taskPlugin, tasksPlugin]);
 };

@@ -17,6 +17,8 @@ export type PageType =
   | 'resource'
   | 'memory'
   | 'image'
+  | 'task'
+  | 'tasks'
   | 'home';
 
 // ======== Page Params ======== //
@@ -69,6 +71,12 @@ export interface ImageParams {
   section?: string;
 }
 
+export interface TaskParams {
+  taskId: string;
+}
+
+export interface TasksParams {}
+
 export interface HomeParams {}
 
 /**
@@ -87,6 +95,8 @@ export interface PageParamsMap {
   'page': PageParams;
   'resource': ResourceParams;
   'settings': SettingsParams;
+  'task': TaskParams;
+  'tasks': TasksParams;
 }
 
 // ======== Cached Display Data ======== //

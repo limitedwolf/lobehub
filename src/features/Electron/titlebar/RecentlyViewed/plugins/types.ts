@@ -1,3 +1,4 @@
+import { type TaskDetailData } from '@lobechat/types';
 import { type LucideIcon } from 'lucide-react';
 
 import { type LobeDocument } from '@/types/document';
@@ -52,6 +53,10 @@ export interface PluginContext {
    * Get session/group by ID
    */
   getSessionGroup: (groupId: string) => SessionGroupItem | undefined;
+  /**
+   * Get task detail by ID
+   */
+  getTask: (taskId: string) => TaskDetailData | undefined;
   /**
    * Get topic by ID from current context
    */
