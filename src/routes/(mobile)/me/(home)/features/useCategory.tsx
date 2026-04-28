@@ -13,6 +13,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import useBusinessMeCells from '@/business/client/features/User/useBusinessMeCells';
 import { type CellProps } from '@/components/Cell';
 import { DOCUMENTS, FEEDBACK } from '@/const/index';
 import { usePlatform } from '@/hooks/usePlatform';
@@ -26,6 +27,7 @@ export const useCategory = (onOpenChangelogModal: () => void) => {
   const { showCloudPromotion, hideDocs } = useServerConfigStore(featureFlagsSelectors);
   const [isLoginWithAuth] = useUserStore((s) => [authSelectors.isLoginWithAuth(s)]);
   const { isIOS, isAndroid } = usePlatform();
+  const businessMeCells = useBusinessMeCells();
 
   const downloadUrl = useMemo(() => {
     if (isIOS) return DOWNLOAD_URL.ios;
@@ -66,7 +68,6 @@ export const useCategory = (onOpenChangelogModal: () => void) => {
     },
   ];
 
-  /* ↓ cloud slot ↓ */
   const helps: CellProps[] = [
     showCloudPromotion && {
       icon: Cloudy,
@@ -100,9 +101,7 @@ export const useCategory = (onOpenChangelogModal: () => void) => {
     },
     ...(isLoginWithAuth ? profile : []),
     ...(isLoginWithAuth ? settings : []),
-    /* ↓ cloud slot ↓ */
-
-    /* ↑ cloud slot ↑ */
+    ...(isLoginWithAuth ? businessMeCells : []),
     ...getDesktopApp,
     ...(!hideDocs ? helps : []),
   ].filter(Boolean) as CellProps[];

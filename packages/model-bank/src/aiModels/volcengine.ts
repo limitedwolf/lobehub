@@ -3,7 +3,7 @@ import {
   type AIImageModelCard,
   type AIVideoModelCard,
 } from '../types/aiModel';
-import { seedance15ProParams } from './lobehub/video';
+import { seedance15ProParams, seedance20Params } from './lobehub/video';
 
 // https://www.volcengine.com/docs/82379/1330310
 
@@ -14,6 +14,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-2-0-pro-260215',
@@ -66,6 +67,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     releasedAt: '2026-02-15',
     settings: {
       extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -75,6 +77,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-2-0-lite-260215',
@@ -127,6 +130,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     releasedAt: '2026-02-15',
     settings: {
       extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -136,6 +140,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-2-0-mini-260215',
@@ -187,6 +192,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     releasedAt: '2026-02-15',
     settings: {
       extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -196,6 +202,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-2-0-code-preview-260215',
@@ -247,6 +254,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     releasedAt: '2026-02-15',
     settings: {
       extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -256,6 +264,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-1-8-251228',
@@ -308,6 +317,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     releasedAt: '2025-12-18',
     settings: {
       extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -317,6 +327,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-code-preview-251028',
@@ -362,6 +373,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     },
     settings: {
       extendParams: ['enableReasoning'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -514,6 +526,30 @@ const doubaoChatModels: AIChatModelCard[] = [
   {
     abilities: {
       functionCall: true,
+      reasoning: true,
+    },
+    config: {
+      deploymentName: 'kimi-k2-thinking-251104',
+    },
+    contextWindowTokens: 262_144,
+    description:
+      'Kimi-K2 is a MoE architecture basic model launched by Moonshot AI with super strong code and agent capabilities. It has a total parameter of 1T and an activation parameter of 32B.In benchmark performance tests in major categories such as general knowledge reasoning, programming, mathematics, and agents, the performance of the K2 model exceeds that of other mainstream open source models.',
+    displayName: 'Kimi K2 Thinking',
+    id: 'kimi-k2-thinking',
+    maxOutput: 32_768,
+    pricing: {
+      currency: 'CNY',
+      units: [
+        { name: 'textInput_cacheRead', rate: 0.8, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 4, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 16, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
     },
     config: {
       deploymentName: 'kimi-k2-250905',
@@ -540,6 +576,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-1-6-vision-250815',
@@ -584,6 +621,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     },
     settings: {
       extendParams: ['enableReasoning'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -593,6 +631,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-1-6-thinking-250715',
@@ -635,6 +674,9 @@ const doubaoChatModels: AIChatModelCard[] = [
         { name: 'textInput_cacheRead', rate: 0.16, strategy: 'fixed', unit: 'millionTokens' },
       ],
     },
+    settings: {
+      searchImpl: 'params',
+    },
     type: 'chat',
   },
   {
@@ -643,6 +685,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-1-6-251015',
@@ -688,6 +731,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     },
     settings: {
       extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -697,6 +741,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-1-6-lite-251015',
@@ -742,6 +787,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     },
     settings: {
       extendParams: ['gpt5ReasoningEffort'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -751,6 +797,7 @@ const doubaoChatModels: AIChatModelCard[] = [
       reasoning: true,
       video: true,
       vision: true,
+      search: true,
     },
     config: {
       deploymentName: 'doubao-seed-1-6-flash-250828',
@@ -795,6 +842,7 @@ const doubaoChatModels: AIChatModelCard[] = [
     },
     settings: {
       extendParams: ['enableReasoning'],
+      searchImpl: 'params',
     },
     type: 'chat',
   },
@@ -1141,11 +1189,14 @@ const volcengineImageModels: AIImageModelCard[] = [
       prompt: {
         default: '',
       },
+      promptExtend: { default: 'off', enum: ['off', 'standard'] },
+      watermark: { default: false },
+      webSearch: { default: false },
       width: { default: 2048, max: 16_384, min: 480, step: 1 },
     },
     pricing: {
       currency: 'CNY',
-      units: [{ name: 'imageGeneration', rate: 0, strategy: 'fixed', unit: 'image' }],
+      units: [{ name: 'imageGeneration', rate: 0.22, strategy: 'fixed', unit: 'image' }],
     },
     releasedAt: '2026-01-28',
     type: 'image',
@@ -1162,6 +1213,8 @@ const volcengineImageModels: AIImageModelCard[] = [
       prompt: {
         default: '',
       },
+      promptExtend: { default: 'off', enum: ['off', 'standard'] },
+      watermark: { default: false },
       width: { default: 2048, max: 16_384, min: 480, step: 1 },
     },
     pricing: {
@@ -1172,12 +1225,6 @@ const volcengineImageModels: AIImageModelCard[] = [
     type: 'image',
   },
   {
-    /*
-    // TODO: AIImageModelCard does not support config.deploymentName
-    config: {
-      deploymentName: 'doubao-seedream-3-0-t2i-250415',
-    },
-    */
     description:
       'Seedream 4.0 is an image generation model from ByteDance Seed, supporting text and image inputs with highly controllable, high-quality image generation. It generates images from text prompts.',
     displayName: 'Seedream 4.0',
@@ -1189,6 +1236,8 @@ const volcengineImageModels: AIImageModelCard[] = [
       prompt: {
         default: '',
       },
+      promptExtend: { default: 'off', enum: ['off', 'standard', 'fast'] },
+      watermark: { default: false },
       width: { default: 2048, max: 16_384, min: 240, step: 1 },
     },
     pricing: {
@@ -1199,16 +1248,9 @@ const volcengineImageModels: AIImageModelCard[] = [
     type: 'image',
   },
   {
-    /*
-    // TODO: AIImageModelCard does not support config.deploymentName
-    config: {
-      deploymentName: 'doubao-seedream-3-0-t2i-250415',
-    },
-    */
     description:
       'Seedream 3.0 is an image generation model from ByteDance Seed, supporting text and image inputs with highly controllable, high-quality image generation. It generates images from text prompts.',
     displayName: 'Seedream 3.0 Text-to-Image',
-    enabled: true,
     id: 'doubao-seedream-3-0-t2i-250415',
     parameters: {
       cfg: { default: 2.5, max: 10, min: 1, step: 0.1 },
@@ -1217,6 +1259,7 @@ const volcengineImageModels: AIImageModelCard[] = [
         default: '',
       },
       seed: { default: null },
+      watermark: { default: false },
       width: { default: 1024, max: 3549, min: 296, step: 1 },
     },
     pricing: {
@@ -1226,15 +1269,10 @@ const volcengineImageModels: AIImageModelCard[] = [
     releasedAt: '2025-04-15',
     type: 'image',
   },
-  // Note: Doubao image-to-image and text-to-image models share the same Endpoint, currently switches to edit endpoint if imageUrl exists
   {
-    // config: {
-    //   deploymentName: 'doubao-seededit-3-0-i2i-250628',
-    // },
     description:
       'The Doubao image model from ByteDance Seed supports text and image inputs with highly controllable, high-quality image generation. It supports text-guided image editing, with output sizes between 512 and 1536 on the long side.',
     displayName: 'SeedEdit 3.0 Image-to-Image',
-    enabled: true,
     id: 'doubao-seededit-3-0-i2i-250628',
     parameters: {
       cfg: { default: 5.5, max: 10, min: 1, step: 0.1 },
@@ -1243,6 +1281,11 @@ const volcengineImageModels: AIImageModelCard[] = [
         default: '',
       },
       seed: { default: null },
+      watermark: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [{ name: 'imageGeneration', rate: 0.259, strategy: 'fixed', unit: 'image' }],
     },
     releasedAt: '2025-06-28',
     type: 'image',
@@ -1252,12 +1295,67 @@ const volcengineImageModels: AIImageModelCard[] = [
 const volcengineVideoModels: AIVideoModelCard[] = [
   {
     description:
+      'Seedance 2.0 by ByteDance is the most powerful video generation model, supporting multimodal reference video generation, video editing, video extension, text-to-video, and image-to-video with synchronized audio.',
+    displayName: 'Seedance 2.0',
+    enabled: true,
+    id: 'doubao-seedance-2-0-260128',
+    organization: 'ByteDance',
+    parameters: {
+      ...seedance20Params,
+      watermark: { default: false },
+      webSearch: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [{ name: 'videoGeneration', rate: 37, strategy: 'fixed', unit: 'millionTokens' }],
+    },
+    releasedAt: '2026-01-28',
+    type: 'video',
+  },
+  {
+    description:
+      'Seedance 2.0 Fast by ByteDance offers the same capabilities as Seedance 2.0 with faster generation speeds at a more competitive price.',
+    displayName: 'Seedance 2.0 Fast',
+    enabled: true,
+    id: 'doubao-seedance-2-0-fast-260128',
+    organization: 'ByteDance',
+    parameters: {
+      ...seedance20Params,
+      watermark: { default: false },
+      webSearch: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [{ name: 'videoGeneration', rate: 46, strategy: 'fixed', unit: 'millionTokens' }],
+    },
+    releasedAt: '2026-01-28',
+    type: 'video',
+  },
+  {
+    description:
       'Seedance 1.5 Pro by ByteDance supports text-to-video, image-to-video (first frame, first+last frame), and audio generation synchronized with visuals.',
     displayName: 'Seedance 1.5 Pro',
     enabled: true,
     id: 'doubao-seedance-1-5-pro-251215',
     organization: 'ByteDance',
-    parameters: seedance15ProParams,
+    parameters: {
+      ...seedance15ProParams,
+      watermark: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [
+        {
+          lookup: {
+            pricingParams: ['generateAudio'],
+            prices: { false: 8, true: 16 },
+          },
+          name: 'videoGeneration',
+          strategy: 'lookup',
+          unit: 'millionTokens',
+        },
+      ],
+    },
     releasedAt: '2025-12-15',
     type: 'video',
   },
@@ -1287,6 +1385,11 @@ const volcengineVideoModels: AIVideoModelCard[] = [
         enum: ['480p', '720p', '1080p'],
       },
       seed: { default: null },
+      watermark: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [{ name: 'videoGeneration', rate: 4.2, strategy: 'fixed', unit: 'millionTokens' }],
     },
     releasedAt: '2025-10-15',
     type: 'video',
@@ -1325,6 +1428,11 @@ const volcengineVideoModels: AIVideoModelCard[] = [
         enum: ['480p', '720p', '1080p'],
       },
       seed: { default: null },
+      watermark: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [{ name: 'videoGeneration', rate: 15, strategy: 'fixed', unit: 'millionTokens' }],
     },
     releasedAt: '2025-05-28',
     type: 'video',
@@ -1349,11 +1457,12 @@ const volcengineVideoModels: AIVideoModelCard[] = [
         requiresImageUrl: true,
         width: { max: 6000, min: 300 },
       },
-      imageUrl: {
+      imageUrls: {
         aspectRatio: { max: 2.5, min: 0.4 },
-        default: null,
+        default: [],
         height: { max: 6000, min: 300 },
         maxFileSize: 30 * 1024 * 1024,
+        maxCount: 4,
         width: { max: 6000, min: 300 },
       },
       duration: { default: 5, max: 12, min: 2 },
@@ -1363,6 +1472,11 @@ const volcengineVideoModels: AIVideoModelCard[] = [
         enum: ['480p', '720p', '1080p'],
       },
       seed: { default: null },
+      watermark: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [{ name: 'videoGeneration', rate: 10, strategy: 'fixed', unit: 'millionTokens' }],
     },
     releasedAt: '2025-04-28',
     type: 'video',
@@ -1386,6 +1500,11 @@ const volcengineVideoModels: AIVideoModelCard[] = [
         enum: ['480p', '720p', '1080p'],
       },
       seed: { default: null },
+      watermark: { default: false },
+    },
+    pricing: {
+      currency: 'CNY',
+      units: [{ name: 'videoGeneration', rate: 10, strategy: 'fixed', unit: 'millionTokens' }],
     },
     releasedAt: '2025-04-28',
     type: 'video',

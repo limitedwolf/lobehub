@@ -19,8 +19,16 @@ import type {
   TextToSpeechPayload,
 } from '../types';
 import { AgentRuntimeErrorType } from '../types/error';
-import type { AuthenticatedImageRuntime, CreateImagePayload } from '../types/image';
-import type { CreateVideoPayload, HandleCreateVideoWebhookPayload } from '../types/video';
+import type {
+  AuthenticatedImageRuntime,
+  CreateImageMethodOptions,
+  CreateImagePayload,
+} from '../types/image';
+import type {
+  CreateVideoMethodOptions,
+  CreateVideoPayload,
+  HandleCreateVideoWebhookPayload,
+} from '../types/video';
 import { AgentRuntimeError } from '../utils/createError';
 import type { LobeRuntimeAI } from './BaseAI';
 
@@ -126,9 +134,8 @@ export class ModelRuntime {
       });
     }
 
-    const finalOptions = await this.applyHooks(payload, options);
-
     try {
+      const finalOptions = await this.applyHooks(payload, options);
       return await this._runtime.chat(payload, finalOptions);
     } catch (error) {
       if (this._hooks?.onChatError) {
@@ -169,24 +176,24 @@ export class ModelRuntime {
   }
 
   async generateObject(payload: GenerateObjectPayload, options?: GenerateObjectOptions) {
-    await this._hooks?.beforeGenerateObject?.(payload, options);
-
-    const finalOptions = this._hooks?.onGenerateObjectFinal
-      ? {
-          ...options,
-          onUsage: async (usage: ModelUsage) => {
-            await options?.onUsage?.(usage);
-            try {
-              await this._hooks!.onGenerateObjectFinal!({ usage }, { options, payload });
-            } catch (e) {
-              // Hook failures (billing, tracing) must not interfere with response completion
-              console.error('[ModelRuntime] onGenerateObjectFinal hook error:', e);
-            }
-          },
-        }
-      : options;
-
     try {
+      await this._hooks?.beforeGenerateObject?.(payload, options);
+
+      const finalOptions = this._hooks?.onGenerateObjectFinal
+        ? {
+            ...options,
+            onUsage: async (usage: ModelUsage) => {
+              await options?.onUsage?.(usage);
+              try {
+                await this._hooks!.onGenerateObjectFinal!({ usage }, { options, payload });
+              } catch (e) {
+                // Hook failures (billing, tracing) must not interfere with response completion
+                console.error('[ModelRuntime] onGenerateObjectFinal hook error:', e);
+              }
+            },
+          }
+        : options;
+
       return await this._runtime.generateObject!(payload, finalOptions);
     } catch (error) {
       if (this._hooks?.onGenerateObjectError) {
@@ -199,16 +206,20 @@ export class ModelRuntime {
     }
   }
 
-  async createImage(payload: CreateImagePayload) {
-    return this._runtime.createImage?.(payload);
+  async createImage(payload: CreateImagePayload, options?: CreateImageMethodOptions) {
+    return this._runtime.createImage?.(payload, options);
   }
 
-  async createVideo(payload: CreateVideoPayload) {
-    return this._runtime.createVideo?.(payload);
+  async createVideo(payload: CreateVideoPayload, options?: CreateVideoMethodOptions) {
+    return this._runtime.createVideo?.(payload, options);
   }
 
   async handleCreateVideoWebhook(payload: HandleCreateVideoWebhookPayload) {
     return this._runtime.handleCreateVideoWebhook?.(payload);
+  }
+
+  async handlePollVideoStatus(inferenceId: string) {
+    return this._runtime.handlePollVideoStatus?.(inferenceId);
   }
 
   async models() {
@@ -216,26 +227,26 @@ export class ModelRuntime {
   }
 
   async embeddings(payload: EmbeddingsPayload, options?: EmbeddingsOptions) {
-    await this._hooks?.beforeEmbeddings?.(payload, options);
-
-    const startTime = Date.now();
-
-    const finalOptions = this._hooks?.onEmbeddingsFinal
-      ? {
-          ...options,
-          onUsage: async (usage: ModelUsage) => {
-            await options?.onUsage?.(usage);
-            try {
-              const latencyMs = Date.now() - startTime;
-              await this._hooks!.onEmbeddingsFinal!({ latencyMs, usage }, { options, payload });
-            } catch (e) {
-              console.error('[ModelRuntime] onEmbeddingsFinal hook error:', e);
-            }
-          },
-        }
-      : options;
-
     try {
+      await this._hooks?.beforeEmbeddings?.(payload, options);
+
+      const startTime = Date.now();
+
+      const finalOptions = this._hooks?.onEmbeddingsFinal
+        ? {
+            ...options,
+            onUsage: async (usage: ModelUsage) => {
+              await options?.onUsage?.(usage);
+              try {
+                const latencyMs = Date.now() - startTime;
+                await this._hooks!.onEmbeddingsFinal!({ latencyMs, usage }, { options, payload });
+              } catch (e) {
+                console.error('[ModelRuntime] onEmbeddingsFinal hook error:', e);
+              }
+            },
+          }
+        : options;
+
       return await this._runtime.embeddings?.(payload, finalOptions);
     } catch (error) {
       if (this._hooks?.onEmbeddingsError) {
@@ -285,7 +296,6 @@ export class ModelRuntime {
         LobeBedrockAIParams &
         LobeCloudflareParams & {
           apiKey?: string;
-          apiVersion?: string;
           baseURL?: string;
           userId?: string;
         }

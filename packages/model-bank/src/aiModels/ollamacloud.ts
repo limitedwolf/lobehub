@@ -5,6 +5,33 @@ const ollamaCloudModels: AIChatModelCard[] = [
     abilities: {
       functionCall: true,
       reasoning: true,
+      vision: true,
+    },
+    contextWindowTokens: 262_144,
+    description:
+      'Kimi K2.6 is an open-source, native multimodal agentic model that advances practical capabilities in long-horizon coding, coding-driven design, proactive autonomous execution, and swarm-based task orchestration.',
+    displayName: 'Kimi K2.6',
+    enabled: true,
+    id: 'kimi-k2.6',
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      reasoning: true,
+    },
+    contextWindowTokens: 200_000,
+    description:
+      'GLM-5.1 is our next-generation flagship model for agentic engineering, with significantly stronger coding capabilities than its predecessor. It achieves state-of-the-art performance on SWE-Bench Pro and leads GLM-5 by a wide margin.',
+    displayName: 'GLM-5.1',
+    enabled: true,
+    id: 'glm-5.1',
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      reasoning: true,
     },
     contextWindowTokens: 204_800,
     description:
@@ -71,7 +98,6 @@ const ollamaCloudModels: AIChatModelCard[] = [
     description:
       'A strong reasoning and agentic model from Z.ai with 744B total parameters (40B active), built for complex systems engineering and long-horizon tasks.',
     displayName: 'GLM-5',
-    enabled: true,
     id: 'glm-5',
     type: 'chat',
   },
@@ -85,7 +111,6 @@ const ollamaCloudModels: AIChatModelCard[] = [
     description:
       'Kimi K2.5 is an open-source, native multimodal agentic model that seamlessly integrates vision and language understanding with advanced agentic capabilities, instant and thinking modes, as well as conversational and agentic paradigms.',
     displayName: 'Kimi K2.5',
-    enabled: true,
     id: 'kimi-k2.5',
     type: 'chat',
   },
@@ -251,6 +276,58 @@ const ollamaCloudModels: AIChatModelCard[] = [
     contextWindowTokens: 262_144,
     displayName: 'Qwen3 VL 235B',
     id: 'qwen3-vl:235b',
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      vision: true,
+    },
+    contextWindowTokens: 262_144,
+    description:
+      'Ministral 3 3B is the smallest and most efficient model in the Ministral 3 series, offering strong language and vision capabilities in a compact package. Designed for edge deployment, it delivers high performance on various hardware including local setups.',
+    displayName: 'Ministral 3 3B',
+    id: 'ministral-3:3b',
+    releasedAt: '2025-12-02',
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      vision: true,
+    },
+    contextWindowTokens: 262_144,
+    description:
+      'Ministral 3 8B is a powerful and efficient model in the Ministral 3 series, delivering top-tier text and vision capabilities. Built for edge deployment, it delivers high performance on various hardware including local setups.',
+    displayName: 'Ministral 3 8B',
+    id: 'ministral-3:8b',
+    releasedAt: '2025-12-02',
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      vision: true,
+    },
+    contextWindowTokens: 262_144,
+    description:
+      'Ministral 3 14B is the largest model in the Ministral 3 series, delivering state-of-the-art performance comparable to the larger Mistral Small 3.2 24B counterpart. Optimized for local deployment, it delivers high performance on various hardware including local setups.',
+    displayName: 'Ministral 3 14B',
+    id: 'ministral-3:14b',
+    releasedAt: '2025-12-02',
+    type: 'chat',
+  },
+  {
+    abilities: {
+      functionCall: true,
+      vision: true,
+    },
+    contextWindowTokens: 262_144,
+    description:
+      'Mistral Large 3 is a state-of-the-art open-weight general-purpose multimodal model with a refined Mixture of Experts architecture. It has 41B active parameters and 675B total parameters.',
+    displayName: 'Mistral Large 3',
+    id: 'mistral-large-3:675b',
+    releasedAt: '2025-12-02',
     type: 'chat',
   },
 ];

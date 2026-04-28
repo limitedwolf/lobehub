@@ -1,10 +1,10 @@
-import {
-  type GenerateContentConfig,
-  type HttpOptions,
-  type ThinkingConfig,
-  type Tool as GoogleFunctionCallTool,
-} from '@google/genai';
 import { GoogleGenAI } from '@google/genai';
+import type {
+  GenerateContentConfig,
+  HttpOptions,
+  ThinkingConfig,
+  Tool as GoogleFunctionCallTool,
+} from '@google/genai';
 import debug from 'debug';
 
 import { type LobeRuntimeAI } from '../../core/BaseAI';
@@ -20,12 +20,14 @@ import {
 } from '../../types';
 import { AgentRuntimeErrorType } from '../../types/error';
 import { type CreateImagePayload, type CreateImageResponse } from '../../types/image';
+import { type CreateVideoPayload, type CreateVideoResponse } from '../../types/video';
 import { AgentRuntimeError } from '../../utils/createError';
 import { debugStream } from '../../utils/debugStream';
 import { getModelPricing } from '../../utils/getModelPricing';
 import { parseGoogleErrorMessage } from '../../utils/googleErrorParser';
 import { StreamingResponse } from '../../utils/response';
 import { createGoogleImage } from './createImage';
+import { createGoogleVideo, pollGoogleVideoOperation } from './createVideo';
 import { createGoogleGenerateObject, createGoogleGenerateObjectWithTools } from './generateObject';
 import { resolveGoogleThinkingConfig } from './thinkingResolver';
 
@@ -53,6 +55,19 @@ const isGemini3OrAbove = (model?: string): boolean => {
   const match = /gemini-(\d+)/.exec(model);
   if (!match) return false;
   return Number.parseInt(match[1], 10) >= 3;
+};
+
+const normalizeThinkingConfig = (config?: ThinkingConfig): ThinkingConfig | undefined => {
+  if (!config) return undefined;
+
+  const { includeThoughts, thinkingBudget, thinkingLevel } = config;
+
+  // Avoid sending `thinkingConfig: {}` (all fields undefined) which can lead upstream
+  // to treat thinking as disabled and produce no thought parts.
+  if (includeThoughts === undefined && thinkingBudget === undefined && thinkingLevel === undefined)
+    return undefined;
+
+  return config;
 };
 
 const modelsDisableInstuction = new Set([
@@ -215,7 +230,13 @@ export class LobeGoogleAI implements LobeRuntimeAI {
         thinkingConfig:
           modelsDisableInstuction.has(model) || model.toLowerCase().includes('learnlm')
             ? undefined
-            : thinkingConfig,
+            : normalizeThinkingConfig(thinkingConfig),
+        // https://ai.google.dev/gemini-api/docs/tool-combination
+        // Vertex AI does not support includeServerSideToolInvocations
+        toolConfig:
+          !this.isVertexAi && this.needsServerSideToolInvocations(payload)
+            ? { includeServerSideToolInvocations: true }
+            : undefined,
         tools: this.buildGoogleToolsWithSearch(payload.tools, payload),
         topP: payload.top_p,
       };
@@ -278,6 +299,14 @@ export class LobeGoogleAI implements LobeRuntimeAI {
    */
   async createImage(payload: CreateImagePayload): Promise<CreateImageResponse> {
     return createGoogleImage(this.client, this.provider, payload);
+  }
+
+  async createVideo(payload: CreateVideoPayload): Promise<CreateVideoResponse> {
+    return createGoogleVideo(this.client, this.provider, payload);
+  }
+
+  async handlePollVideoStatus(inferenceId: string) {
+    return pollGoogleVideoOperation(this.client, inferenceId, this.provider, this.apiKey!);
   }
 
   /**
@@ -461,6 +490,21 @@ export class LobeGoogleAI implements LobeRuntimeAI {
       messages: user_messages,
       system: system_message?.content,
     };
+  }
+
+  /**
+   * Returns true when Gemini 3+ tools array combines built-in tools (googleSearch / urlContext)
+   * with functionDeclarations — the API requires `toolConfig.includeServerSideToolInvocations`
+   * in that case.
+   * @see https://ai.google.dev/gemini-api/docs/tool-combination
+   */
+  private needsServerSideToolInvocations(payload?: ChatStreamPayload): boolean {
+    if (!isGemini3OrAbove(payload?.model)) return false;
+
+    const hasBuiltIn = payload?.enabledSearch || payload?.urlContext;
+    const hasFunctions = payload?.tools && payload.tools.length > 0;
+
+    return !!(hasBuiltIn && hasFunctions);
   }
 
   private buildGoogleToolsWithSearch(

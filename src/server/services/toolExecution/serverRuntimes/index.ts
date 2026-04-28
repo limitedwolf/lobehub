@@ -13,6 +13,8 @@ import { briefRuntime } from './brief';
 import { calculatorRuntime } from './calculator';
 import { cloudSandboxRuntime } from './cloudSandbox';
 import { credsRuntime } from './creds';
+import { cronRuntime } from './cron';
+import { gtdRuntime } from './gtd';
 import { localSystemRuntime } from './localSystem';
 import { memoryRuntime } from './memory';
 import { messageRuntime } from './message';
@@ -25,6 +27,7 @@ import { topicReferenceRuntime } from './topicReference';
 import { type ServerRuntimeFactory, type ServerRuntimeRegistration } from './types';
 import { userInteractionRuntime } from './userInteraction';
 import { webBrowsingRuntime } from './webBrowsing';
+import { webOnboardingRuntime } from './webOnboarding';
 
 /**
  * Registry of server runtime factories by identifier
@@ -59,6 +62,9 @@ registerRuntimes([
   topicReferenceRuntime,
   userInteractionRuntime,
   credsRuntime,
+  cronRuntime,
+  gtdRuntime,
+  webOnboardingRuntime,
 ]);
 
 // ==================== Registry API ====================

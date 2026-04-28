@@ -1,12 +1,10 @@
 {
-  "image_generation_completed": "Afbeelding \"{{prompt}}\" succesvol gegenereerd",
-  "image_generation_completed_title": "Afbeelding gegenereerd",
+  "billboard.learnMore": "Meer informatie",
+  "billboard.menuLabel": "Aankondigingen",
   "inbox.archiveAll": "Alles archiveren",
   "inbox.empty": "Nog geen meldingen",
   "inbox.emptyUnread": "Geen ongelezen meldingen",
   "inbox.filterUnread": "Alleen ongelezen tonen",
   "inbox.markAllRead": "Alles als gelezen markeren",
-  "inbox.title": "Meldingen",
-  "video_generation_completed": "Video \"{{prompt}}\" succesvol gegenereerd",
-  "video_generation_completed_title": "Video gegenereerd"
+  "inbox.title": "Meldingen"
 }

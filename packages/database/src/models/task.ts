@@ -1,12 +1,16 @@
 import type {
   CheckpointConfig,
+  NewTask,
+  TaskItem,
   WorkspaceData,
   WorkspaceDocNode,
   WorkspaceTreeNode,
 } from '@lobechat/types';
 import { and, desc, eq, inArray, isNotNull, isNull, ne, sql } from 'drizzle-orm';
 
-import type { NewTask, NewTaskComment, TaskCommentItem, TaskItem } from '../schemas/task';
+import { merge } from '@/utils/merge';
+
+import type { NewTaskComment, TaskCommentItem } from '../schemas/task';
 import { taskComments, taskDependencies, taskDocuments, tasks } from '../schemas/task';
 import type { LobeChatDatabase } from '../type';
 
@@ -138,18 +142,99 @@ export class TaskModel {
 
   // ========== Query ==========
 
+  async groupList(options: {
+    assigneeAgentId?: string;
+    groups: Array<{
+      key: string;
+      limit?: number;
+      offset?: number;
+      statuses: string[];
+    }>;
+    parentTaskId?: string | null;
+  }): Promise<
+    Array<{
+      hasMore: boolean;
+      key: string;
+      limit: number;
+      offset: number;
+      tasks: TaskItem[];
+      total: number;
+    }>
+  > {
+    const { groups, assigneeAgentId, parentTaskId } = options;
+
+    const baseConditions = [eq(tasks.createdByUserId, this.userId)];
+    if (assigneeAgentId) baseConditions.push(eq(tasks.assigneeAgentId, assigneeAgentId));
+    if (parentTaskId === null) {
+      baseConditions.push(isNull(tasks.parentTaskId));
+    } else if (parentTaskId) {
+      baseConditions.push(eq(tasks.parentTaskId, parentTaskId));
+    }
+
+    // Collect all statuses for a single aggregated count query
+    const allStatuses = Array.from(new Set(groups.flatMap((g) => g.statuses)));
+    const countResult = await this.db
+      .select({ count: sql<number>`count(*)`, status: tasks.status })
+      .from(tasks)
+      .where(and(...baseConditions, inArray(tasks.status, allStatuses)))
+      .groupBy(tasks.status);
+
+    const countByStatus: Record<string, number> = {};
+    for (const row of countResult) {
+      countByStatus[row.status] = Number(row.count);
+    }
+
+    // Query each group's tasks in parallel
+    const results = await Promise.all(
+      groups.map(async (group) => {
+        const limit = group.limit ?? 50;
+        const offset = group.offset ?? 0;
+
+        const groupTasks = await this.db
+          .select()
+          .from(tasks)
+          .where(and(...baseConditions, inArray(tasks.status, group.statuses)))
+          .orderBy(desc(tasks.createdAt))
+          .limit(limit)
+          .offset(offset);
+
+        const total = group.statuses.reduce((sum, s) => sum + (countByStatus[s] || 0), 0);
+
+        return {
+          hasMore: offset + groupTasks.length < total,
+          key: group.key,
+          limit,
+          offset,
+          tasks: groupTasks,
+          total,
+        };
+      }),
+    );
+
+    return results;
+  }
+
   async list(options?: {
     assigneeAgentId?: string;
     limit?: number;
     offset?: number;
     parentTaskId?: string | null;
-    status?: string;
+    priorities?: number[];
+    statuses?: string[];
   }): Promise<{ tasks: TaskItem[]; total: number }> {
-    const { status, parentTaskId, assigneeAgentId, limit = 50, offset = 0 } = options || {};
+    const {
+      statuses,
+      priorities,
+      parentTaskId,
+      assigneeAgentId,
+      limit = 50,
+      offset = 0,
+    } = options || {};
 
     const conditions = [eq(tasks.createdByUserId, this.userId)];
 
-    if (status) conditions.push(eq(tasks.status, status));
+    if (statuses?.length) conditions.push(inArray(tasks.status, statuses));
+    if (priorities?.length) conditions.push(inArray(tasks.priority, priorities));
     if (assigneeAgentId) conditions.push(eq(tasks.assigneeAgentId, assigneeAgentId));
 
     if (parentTaskId === null) {
@@ -197,6 +282,30 @@ export class TaskModel {
       .orderBy(tasks.sortOrder, tasks.seq);
   }
 
+  /**
+   * Fetch all descendants of a root task using Drizzle select() (returns camelCase fields).
+   * Uses breadth-first traversal with O(depth) queries.
+   */
+  async findAllDescendants(rootTaskId: string): Promise<TaskItem[]> {
+    const all: TaskItem[] = [];
+    let parentIds = [rootTaskId];
+
+    while (parentIds.length > 0) {
+      const children = await this.db
+        .select()
+        .from(tasks)
+        .where(and(inArray(tasks.parentTaskId, parentIds), eq(tasks.createdByUserId, this.userId)))
+        .orderBy(tasks.sortOrder, tasks.seq);
+
+      if (children.length === 0) break;
+
+      all.push(...children);
+      parentIds = children.map((c) => c.id);
+    }
+
+    return all;
+  }
+
   // Recursive query to get full task tree
   async getTaskTree(rootTaskId: string): Promise<TaskItem[]> {
     const result = await this.db.execute(sql`
@@ -209,7 +318,63 @@ export class TaskModel {
       SELECT * FROM task_tree
     `);
 
-    return result.rows as TaskItem[];
+    return result.rows as unknown as TaskItem[];
+  }
+
+  /**
+   * For a list of task IDs, find all agent IDs (assignee + creator) across their full task trees.
+   * Walks UP to find root, then DOWN to collect all agents.
+   * Returns { [inputTaskId]: agentId[] }
+   */
+  async getTreeAgentIdsForTaskIds(taskIds: string[]): Promise<Record<string, string[]>> {
+    if (taskIds.length === 0) return {};
+
+    const taskIdParams = taskIds.map((id) => sql`${id}`);
+    const taskIdList = sql.join(taskIdParams, sql`, `);
+
+    const result = await this.db.execute(sql`
+      WITH RECURSIVE
+      ancestors AS (
+        SELECT id AS origin_id, id, parent_task_id
+        FROM tasks
+        WHERE id IN (${taskIdList})
+          AND created_by_user_id = ${this.userId}
+        UNION ALL
+        SELECT a.origin_id, t.id, t.parent_task_id
+        FROM tasks t
+        JOIN ancestors a ON t.id = a.parent_task_id
+        WHERE t.created_by_user_id = ${this.userId}
+      ),
+      roots AS (
+        SELECT DISTINCT ON (origin_id) origin_id, id AS root_id
+        FROM ancestors
+        WHERE parent_task_id IS NULL
+      ),
+      descendants AS (
+        SELECT r.origin_id, t.id, t.assignee_agent_id, t.created_by_agent_id
+        FROM tasks t
+        JOIN roots r ON t.id = r.root_id
+        WHERE t.created_by_user_id = ${this.userId}
+        UNION ALL
+        SELECT d.origin_id, t.id, t.assignee_agent_id, t.created_by_agent_id
+        FROM tasks t
+        JOIN descendants d ON t.parent_task_id = d.id
+        WHERE t.created_by_user_id = ${this.userId}
+      )
+      SELECT origin_id, assignee_agent_id, created_by_agent_id
+      FROM descendants
+      WHERE assignee_agent_id IS NOT NULL OR created_by_agent_id IS NOT NULL
+    `);
+
+    const map: Record<string, Set<string>> = {};
+    for (const row of result.rows as any[]) {
+      const originId = row.origin_id as string;
+      if (!map[originId]) map[originId] = new Set();
+      if (row.assignee_agent_id) map[originId].add(row.assignee_agent_id as string);
+      if (row.created_by_agent_id) map[originId].add(row.created_by_agent_id as string);
+    }
+
+    return Object.fromEntries(Object.entries(map).map(([k, v]) => [k, Array.from(v)]));
   }
 
   // ========== Status ==========
@@ -232,6 +397,37 @@ export class TaskModel {
     return result.length;
   }
 
+  // ========== Config ==========
+
+  /**
+   * Safely merge-update the task's config object.
+   * Reads the current config, shallow-merges the incoming partial, and writes back.
+   */
+  async updateTaskConfig(id: string, partial: Record<string, unknown>): Promise<TaskItem | null> {
+    const task = await this.findById(id);
+    if (!task) return null;
+
+    const current = (task.config as Record<string, unknown>) || {};
+    const config = merge(current, partial);
+    return this.update(id, { config });
+  }
+
+  // ========== Context (runtime state) ==========
+
+  /**
+   * Deep-merge into the task's context JSONB. Used by the heartbeat scheduler
+   * to update `context.scheduler.{tickMessageId, consecutiveFailures, ...}`
+   * without disturbing other namespaces under context.
+   */
+  async updateContext(id: string, partial: Record<string, unknown>): Promise<TaskItem | null> {
+    const task = await this.findById(id);
+    if (!task) return null;
+
+    const current = (task.context as Record<string, unknown>) || {};
+    const context = merge(current, partial);
+    return this.update(id, { context });
+  }
+
   // ========== Checkpoint ==========
 
   getCheckpointConfig(task: TaskItem): CheckpointConfig {
@@ -239,11 +435,7 @@ export class TaskModel {
   }
 
   async updateCheckpointConfig(id: string, checkpoint: CheckpointConfig): Promise<TaskItem | null> {
-    const task = await this.findById(id);
-    if (!task) return null;
-
-    const config = { ...(task.config as Record<string, any>), checkpoint };
-    return this.update(id, { config });
+    return this.updateTaskConfig(id, { checkpoint });
   }
 
   // ========== Review Config ==========
@@ -253,11 +445,7 @@ export class TaskModel {
   }
 
   async updateReviewConfig(id: string, review: Record<string, any>): Promise<TaskItem | null> {
-    const task = await this.findById(id);
-    if (!task) return null;
-
-    const config = { ...(task.config as Record<string, any>), review };
-    return this.update(id, { config });
+    return this.updateTaskConfig(id, { review });
   }
 
   // Check if a task should pause after a topic completes
@@ -519,5 +707,14 @@ export class TaskModel {
 
       .returning();
     return result.length > 0;
+  }
+
+  async updateComment(id: string, content: string): Promise<TaskCommentItem | undefined> {
+    const [comment] = await this.db
+      .update(taskComments)
+      .set({ content, updatedAt: new Date() })
+      .where(and(eq(taskComments.id, id), eq(taskComments.userId, this.userId)))
+      .returning();
+    return comment;
   }
 }

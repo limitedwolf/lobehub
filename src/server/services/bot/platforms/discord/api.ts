@@ -1,6 +1,7 @@
 import { REST } from '@discordjs/rest';
 import debug from 'debug';
 import {
+  ApplicationCommandOptionType,
   ApplicationCommandType,
   ChannelType,
   type RESTGetAPIChannelMessageReactionUsersResult,
@@ -79,7 +80,7 @@ export class DiscordApi {
     return (await this.rest.get(Routes.channelMessages(channelId), {
       query: new URLSearchParams(
         Object.entries(query ?? {})
-          .filter(([, v]) => v !== undefined)
+          .filter(([, v]) => v !== undefined && v !== '')
           .map(([k, v]) => [k, String(v)]),
       ),
     })) as RESTGetAPIChannelMessagesResult;
@@ -225,13 +226,30 @@ export class DiscordApi {
 
   async registerCommands(
     applicationId: string,
-    commands: Array<{ command: string; description: string }>,
+    commands: Array<{
+      command: string;
+      description: string;
+      options?: Array<{ description: string; name: string; required?: boolean }>;
+    }>,
   ): Promise<void> {
     log('registerCommands: appId=%s, %d commands', applicationId, commands.length);
     await this.rest.put(Routes.applicationCommands(applicationId), {
       body: commands.map((c) => ({
         description: c.description,
         name: c.command,
+        // Map our generic option schema to Discord's option type. We only
+        // surface string options today (Crockford-Base32 pairing codes);
+        // extend the mapping when a new command needs ints/booleans/etc.
+        ...(c.options && c.options.length > 0
+          ? {
+              options: c.options.map((opt) => ({
+                description: opt.description,
+                name: opt.name,
+                required: opt.required ?? false,
+                type: ApplicationCommandOptionType.String,
+              })),
+            }
+          : {}),
         type: ApplicationCommandType.ChatInput,
       })),
     });

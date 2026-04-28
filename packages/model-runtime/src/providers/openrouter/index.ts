@@ -14,7 +14,16 @@ export const params = {
   baseURL: 'https://openrouter.ai/api/v1',
   chatCompletion: {
     handlePayload: (payload) => {
-      const { reasoning_effort, thinking, reasoning: _reasoning, thinkingLevel, ...rest } = payload;
+      const {
+        reasoning_effort,
+        thinking,
+        reasoning: _reasoning,
+        thinkingLevel,
+        imageAspectRatio,
+        imageResolution,
+        model,
+        ...rest
+      } = payload;
 
       let reasoning: OpenRouterReasoning | undefined;
 
@@ -37,8 +46,35 @@ export const params = {
         }
       }
 
+      // Add modalities and image_config for image generation models
+      const isImageModel = model.includes('-image') || model.includes('flux');
+      const modalities =
+        (payload as any).modalities ?? (isImageModel ? ['image', 'text'] : undefined);
+
+      // Map imageResolution to image_size: '512px' → '0.5K', others pass through
+      const imageSizeValue = imageResolution
+        ? imageResolution === '512px'
+          ? '0.5K'
+          : imageResolution
+        : undefined;
+
+      // 'auto' means use model default — omit the parameter
+      const aspectRatioValue =
+        imageAspectRatio && imageAspectRatio !== 'auto' ? imageAspectRatio : undefined;
+
+      const image_config =
+        (payload as any).image_config ??
+        (isImageModel && (aspectRatioValue || imageSizeValue)
+          ? {
+              ...(aspectRatioValue && { aspect_ratio: aspectRatioValue }),
+              ...(imageSizeValue && { image_size: imageSizeValue }),
+            }
+          : undefined);
+
       return {
         ...rest,
+        ...(image_config && { image_config }),
+        ...(modalities && { modalities }),
         model: payload.enabledSearch ? `${payload.model}:online` : payload.model,
         ...(reasoning && { reasoning }),
         stream: payload.stream ?? true,
@@ -130,7 +166,12 @@ export const params = {
           if (model.description && model.description.includes('`reasoning` `enabled`')) {
             extendParams.push('enableReasoning');
           }
-          if (hasReasoning && (model.id.includes('gpt-5.2') || model.id.includes('gpt-5.4'))) {
+          if (
+            hasReasoning &&
+            (model.id.includes('gpt-5.2') ||
+              model.id.includes('gpt-5.4') ||
+              model.id.includes('gpt-5.5'))
+          ) {
             extendParams.push('gpt5_2ReasoningEffort', 'textVerbosity');
           } else if (hasReasoning && model.id.includes('gpt-5.1')) {
             extendParams.push('gpt5_1ReasoningEffort', 'textVerbosity');
