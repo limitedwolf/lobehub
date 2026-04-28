@@ -26,6 +26,7 @@ import { apiKeyRouter } from './apiKey';
 import { botMessageRouter } from './botMessage';
 import { briefRouter } from './brief';
 import { chunkRouter } from './chunk';
+import { cloudClaudeCodeRouter } from './cloudClaudeCode';
 import { comfyuiRouter } from './comfyui';
 import { configRouter } from './config';
 import { deviceRouter } from './device';
@@ -67,6 +68,7 @@ export const lambdaRouter = router({
   agent: agentRouter,
   agentBotProvider: agentBotProviderRouter,
   agentNotify: agentNotifyRouter,
+  cloudClaudeCode: cloudClaudeCodeRouter,
   botMessage: botMessageRouter,
   agentCronJob: agentCronJobRouter,
   agentDocument: agentDocumentRouter,

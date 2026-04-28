@@ -1,0 +1,1 @@
+export { CloudCCMessagePersistence } from './messagePersistence';
