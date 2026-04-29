@@ -164,6 +164,7 @@ export const cloudClaudeCodeRouter = router({
       `LOBEHUB_JWT=${jwt}`,
       `LOBEHUB_SERVER=${serverUrl}`,
       'LOBEHUB_CLOUD_CC_DEBUG=1',
+      'GITHUB_TOKEN=${GITHUB_TOKEN:-$GITHUB_ACCESS_TOKEN}',
       oauthToken ? `CLAUDE_CODE_OAUTH_TOKEN=${oauthToken}` : '',
     ]
       .filter(Boolean)
@@ -187,7 +188,7 @@ export const cloudClaudeCodeRouter = router({
     console.log('[CloudCC Server] injecting CLAUDE_CODE_OAUTH_TOKEN to sandbox...');
     try {
       const result = await marketService.market.creds.inject({
-        keys: ['CLAUDE_CODE_OAUTH_TOKEN'],
+        keys: ['CLAUDE_CODE_OAUTH_TOKEN', 'GITHUB', 'GITHUB_TOKEN'],
         sandbox: true,
         topicId,
         userId: ctx.userId,

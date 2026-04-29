@@ -1,5 +1,8 @@
 import { isDesktop } from '@lobechat/const';
-import { HETEROGENEOUS_AGENT_CLIENT_CONFIGS } from '@lobechat/heterogeneous-agents/client';
+import {
+  getHeterogeneousAgentClientConfig,
+  HETEROGENEOUS_AGENT_CLIENT_CONFIGS,
+} from '@lobechat/heterogeneous-agents/client';
 import { Icon } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { App } from 'antd';
@@ -12,6 +15,7 @@ import useSWRMutation from 'swr/mutation';
 
 import { useGroupTemplates } from '@/components/ChatGroupWizard/templates';
 import { DEFAULT_CHAT_GROUP_CHAT_CONFIG } from '@/const/settings';
+import { prepareCloudClaudeCodeSetup } from '@/features/CloudClaudeCode/SetupModal';
 import { useOptionalAgentModal } from '@/routes/(main)/home/_layout/Body/Agent/ModalProvider';
 import type { CreateAgentParams } from '@/services/agent';
 import type { GroupMemberConfig } from '@/services/chatGroup';
@@ -288,6 +292,10 @@ export const useCreateMenuItems = () => {
         label: t('newCloudClaudeCode'),
         onClick: async (info) => {
           info.domEvent?.stopPropagation();
+          const isReady = await prepareCloudClaudeCodeSetup();
+          if (!isReady) return;
+
+          const claudeCodeConfig = getHeterogeneousAgentClientConfig('claude-code');
           const result = await storeCreateAgent({
             config: {
               agencyConfig: {
@@ -295,7 +303,7 @@ export const useCreateMenuItems = () => {
                   type: 'cloud-claude-code',
                 },
               },
-              avatar: '🤖',
+              avatar: claudeCodeConfig?.avatar || '🤖',
               systemRole: '',
               title: 'Cloud Claude Code',
             },

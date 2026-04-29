@@ -317,6 +317,31 @@ export default {
   'codexInstallGuide.title': 'Install Codex CLI',
   'newAgent': 'Create Agent',
   'newClaudeCodeAgent': 'Add Claude Code',
+  'cloudClaudeCodeSetup.actions.cancel': 'Cancel',
+  'cloudClaudeCodeSetup.actions.confirm': 'Continue',
+  'cloudClaudeCodeSetup.desc':
+    'Before creating the agent, complete the Claude Code token and GitHub authorization setup.',
+  'cloudClaudeCodeSetup.errors.githubRequired': 'Connect GitHub before continuing.',
+  'cloudClaudeCodeSetup.errors.refresh': 'Failed to refresh the current authorization status.',
+  'cloudClaudeCodeSetup.errors.submit': 'Failed to save the Cloud Claude Code prerequisites.',
+  'cloudClaudeCodeSetup.errors.tokenRequired': 'Paste your CLAUDE_CODE_OAUTH_TOKEN first.',
+  'cloudClaudeCodeSetup.github.authorized':
+    'GitHub authorization is already available. We will create the injectable credential automatically when you continue.',
+  'cloudClaudeCodeSetup.github.connected': 'Detected an available GitHub credential.',
+  'cloudClaudeCodeSetup.github.desc':
+    'Claude Code will use your GitHub identity to access repositories and write code for you.',
+  'cloudClaudeCodeSetup.github.footer':
+    'After GitHub authorization succeeds, continue creating the agent.',
+  'cloudClaudeCodeSetup.github.title': 'GitHub Authorization',
+  'cloudClaudeCodeSetup.title': 'Enable Cloud Claude Code',
+  'cloudClaudeCodeSetup.token.commandPrefix': 'Run this inside your Claude Code session',
+  'cloudClaudeCodeSetup.token.connected':
+    'Detected an existing CLAUDE_CODE_OAUTH_TOKEN and will reuse it.',
+  'cloudClaudeCodeSetup.token.desc': 'This token lets Cloud Claude Code run on your behalf.',
+  'cloudClaudeCodeSetup.token.hint':
+    'If you do not have the token yet, get the long-lived credential from your own Claude Code first.',
+  'cloudClaudeCodeSetup.token.placeholder': 'Paste CLAUDE_CODE_OAUTH_TOKEN',
+  'cloudClaudeCodeSetup.token.title': 'Claude Code Token',
   'newCloudClaudeCode': 'Add Cloud Claude Code',
   'newCodexAgent': 'Add Codex',
   'newGroupChat': 'Create Group',
