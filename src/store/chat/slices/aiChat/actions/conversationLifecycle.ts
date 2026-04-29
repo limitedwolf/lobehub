@@ -518,7 +518,6 @@ export class ConversationLifecycleActionImpl {
         .mutate({
           agentId,
           assistantMessageId: cloudData.assistantMessageId,
-          oauthToken: heterogeneousProvider.env?.CLAUDE_CODE_OAUTH_TOKEN,
           prompt: message,
           topicId,
         })

@@ -34,8 +34,6 @@ const StartSchema = z.object({
   agentId: z.string(),
   /** Existing assistant message ID to reuse for the first ingested step */
   assistantMessageId: z.string().optional(),
-  /** Claude Code OAuth token (for CC auth) */
-  oauthToken: z.string().optional(),
   /** User prompt */
   prompt: z.string(),
   /** Resume session ID for multi-turn */
@@ -135,7 +133,7 @@ export const cloudClaudeCodeRouter = router({
    * Generates JWT, builds wrapper command, and invokes sandbox runCommand.
    */
   start: cloudCCProcedure.input(StartSchema).mutation(async ({ input, ctx }) => {
-    const { topicId, agentId, assistantMessageId, prompt, resumeSessionId, oauthToken } = input;
+    const { topicId, agentId, assistantMessageId, prompt, resumeSessionId } = input;
 
     console.log(
       '[CloudCC Server] start: topicId=%s, agentId=%s, prompt=%s',
@@ -147,7 +145,7 @@ export const cloudClaudeCodeRouter = router({
     // 1. Generate short-lived JWT for sandbox → server callback
     const jwt = await signUserJWT(ctx.userId, '2h');
     // FIXME: hardcoded tunnel URL for local testing — revert before merge
-    const serverUrl = 'https://purpose-jade-bridges-concepts.trycloudflare.com';
+    const serverUrl = 'https://sonic-fridge-detected-interested.trycloudflare.com';
     console.log('[CloudCC Server] serverUrl:', serverUrl);
 
     // 2. Build the inline wrapper command
@@ -165,7 +163,6 @@ export const cloudClaudeCodeRouter = router({
       `LOBEHUB_SERVER=${serverUrl}`,
       'LOBEHUB_CLOUD_CC_DEBUG=1',
       'GITHUB_TOKEN=${GITHUB_TOKEN:-$GITHUB_ACCESS_TOKEN}',
-      oauthToken ? `CLAUDE_CODE_OAUTH_TOKEN=${oauthToken}` : '',
     ]
       .filter(Boolean)
       .join(' ');
@@ -184,11 +181,12 @@ export const cloudClaudeCodeRouter = router({
       userId: ctx.userId,
     });
 
-    // 4a. Inject CLAUDE_CODE_OAUTH_TOKEN into sandbox env via lobe-creds
+    // 4a. Inject Claude Code auth first. Mixing GitHub creds into the same
+    // inject call can interfere with Claude CLI login state in the sandbox.
     console.log('[CloudCC Server] injecting CLAUDE_CODE_OAUTH_TOKEN to sandbox...');
     try {
       const result = await marketService.market.creds.inject({
-        keys: ['CLAUDE_CODE_OAUTH_TOKEN', 'GITHUB', 'GITHUB_TOKEN'],
+        keys: ['CLAUDE_CODE_OAUTH_TOKEN'],
         sandbox: true,
         topicId,
         userId: ctx.userId,
@@ -196,6 +194,21 @@ export const cloudClaudeCodeRouter = router({
       console.log('[CloudCC Server] creds injected OK, notFound:', result.notFound);
     } catch (e) {
       console.error('[CloudCC Server] creds injection failed (CC may not be authenticated):', e);
+    }
+
+    // 4b. Inject GitHub creds separately so a missing/extra GitHub key does
+    // not affect Claude Code's own auth bootstrap.
+    console.log('[CloudCC Server] injecting GitHub creds to sandbox...');
+    try {
+      const result = await marketService.market.creds.inject({
+        keys: ['GITHUB', 'GITHUB_TOKEN'],
+        sandbox: true,
+        topicId,
+        userId: ctx.userId,
+      });
+      console.log('[CloudCC Server] GitHub creds injected OK, notFound:', result.notFound);
+    } catch (e) {
+      console.error('[CloudCC Server] GitHub creds injection failed:', e);
     }
 
     console.log('[CloudCC Server] calling sandbox runCommand, command length:', fullCommand.length);
