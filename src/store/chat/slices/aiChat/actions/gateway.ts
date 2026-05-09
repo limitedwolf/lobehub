@@ -292,11 +292,12 @@ export class GatewayActionImpl {
     const isCreateNewTopic = !context.topicId;
     const taskId = context.viewedTask?.type === 'detail' ? context.viewedTask.taskId : undefined;
 
-    // If this is a new topic, consume any repos the user pre-selected before
-    // sending the first message. They're written into the topic metadata at
-    // creation time server-side so there's no race condition with the store.
+    // If this is a new topic, read any repos the user pre-selected before
+    // sending the first message. We read without consuming yet — if execAgentTask
+    // fails or is aborted, the selection is preserved so a retry can still pick
+    // it up. We clear only after the server confirms the topic was created.
     const pendingRepos =
-      isCreateNewTopic && context.agentId ? consumePendingTopicRepos(context.agentId) : [];
+      isCreateNewTopic && context.agentId ? getPendingTopicRepos(context.agentId) : [];
     const initialTopicMetadata =
       pendingRepos.length > 0
         ? { repos: pendingRepos, workingDirectory: pendingRepos[0] }
@@ -349,6 +350,8 @@ export class GatewayActionImpl {
     // If server created a new topic, fetch messages first then switch topic
     // (same pattern as client mode: replaceMessages before switchTopic to avoid skeleton flash)
     if (isCreateNewTopic && result.topicId) {
+      // Topic created successfully — now safe to clear the pending repo selection.
+      if (context.agentId) consumePendingTopicRepos(context.agentId);
       try {
         const newContext = { ...context, topicId: result.topicId };
         const messages = await messageService.getMessages(newContext);
