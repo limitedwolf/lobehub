@@ -10,6 +10,7 @@ import { isDesktop } from '@/const/version';
 import { aiAgentService, type ResumeApprovalParam } from '@/services/aiAgent';
 import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
+import { consumePendingTopicRepos } from '@/store/chat/pendingTopicRepos';
 import type { ChatStore } from '@/store/chat/store';
 import type { StoreSetter } from '@/store/types';
 import { useUserStore } from '@/store/user';
@@ -291,6 +292,16 @@ export class GatewayActionImpl {
     const isCreateNewTopic = !context.topicId;
     const taskId = context.viewedTask?.type === 'detail' ? context.viewedTask.taskId : undefined;
 
+    // If this is a new topic, consume any repos the user pre-selected before
+    // sending the first message. They're written into the topic metadata at
+    // creation time server-side so there's no race condition with the store.
+    const pendingRepos =
+      isCreateNewTopic && context.agentId ? consumePendingTopicRepos(context.agentId) : [];
+    const initialTopicMetadata =
+      pendingRepos.length > 0
+        ? { repos: pendingRepos, workingDirectory: pendingRepos[0] }
+        : undefined;
+
     // Honour user-initiated cancel during phase-1 init: while we await the
     // execAgentTask round-trip the caller's loading state (e.g. `sendMessage`)
     // is still running, so the ChatInput stop button is active. Forward the
@@ -309,6 +320,7 @@ export class GatewayActionImpl {
           defaultTaskAssigneeAgentId: context.defaultTaskAssigneeAgentId,
           documentId: context.documentId,
           groupId: context.groupId,
+          ...(initialTopicMetadata && { initialTopicMetadata }),
           scope: context.scope,
           taskId,
           threadId: context.threadId,
@@ -349,6 +361,14 @@ export class GatewayActionImpl {
         clearNewKey: true,
         skipRefreshMessage: true,
       });
+
+      // Refresh the topic list so the new topic appears in topicDataMap (sidebar).
+      // Unlike the direct-API sendMessage path (which receives topics[] in the
+      // response and calls internal_updateTopics), the gateway path only gets a
+      // topicId — we must explicitly refetch so the sidebar shows the new topic.
+      this.#get()
+        .refreshTopic()
+        .catch((err) => console.error('[Gateway] refreshTopic after topic creation failed:', err));
 
       if (abortSignal?.aborted) {
         aiAgentService
