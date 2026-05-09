@@ -9,13 +9,13 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { Center, Empty, Flexbox } from '@lobehub/ui';
+import { Flexbox } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
-import { ClipboardCheckIcon } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useTaskTemplateRecommendationsUI } from '@/features/RecommendTaskTemplates/useTaskTemplateRecommendationsUI';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 import { useTaskStore } from '@/store/task';
@@ -26,6 +26,7 @@ import { createTaskModal } from '../CreateTaskModal';
 import AgentTaskItem from '../features/AgentTaskItem';
 import HiddenColumnsPanel from './HiddenColumnsPanel';
 import KanbanColumn, { COLUMN_I18N_KEYS, COLUMN_STATUS_ICON, COLUMN_WIDTH } from './KanbanColumn';
+import { RecommendedTaskTemplatesEmptyState } from './RecommendedTaskTemplatesEmptyState';
 
 const styles = createStaticStyles(({ css }) => ({
   board: css`
@@ -182,6 +183,11 @@ const KanbanBoard = memo(() => {
     [hiddenColumnSet, t, taskGroups],
   );
 
+  const totalTasks = useMemo(() => taskGroups.reduce((sum, g) => sum + g.total, 0), [taskGroups]);
+  const recommendationState = useTaskTemplateRecommendationsUI({
+    enabled: isInit && totalTasks === 0,
+  });
+
   if (!isInit) {
     return (
       <Flexbox horizontal className={styles.board}>
@@ -199,14 +205,8 @@ const KanbanBoard = memo(() => {
     );
   }
 
-  const totalTasks = taskGroups.reduce((sum, g) => sum + g.total, 0);
-
   if (totalTasks === 0) {
-    return (
-      <Center height={'80vh'} width={'100%'}>
-        <Empty description={t('taskList.empty')} icon={ClipboardCheckIcon} />
-      </Center>
-    );
+    return <RecommendedTaskTemplatesEmptyState recommendationState={recommendationState} />;
   }
 
   return (

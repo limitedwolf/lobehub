@@ -1,10 +1,11 @@
-import { Accordion, AccordionItem, Block, Center, Empty, Flexbox, Icon, Text } from '@lobehub/ui';
+import { Accordion, AccordionItem, Block, Flexbox, Icon, Text } from '@lobehub/ui';
 import { Divider } from 'antd';
 import { cssVar } from 'antd-style';
-import { ClipboardCheckIcon, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
 import { Fragment, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useTaskTemplateRecommendationsUI } from '@/features/RecommendTaskTemplates/useTaskTemplateRecommendationsUI';
 import { useTaskStore } from '@/store/task';
 import { taskListSelectors } from '@/store/task/selectors';
 
@@ -24,6 +25,7 @@ import {
   HIDDEN_WHEN_COMPLETED_STATUSES,
   sortGroupEntries,
 } from './listViewOptions';
+import { RecommendedTaskTemplatesEmptyState } from './RecommendedTaskTemplatesEmptyState';
 import TaskItemSkeleton from './TaskItemSkeleton';
 
 interface TaskListProps {
@@ -122,6 +124,9 @@ const TaskList = memo<TaskListProps>(({ onShowHiddenCompleted, options }) => {
   const { t } = useTranslation('chat');
   const tasks = useTaskStore(taskListSelectors.taskList);
   const isInit = useTaskStore(taskListSelectors.isTaskListInit);
+  const recommendationState = useTaskTemplateRecommendationsUI({
+    enabled: isInit && tasks.length === 0,
+  });
   const groupBy = normalizeGroupBy(options.groupBy, 'status');
   const subGroupBy = normalizeGroupBy(options.subGroupBy, 'none');
   const effectiveSubGroupBy = groupBy === 'none' ? 'none' : subGroupBy;
@@ -207,11 +212,7 @@ const TaskList = memo<TaskListProps>(({ onShowHiddenCompleted, options }) => {
   }
 
   if (tasks.length === 0) {
-    return (
-      <Center height={'80vh'} width={'100%'}>
-        <Empty description={t('taskList.empty')} icon={ClipboardCheckIcon} />
-      </Center>
-    );
+    return <RecommendedTaskTemplatesEmptyState recommendationState={recommendationState} />;
   }
 
   const hiddenFooter = hiddenCount > 0 && (
