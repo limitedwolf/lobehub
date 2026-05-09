@@ -467,6 +467,14 @@ export class GatewayActionImpl {
       window.global_serverConfigStore?.getState()?.serverConfig?.agentGatewayUrl;
     if (!agentGatewayUrl) return;
 
+    // Skip reconnect if the gateway action already established (or is establishing)
+    // a fresh connection for this operation. This prevents a race on new-topic creation
+    // where switchTopic loads runningOperation → useGatewayReconnect fires → overwrites
+    // the connectToGateway call made by executeGatewayAgent with resumeOnConnect: true,
+    // causing the gateway to treat a brand-new session as a resume → stuck / no events.
+    const existingStatus = this.#get().gatewayConnections[operationId]?.status;
+    if (existingStatus === 'connecting' || existingStatus === 'connected') return;
+
     // Get a fresh JWT token (original expired after 5 min)
     const { token } = await aiAgentService.refreshGatewayToken(topicId);
 
