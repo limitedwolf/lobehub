@@ -18,7 +18,7 @@ export function buildCloudHeteroContext(params: {
   agentSystemContext?: string;
   /** GitHub OAuth token injected as GITHUB_TOKEN env var in the sandbox. */
   githubToken?: string;
-}): string | undefined {
+}): string {
   const { repos, agentSystemContext, githubToken } = params;
 
   const parts: string[] = [];
@@ -75,7 +75,7 @@ export function buildCloudHeteroContext(params: {
 
   parts.push(workspaceLines.join('\n'));
 
-  return parts.length > 0 ? parts.join('\n\n') : undefined;
+  return parts.join('\n\n');
 }
 
 // ---------------------------------------------------------------------------

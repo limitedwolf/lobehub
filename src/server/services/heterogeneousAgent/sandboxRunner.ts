@@ -31,9 +31,11 @@ export interface SandboxRunParams {
 /**
  * Derive the local directory name from a repo identifier.
  * Accepts "owner/repo", "https://github.com/owner/repo", or "https://github.com/owner/repo.git".
+ * Only allows safe characters to prevent shell injection.
  */
 function repoToLocalDir(repo: string): string {
-  return (repo.split('/').findLast(Boolean) ?? repo).replace(/\.git$/, '');
+  const raw = (repo.split('/').findLast(Boolean) ?? repo).replace(/\.git$/, '');
+  return raw.replaceAll(/[^\w.-]/g, '');
 }
 
 /**
@@ -48,13 +50,14 @@ function buildRepoSetupScript(repos: string[], githubToken?: string): string | n
     const dir = repoToLocalDir(repo);
     // Normalise to "owner/repo" for the clone URL
     const repoPath = repo.startsWith('http') ? (repo.split('github.com/')[1] ?? repo) : repo;
-    const cloneUrl = githubToken
-      ? `https://oauth2:${githubToken}@github.com/${repoPath}`
-      : `https://github.com/${repoPath}`;
+    // Use git's insteadOf rewrite (passed via -c, not stored in .git/config) so the token
+    // never ends up in the cloned repo's remote URL.
+    const cloneCmd = githubToken
+      ? `git -c "url.https://oauth2:${githubToken}@github.com/.insteadOf=https://github.com/" clone -q https://github.com/${repoPath} '${dir}'`
+      : `git clone -q 'https://github.com/${repoPath}' '${dir}'`;
 
-    // Single-quote the URL to avoid shell word-splitting; dir is always a safe slug.
     // `|| true` makes clone failures non-fatal — CC still runs even if a repo can't be cloned.
-    return `{ [ -d '${dir}' ] || git clone -q '${cloneUrl}' '${dir}'; } || true`;
+    return `{ [ -d '${dir}' ] || ${cloneCmd}; } || true`;
   });
 
   return lines.join(' && \\\n');

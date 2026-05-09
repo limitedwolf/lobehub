@@ -50,14 +50,6 @@ const styles = createStaticStyles(({ css }) => ({
     color: #fff;
     background: ${cssVar.colorPrimary};
   `,
-  emptyHint: css`
-    padding-block: 12px;
-    padding-inline: 8px;
-
-    font-size: 12px;
-    color: ${cssVar.colorTextQuaternary};
-    text-align: center;
-  `,
   repoItem: css`
     cursor: pointer;
 
@@ -181,34 +173,30 @@ const CloudRepoSwitcher = memo<CloudRepoSwitcherProps>(({ agentId }) => {
     <Flexbox gap={4} style={{ minWidth: 280 }}>
       <div className={styles.sectionTitle}>{t('heteroAgent.cloudRepo.sectionTitle')}</div>
       <div className={styles.scrollContainer}>
-        {availableRepos.length === 0 ? (
-          <div className={styles.emptyHint}>{t('heteroAgent.cloudRepo.noRepos')}</div>
-        ) : (
-          availableRepos.map((repo) => {
-            const isChecked = displayRepos.includes(repo);
-            return (
-              <Flexbox
-                horizontal
-                align="center"
-                className={styles.repoItem}
-                gap={8}
-                key={repo}
-                onClick={() => toggleRepo(repo)}
+        {availableRepos.map((repo) => {
+          const isChecked = displayRepos.includes(repo);
+          return (
+            <Flexbox
+              horizontal
+              align="center"
+              className={styles.repoItem}
+              gap={8}
+              key={repo}
+              onClick={() => toggleRepo(repo)}
+            >
+              <div
+                className={`${styles.checkIndicator} ${isChecked ? styles.checkIndicatorChecked : ''}`}
               >
-                <div
-                  className={`${styles.checkIndicator} ${isChecked ? styles.checkIndicatorChecked : ''}`}
-                >
-                  {isChecked && <Icon icon={CheckIcon} size={12} />}
-                </div>
-                <Github size={16} style={{ color: cssVar.colorTextTertiary, flex: 'none' }} />
-                <Flexbox flex={1} style={{ minWidth: 0 }}>
-                  <div className={styles.repoName}>{getRepoName(repo)}</div>
-                  <div className={styles.repoUrl}>{repo}</div>
-                </Flexbox>
+                {isChecked && <Icon icon={CheckIcon} size={12} />}
+              </div>
+              <Github size={16} style={{ color: cssVar.colorTextTertiary, flex: 'none' }} />
+              <Flexbox flex={1} style={{ minWidth: 0 }}>
+                <div className={styles.repoName}>{getRepoName(repo)}</div>
+                <div className={styles.repoUrl}>{repo}</div>
               </Flexbox>
-            );
-          })
-        )}
+            </Flexbox>
+          );
+        })}
       </div>
     </Flexbox>
   );
