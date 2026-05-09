@@ -214,7 +214,6 @@
   "schedule.daily": "Every day at {{time}}",
   "schedule.editableAfterCreateTooltip": "You can adjust the schedule after creating the task.",
   "schedule.weekly": "Every {{weekday}} at {{time}}",
-  "section.emptyTitle": "No tasks yet. Try these tasks",
   "section.title": "Try these tasks",
   "seo-weekly-report.description": "Every Monday, ranking movement, emerging keywords, and pages worth refreshing.",
   "seo-weekly-report.prompt": "Every Monday at 09:00, give me a lightweight SEO weekly: top ranking movers (up/down), 5 emerging keywords worth targeting, and 3 existing pages ripe for a content refresh.",

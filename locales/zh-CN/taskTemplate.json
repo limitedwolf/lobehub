@@ -214,7 +214,6 @@
   "schedule.daily": "每天 {{time}}",
   "schedule.editableAfterCreateTooltip": "创建后可调整",
   "schedule.weekly": "每{{weekday}} {{time}}",
-  "section.emptyTitle": "暂无任务，试试这些任务",
   "section.title": "试试这些任务",
   "seo-weekly-report.description": "每周一一份轻量 SEO 报告：排名变化、新关键词机会、值得翻新的页面",
   "seo-weekly-report.prompt": "每周一早上 9:00 给我一份轻量 SEO 周报：排名升 / 降 TOP 变动、5 个值得关注的新关键词、3 个适合内容翻新的老页面。",

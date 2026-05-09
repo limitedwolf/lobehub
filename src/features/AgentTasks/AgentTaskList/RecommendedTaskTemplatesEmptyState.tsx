@@ -1,5 +1,4 @@
-import { Block, Empty, Flexbox, Icon, Text } from '@lobehub/ui';
-import { cssVar } from 'antd-style';
+import { Empty, Flexbox, Text } from '@lobehub/ui';
 import { ClipboardCheckIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,26 +25,17 @@ export const RecommendedTaskTemplatesEmptyState = memo<RecommendedTaskTemplatesE
 
     return (
       <Flexbox
-        align={'center'}
-        gap={16}
-        paddingBlock={24}
+        gap={12}
+        paddingBlock={20}
         style={{ marginInline: 'auto', maxWidth: 720, width: '100%' }}
       >
-        <Flexbox horizontal align={'center'} gap={12} style={{ width: '100%' }}>
-          <Block
-            align={'center'}
-            height={40}
-            justify={'center'}
-            style={{ background: cssVar.colorFillSecondary, flexShrink: 0 }}
-            width={40}
-          >
-            <Icon color={cssVar.colorTextSecondary} icon={ClipboardCheckIcon} size={22} />
-          </Block>
-          <Flexbox gap={2} style={{ minWidth: 0 }}>
-            <Text ellipsis fontSize={18} weight={600}>
-              {tTaskTemplate('section.emptyTitle')}
-            </Text>
-          </Flexbox>
+        <Flexbox gap={2} style={{ width: '100%' }}>
+          <Text fontSize={13} type={'secondary'}>
+            {t('taskList.empty')}
+          </Text>
+          <Text fontSize={16} weight={600}>
+            {tTaskTemplate('section.title')}
+          </Text>
         </Flexbox>
         <TaskTemplateRecommendationsView state={recommendationState} />
       </Flexbox>
