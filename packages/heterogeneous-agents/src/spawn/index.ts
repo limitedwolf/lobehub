@@ -12,6 +12,7 @@
  * `@lobechat/agent-gateway-client` (which is a browser-side WebSocket client
  * that producers have no business pulling in).
  */
+export { AgentSdkEventPipeline, type AgentSdkEventPipelineOptions } from './agentSdkPipeline';
 export { AgentStreamPipeline, type AgentStreamPipelineOptions } from './agentStreamPipeline';
 export { CodexFileChangeTracker } from './codexFileChangeTracker';
 export {

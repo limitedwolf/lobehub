@@ -134,11 +134,20 @@ interface AgentSession {
   agentType: string;
   args: string[];
   /**
+   * Cancel handle for the in-flight stream. Spawn-based agents (Codex) leave
+   * this unset and rely on `process` + `killProcessTree`; SDK-driven agents
+   * (Claude Code) set this to the `AbortController.abort` of the active
+   * `query()` so cancelSession / stopSession can settle the iterator without
+   * touching the underlying subprocess directly.
+   */
+  cancel?: () => void;
+  /**
    * True when *we* initiated the kill (cancelSession / stopSession / before-quit).
    * The `exit` handler uses this to route signal-induced non-zero exits through
    * the `complete` broadcast instead of surfacing them as runtime errors —
    * SIGINT(130) / SIGTERM(143) / SIGKILL(137) from our own kill paths are
-   * intentional, not agent failures.
+   * intentional, not agent failures. SDK-path equivalent: an `AbortError`
+   * thrown by the iterator is treated as a clean shutdown.
    */
   cancelledByUs?: boolean;
   command: string;

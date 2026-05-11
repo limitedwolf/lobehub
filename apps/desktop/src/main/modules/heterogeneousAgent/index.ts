@@ -1,9 +1,9 @@
-import { claudeCodeDriver } from './drivers/claudeCode';
+import { claudeCodeSdkDriver } from './drivers/claudeCodeSdk';
 import { codexDriver } from './drivers/codex';
 import type { HeterogeneousAgentDriver } from './types';
 
 const heterogeneousAgentDrivers: Record<string, HeterogeneousAgentDriver> = {
-  'claude-code': claudeCodeDriver,
+  'claude-code': claudeCodeSdkDriver,
   'codex': codexDriver,
 };
 
