@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { useImperativeHandle } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,7 +19,7 @@ const handleSpies = {
 // ─── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@/features/ExplorerTree', () => {
-  const MockExplorerTree = ({ ref, ...props }) => {
+  const MockExplorerTree = ({ ref, ...props }: { ref?: Ref<unknown>; [key: string]: unknown }) => {
     useImperativeHandle(ref, () => ({
       focus: handleSpies.focus,
       getSelectedIds: vi.fn(() => []),
