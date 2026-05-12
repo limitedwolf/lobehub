@@ -3,15 +3,18 @@ import type {
   StepCompleteData,
   StreamChunkData,
   StreamStartData,
+  ToolEndData,
   ToolExecuteData,
+  ToolStartData,
 } from '@lobechat/agent-gateway-client';
-import type { ChatMessageError, ConversationContext } from '@lobechat/types';
+import type { BuiltinToolResult, ChatMessageError, ConversationContext } from '@lobechat/types';
 import { AgentRuntimeErrorType } from '@lobechat/types';
 
 import { messageService } from '@/services/message';
 import { emitClientAgentSignalSourceEvent } from '@/store/chat/slices/aiChat/actions/agentSignalBridge';
 import type { ChatStore } from '@/store/chat/store';
 import { notifyDesktopHumanApprovalRequired } from '@/store/chat/utils/desktopNotification';
+import { getExecutor } from '@/store/tool/slices/builtin/executors';
 
 /**
  * Fetch messages from DB and replace them in the chat store's dbMessagesMap.
@@ -22,6 +25,82 @@ const fetchAndReplaceMessages = async (get: () => ChatStore, context: Conversati
   const messages = await messageService.getMessages(context);
   get().replaceMessages(messages, { context });
   return messages;
+};
+
+interface ChatToolPayloadLike {
+  apiName?: unknown;
+  arguments?: unknown;
+  id?: unknown;
+  identifier?: unknown;
+}
+
+interface ToolPayloadIdentity {
+  apiName: string;
+  identifier: string;
+  params: unknown;
+  toolCallId?: string;
+}
+
+/**
+ * Extract `{ identifier, apiName, params, toolCallId }` from a stream event's
+ * tool payload. Returns `undefined` when the payload is malformed so the
+ * caller can skip dispatch without throwing.
+ */
+const readToolPayload = (
+  payload: ChatToolPayloadLike | undefined,
+): ToolPayloadIdentity | undefined => {
+  const identifier = typeof payload?.identifier === 'string' ? payload.identifier : undefined;
+  const apiName = typeof payload?.apiName === 'string' ? payload.apiName : undefined;
+  if (!identifier || !apiName) return undefined;
+
+  let params: unknown = payload?.arguments;
+  if (typeof params === 'string') {
+    try {
+      params = JSON.parse(params);
+    } catch {
+      params = {};
+    }
+  } else if (params == null) {
+    params = {};
+  }
+
+  const toolCallId = typeof payload?.id === 'string' ? payload.id : undefined;
+  return { apiName, identifier, params, toolCallId };
+};
+
+/**
+ * Route a `tool_start` event to the executor's optional `onBeforeCall` hook so
+ * tool packages can react before their own mutations dispatch (e.g.
+ * optimistic UI). Fires for both client- and server-runtime tools.
+ */
+const dispatchOnBeforeCall = async (data: ToolStartData | undefined): Promise<void> => {
+  const payload = data?.toolCalling as ChatToolPayloadLike | undefined;
+  const identity = readToolPayload(payload);
+  if (!identity) return;
+
+  const executor = getExecutor(identity.identifier);
+  if (!executor?.onBeforeCall) return;
+
+  await executor.onBeforeCall(identity);
+};
+
+/**
+ * Route a `tool_end` event to the executor's optional `onAfterCall` hook so
+ * tool packages can react to their own mutations (e.g. invalidate store
+ * caches) regardless of whether the tool ran client- or server-side.
+ */
+const dispatchOnAfterCall = async (data: ToolEndData | undefined): Promise<void> => {
+  const payload = data?.payload as ChatToolPayloadLike | undefined;
+  const identity = readToolPayload(payload);
+  if (!identity) return;
+
+  const executor = getExecutor(identity.identifier);
+  if (!executor?.onAfterCall) return;
+
+  await executor.onAfterCall({
+    ...identity,
+    result: (data?.result ?? {}) as BuiltinToolResult,
+  });
 };
 
 type GatewayMessageLike = { id: string; role?: string };
@@ -249,6 +328,10 @@ export const createGatewayEventHandler = (
       case 'tool_start': {
         // Server creates tool messages in DB.
         // Loading is already active from stream_start (not cleared by stream_end).
+        const data = event.data as ToolStartData | undefined;
+        enqueue(async () => {
+          await dispatchOnBeforeCall(data).catch(console.error);
+        });
         break;
       }
 
@@ -286,8 +369,12 @@ export const createGatewayEventHandler = (
       }
 
       case 'tool_end': {
+        const data = event.data as ToolEndData | undefined;
         enqueue(async () => {
-          await fetchAndReplaceMessages(get, context).catch(console.error);
+          await Promise.all([
+            fetchAndReplaceMessages(get, context).catch(console.error),
+            dispatchOnAfterCall(data).catch(console.error),
+          ]);
         });
         break;
       }

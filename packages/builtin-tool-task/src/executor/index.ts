@@ -13,6 +13,7 @@ import type {
   BuiltinToolResult,
   TaskAutomationMode,
   TaskStatus,
+  ToolAfterCallContext,
 } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 import debug from 'debug';
@@ -34,9 +35,61 @@ import { TaskApiName } from '../types';
 
 const log = debug('lobe-task:executor');
 
+// APIs whose execution mutates state that's surfaced in the renderer's task
+// list or detail caches. Used by `onAfterCall` to decide what to revalidate.
+const LIST_MUTATING_APIS = new Set<string>([
+  TaskApiName.createTask,
+  TaskApiName.createTasks,
+  TaskApiName.deleteTask,
+  TaskApiName.editTask,
+  TaskApiName.runTask,
+  TaskApiName.runTasks,
+  TaskApiName.setTaskSchedule,
+  TaskApiName.updateTaskStatus,
+]);
+
+const DETAIL_MUTATING_APIS = new Set<string>([
+  TaskApiName.addTaskComment,
+  TaskApiName.deleteTaskComment,
+  TaskApiName.editTask,
+  TaskApiName.runTask,
+  TaskApiName.setTaskSchedule,
+  TaskApiName.updateTaskComment,
+  TaskApiName.updateTaskStatus,
+  TaskApiName.viewTask,
+]);
+
+const extractIdentifier = (params: unknown, result: BuiltinToolResult): string | undefined => {
+  const fromState = (result.state as { identifier?: unknown } | undefined)?.identifier;
+  if (typeof fromState === 'string' && fromState.length > 0) return fromState;
+  const fromParams = (params as { identifier?: unknown } | null | undefined)?.identifier;
+  if (typeof fromParams === 'string' && fromParams.length > 0) return fromParams;
+  return undefined;
+};
+
 class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
   readonly identifier = TaskIdentifier;
   protected readonly apiEnum = TaskApiName;
+
+  onAfterCall = async ({ apiName, params, result }: ToolAfterCallContext): Promise<void> => {
+    if (!result.success) return;
+
+    const store = getTaskStoreState();
+    const identifier = extractIdentifier(params, result);
+
+    const refreshes: Promise<unknown>[] = [];
+    if (LIST_MUTATING_APIS.has(apiName)) {
+      refreshes.push(store.refreshTaskList());
+    }
+    if (identifier && DETAIL_MUTATING_APIS.has(apiName)) {
+      refreshes.push(store.internal_refreshTaskDetail(identifier));
+    }
+
+    if (refreshes.length === 0) return;
+    await Promise.all(refreshes).catch((error) => {
+      log('[TaskExecutor] onAfterCall - refresh failed:', error);
+    });
+  };
 
   addTaskComment = async (
     params: AddTaskCommentParams,
