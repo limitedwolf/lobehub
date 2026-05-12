@@ -59,7 +59,7 @@ export const APP_REGISTRY: Record<OpenInAppId, AppDescriptor> = {
     detect: {
       darwin: { paths: ['/Applications/WebStorm.app'], type: 'appBundle' },
       linux: { binary: 'webstorm', type: 'commandV' },
-      win32: { binary: 'webstorm', type: 'commandV' },
+      win32: { exeName: 'webstorm64.exe', type: 'registryAppPaths' },
     },
     displayName: 'WebStorm',
     launch: {

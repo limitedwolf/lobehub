@@ -158,7 +158,10 @@ const Files = memo<FilesProps>(({ workingDirectory }) => {
 
     const nodeIds = new Set(nodes.map((n) => n.id));
     if (!nodeIds.has(path)) {
-      void message.warning(t('workingPanel.review.revealNotFound'));
+      // Data may still be loading — retry silently instead of showing a warning.
+      if (!isLoading) {
+        void message.warning(t('workingPanel.review.revealNotFound'));
+      }
       return;
     }
 
@@ -167,9 +170,10 @@ const Files = memo<FilesProps>(({ workingDirectory }) => {
     treeRef.current?.setExpanded(nextExpanded);
     treeRef.current?.select(path);
     treeRef.current?.focus(path);
-    // Keyed on nonce so the same path can be re-revealed by bumping it.
+    // Re-run when nonce changes (user re-triggers) or when nodes/isLoading
+    // update (data arrives after initial reveal attempt).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revealRequest?.nonce]);
+  }, [revealRequest?.nonce, nodes, isLoading]);
 
   const openLocalFile = useChatStore((s) => s.openLocalFile);
 
