@@ -106,7 +106,7 @@ const AgentWorkingSidebar = memo(() => {
           className={styles.header}
           height={44}
           justify={'space-between'}
-          paddingInline={16}
+          paddingInline={4}
         >
           {reviewAvailable || filesAvailable ? (
             <div className={styles.tabs}>
