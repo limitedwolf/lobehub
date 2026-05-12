@@ -79,4 +79,6 @@ export interface ExplorerTreeProps<TData = unknown> {
   overscan?: number;
   selectedIds?: string[];
   style?: CSSProperties;
+  /** Raw CSS injected into the pierre/trees shadow DOM via FILE_TREE_UNSAFE_CSS_ATTRIBUTE. */
+  unsafeCSS?: string;
 }

@@ -13,6 +13,7 @@ import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
 import { useGlobalStore } from '@/store/global';
 
+import Files from './Files';
 import ProgressSection from './ProgressSection';
 import ResourcesSection from './ResourcesSection';
 import Review from './Review';
@@ -66,7 +67,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
 }));
 
-type Tab = 'review' | 'resources';
+type Tab = 'review' | 'resources' | 'files';
 
 const AgentWorkingSidebar = memo(() => {
   const { t } = useTranslation('chat');
@@ -81,10 +82,20 @@ const AgentWorkingSidebar = memo(() => {
   const workingDirectory = topicWorkingDirectory || agentWorkingDirectory;
   const repoType = useRepoType(workingDirectory);
 
+  const filesAvailable = !!workingDirectory;
   const reviewAvailable = !!workingDirectory && !!repoType;
-  // Topic metadata is preferred for resuming a coding session, but Review is
-  // project-scoped and should also work before a topic has bound metadata.
-  const activeTab: Tab = reviewAvailable ? (storedTab ?? 'review') : 'resources';
+  // Topic metadata is preferred for resuming a coding session, but Review and
+  // Files are project-scoped and should also work before a topic has bound
+  // metadata. Fall back to a still-visible tab when the stored choice is gone.
+  const resolveActiveTab = (): Tab => {
+    if (storedTab === 'review' && reviewAvailable) return 'review';
+    if (storedTab === 'files' && filesAvailable) return 'files';
+    if (storedTab === 'resources') return 'resources';
+    if (reviewAvailable) return 'review';
+    if (filesAvailable) return 'files';
+    return 'resources';
+  };
+  const activeTab: Tab = resolveActiveTab();
 
   return (
     <RightPanel stableLayout defaultWidth={360} maxWidth={720} minWidth={300}>
@@ -97,7 +108,7 @@ const AgentWorkingSidebar = memo(() => {
           justify={'space-between'}
           paddingInline={4}
         >
-          {reviewAvailable ? (
+          {reviewAvailable || filesAvailable ? (
             <div className={styles.tabs}>
               <button
                 className={`${styles.tab} ${activeTab === 'resources' ? styles.tabActive : ''}`}
@@ -106,13 +117,24 @@ const AgentWorkingSidebar = memo(() => {
               >
                 {t('workingPanel.space')}
               </button>
-              <button
-                className={`${styles.tab} ${activeTab === 'review' ? styles.tabActive : ''}`}
-                type="button"
-                onClick={() => setWorkingSidebarTab('review')}
-              >
-                {t('workingPanel.review.title')}
-              </button>
+              {reviewAvailable && (
+                <button
+                  className={`${styles.tab} ${activeTab === 'review' ? styles.tabActive : ''}`}
+                  type="button"
+                  onClick={() => setWorkingSidebarTab('review')}
+                >
+                  {t('workingPanel.review.title')}
+                </button>
+              )}
+              {filesAvailable && (
+                <button
+                  className={`${styles.tab} ${activeTab === 'files' ? styles.tabActive : ''}`}
+                  type="button"
+                  onClick={() => setWorkingSidebarTab('files')}
+                >
+                  {t('workingPanel.files.title')}
+                </button>
+              )}
             </div>
           ) : (
             <Text strong>{t('workingPanel.space')}</Text>
@@ -127,6 +149,11 @@ const AgentWorkingSidebar = memo(() => {
           {reviewAvailable && (
             <Flexbox className={activeTab === 'review' ? styles.pane : styles.paneHidden}>
               <Review workingDirectory={workingDirectory} />
+            </Flexbox>
+          )}
+          {filesAvailable && (
+            <Flexbox className={activeTab === 'files' ? styles.pane : styles.paneHidden}>
+              <Files workingDirectory={workingDirectory} />
             </Flexbox>
           )}
           <Flexbox

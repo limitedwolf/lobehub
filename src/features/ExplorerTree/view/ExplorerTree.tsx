@@ -214,6 +214,7 @@ function ExplorerTreeInner<TData>(
         if (!node) return null;
         return (fn({ node }) as FileTreeRowDecoration | null) ?? null;
       },
+      unsafeCSS: props.unsafeCSS,
     };
     // we build options ONCE; callbacks read propsRef to stay fresh
     // eslint-disable-next-line react-hooks/exhaustive-deps

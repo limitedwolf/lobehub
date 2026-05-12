@@ -30,6 +30,12 @@ vi.mock('./Review', () => ({
   ),
 }));
 
+vi.mock('./Files', () => ({
+  default: ({ workingDirectory }: { workingDirectory: string }) => (
+    <div data-testid="files-panel">{workingDirectory}</div>
+  ),
+}));
+
 vi.mock('@/features/ChatInput/RuntimeConfig/useRepoType', () => ({
   useRepoType: (path?: string) => (path ? mocks.repoType : undefined),
 }));
