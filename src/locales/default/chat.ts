@@ -946,6 +946,8 @@ export default {
   'workingPanel.review.collapseAll': 'Collapse all',
   'workingPanel.review.copied': 'Path copied',
   'workingPanel.review.copyPath': 'Copy file path',
+  'workingPanel.review.revealInTree': 'Reveal in tree',
+  'workingPanel.review.revealNotFound': 'File not found in project index',
   'workingPanel.review.empty': 'No working tree changes',
   'workingPanel.review.empty.branch': 'No changes vs {{baseRef}}',
   'workingPanel.review.empty.noBaseRef':

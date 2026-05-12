@@ -4,13 +4,14 @@ import type { GitFileDiffStatus } from '@lobechat/electron-client-ipc';
 import { ActionIcon, copyToClipboard, PatchDiff } from '@lobehub/ui';
 import { Popconfirm } from 'antd';
 import { createStaticStyles } from 'antd-style';
-import { CopyIcon, Undo2Icon } from 'lucide-react';
+import { CopyIcon, LocateFixedIcon, Undo2Icon } from 'lucide-react';
 import path from 'path-browserify-esm';
 import { memo, type MouseEvent, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { message } from '@/components/AntdStaticMethods';
 import { electronGitService } from '@/services/electron/git';
+import { useGlobalStore } from '@/store/global';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   additions: css`
@@ -113,10 +114,19 @@ interface FileItemHeaderProps {
 export const FileItemHeader = memo<FileItemHeaderProps>(
   ({ filePath, additions, deletions, revertContext, onReverted }) => {
     const { t } = useTranslation('chat');
+    const revealInFilesTab = useGlobalStore((s) => s.revealInFilesTab);
 
     const lastSlash = filePath.lastIndexOf('/');
     const dir = lastSlash >= 0 ? filePath.slice(0, lastSlash + 1) : '';
     const fileName = lastSlash >= 0 ? filePath.slice(lastSlash + 1) : filePath;
+
+    const handleReveal = useCallback(
+      (event: MouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        revealInFilesTab(filePath);
+      },
+      [filePath, revealInFilesTab],
+    );
 
     const handleCopy = useCallback(
       async (event: MouseEvent<HTMLDivElement>) => {
@@ -206,6 +216,14 @@ export const FileItemHeader = memo<FileItemHeaderProps>(
             </span>
           </Popconfirm>
         )}
+        <ActionIcon
+          className={styles.rowAction}
+          data-testid="reveal-in-tree"
+          icon={LocateFixedIcon}
+          size={'small'}
+          title={t('workingPanel.review.revealInTree')}
+          onClick={handleReveal}
+        />
         <ActionIcon
           className={styles.rowAction}
           icon={CopyIcon}

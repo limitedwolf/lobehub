@@ -128,6 +128,14 @@ export class GlobalWorkspacePaneActionImpl {
     this.#get().updateSystemStatus({ workingSidebarTab: tab }, n('setWorkingSidebarTab', tab));
   };
 
+  revealInFilesTab = (relativePath: string): void => {
+    this.#get().setWorkingSidebarTab('files');
+    this.#get().updateSystemStatus(
+      { workingSidebarRevealRequest: { nonce: Date.now(), path: relativePath } },
+      n('revealInFilesTab'),
+    );
+  };
+
   toggleWideScreen = (newValue?: boolean): void => {
     const noWideScreen =
       typeof newValue === 'boolean' ? !newValue : !this.#get().status.noWideScreen;

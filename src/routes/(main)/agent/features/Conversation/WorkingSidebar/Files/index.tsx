@@ -2,14 +2,17 @@
 
 import type { ProjectFileIndexEntry } from '@lobechat/electron-client-ipc';
 import { ActionIcon, Center, Empty, Flexbox } from '@lobehub/ui';
+import { message } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import { FileIcon, RefreshCwIcon } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import NeuralNetworkLoading from '@/components/NeuralNetworkLoading';
 import { ExplorerTree, type ExplorerTreeNode } from '@/features/ExplorerTree';
+import type { ExplorerTreeHandle } from '@/features/ExplorerTree/types';
 import { useChatStore } from '@/store/chat';
+import { useGlobalStore } from '@/store/global';
 
 import { useProjectFiles } from './useProjectFiles';
 
@@ -111,6 +114,15 @@ const buildTreeNodes = (
   });
 };
 
+const getAncestorIds = (filePath: string): string[] => {
+  const segments = filePath.split('/');
+  const ancestors: string[] = [];
+  for (let i = 1; i < segments.length; i++) {
+    ancestors.push(segments.slice(0, i).join('/') + '/');
+  }
+  return ancestors;
+};
+
 const Files = memo<FilesProps>(({ workingDirectory }) => {
   const { t } = useTranslation('chat');
   const { data, isLoading, isValidating, mutate } = useProjectFiles(workingDirectory);
@@ -123,6 +135,41 @@ const Files = memo<FilesProps>(({ workingDirectory }) => {
     () => nodes.filter((node) => node.isFolder && node.parentId == null).map((node) => node.id),
     [nodes],
   );
+
+  const [expandedIds, setExpandedIds] = useState<string[]>([]);
+
+  // Skip resyncs when defaultExpandedIds is structurally unchanged so the user's expansions survive re-renders.
+  const prevDefaultRef = useRef<string[]>([]);
+  useEffect(() => {
+    const next = defaultExpandedIds.join('\0');
+    const prev = prevDefaultRef.current.join('\0');
+    if (next === prev) return;
+    prevDefaultRef.current = defaultExpandedIds;
+    setExpandedIds(defaultExpandedIds);
+  }, [defaultExpandedIds]);
+
+  const treeRef = useRef<ExplorerTreeHandle>(null);
+
+  const revealRequest = useGlobalStore((s) => s.status.workingSidebarRevealRequest);
+
+  useEffect(() => {
+    if (!revealRequest) return;
+    const { path, nonce: _nonce } = revealRequest;
+
+    const nodeIds = new Set(nodes.map((n) => n.id));
+    if (!nodeIds.has(path)) {
+      void message.warning(t('workingPanel.review.revealNotFound'));
+      return;
+    }
+
+    const ancestors = getAncestorIds(path);
+    const nextExpanded = Array.from(new Set([...expandedIds, ...ancestors]));
+    treeRef.current?.setExpanded(nextExpanded);
+    treeRef.current?.select(path);
+    treeRef.current?.focus(path);
+    // Keyed on nonce so the same path can be re-revealed by bumping it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealRequest?.nonce]);
 
   const openLocalFile = useChatStore((s) => s.openLocalFile);
 
@@ -169,8 +216,10 @@ const Files = memo<FilesProps>(({ workingDirectory }) => {
             density="compact"
             iconSet="complete"
             nodes={nodes}
+            ref={treeRef}
             style={{ height: '100%' }}
             unsafeCSS={FOLDER_ICON_CSS}
+            onExpandedChange={setExpandedIds}
             onNodeClick={handleNodeClick}
           />
         </div>

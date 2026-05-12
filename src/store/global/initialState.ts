@@ -267,6 +267,7 @@ export interface SystemStatus {
   videoPanelWidth: number;
   videoTopicPanelWidth?: number;
   videoTopicViewMode?: 'grid' | 'list';
+  workingSidebarRevealRequest?: { nonce: number; path: string };
   /**
    * Active tab inside the agent chat right-side WorkingSidebar.
    * Lifted to global so external triggers (e.g. the diff badge in the input bar)
