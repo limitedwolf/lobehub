@@ -31,20 +31,8 @@ export interface SideBarDrawerHandle {
 interface SideBarDrawerProps {
   action?: ReactNode;
   children?: ReactNode;
-  /**
-   * Backward-compat / lifecycle callback. Called after drawer closes
-   * (X button, click-away, imperative close).
-   */
   onClose?: () => void;
-  /**
-   * Fires whenever internal open state changes (open, close, click-away).
-   * Used by consumers to sync derived state (e.g. SWR keys).
-   */
   onOpenChange?: (open: boolean) => void;
-  /**
-   * Backward-compat: external controlled open. If provided, takes precedence
-   * over internal state.
-   */
   open?: boolean;
   ref?: Ref<SideBarDrawerHandle>;
   subHeader?: ReactNode;
@@ -77,11 +65,12 @@ const SideBarDrawer = memo<SideBarDrawerProps>(
     const effectiveOpen = open ?? internalOpen;
 
     const handleOpen = useCallback(() => {
+      if (isControlled) return;
       setInternalOpen((prev) => {
         if (!prev) onOpenChange?.(true);
         return true;
       });
-    }, [onOpenChange]);
+    }, [isControlled, onOpenChange]);
 
     const handleClose = useCallback(() => {
       if (!isControlled) {
