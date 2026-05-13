@@ -3,7 +3,7 @@
 import type { UIChatMessage } from '@lobechat/types';
 import { Flexbox, ScrollArea } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
-import type { RefObject } from 'react';
+import type { CSSProperties, RefObject } from 'react';
 import { memo, useMemo } from 'react';
 
 import { resolveAssistantGroupFromMessages } from '../utils/resolveAssistantGroupFromMessages';
@@ -22,6 +22,21 @@ const styles = createStaticStyles(({ css }) => ({
     max-height: min(40vh, 320px);
   `,
 }));
+
+const SCROLL_CONTENT_STYLE = {
+  color: 'inherit',
+  display: 'block',
+  fontSize: 'inherit',
+  gap: 0,
+  lineHeight: 'inherit',
+  paddingInlineEnd: 16,
+} satisfies CSSProperties;
+
+const SCROLLBAR_STYLE = {
+  marginBlock: 8,
+  marginInlineEnd: 2,
+  marginInlineStart: 0,
+} satisfies CSSProperties;
 
 interface ContentBlocksScrollBaseProps {
   disableEditing?: boolean;
@@ -92,15 +107,8 @@ const ContentBlocksScroll = memo<ContentBlocksScrollProps>((props) => {
     <ScrollArea
       scrollFade
       className={styles.scrollRoot}
-      contentProps={{
-        style: {
-          color: 'inherit',
-          display: 'block',
-          fontSize: 'inherit',
-          gap: 0,
-          lineHeight: 'inherit',
-        },
-      }}
+      contentProps={{ style: SCROLL_CONTENT_STYLE }}
+      scrollbarProps={{ style: SCROLLBAR_STYLE }}
       viewportProps={{
         className: scrollClass,
         ref: scrollRef as RefObject<HTMLDivElement>,
