@@ -26,18 +26,18 @@ export interface GroupItemComponentProps {
 
 interface GroupedAccordionProps {
   GroupItem: ComponentType<GroupItemComponentProps>;
+  onOpenDrawer: () => void;
 }
 
-const GroupedAccordion = memo<GroupedAccordionProps>(({ GroupItem }) => {
+const GroupedAccordion = memo<GroupedAccordionProps>(({ GroupItem, onOpenDrawer }) => {
   const { t } = useTranslation('topic');
   const topicPageSize = useGlobalStore(systemStatusSelectors.topicPageSize);
   const topicSortBy = useUserStore(preferenceSelectors.topicSortBy);
   const { topicGroupMode } = useAgentTopicGroupMode();
 
-  const [hasMore, isExpandingPageSize, openAllTopicsDrawer] = useChatStore((s) => [
+  const [hasMore, isExpandingPageSize] = useChatStore((s) => [
     topicSelectors.hasMoreTopics(s),
     topicSelectors.isExpandingPageSize(s),
-    s.openAllTopicsDrawer,
   ]);
   const [activeTopicId, activeThreadId] = useChatStore((s) => [s.activeTopicId, s.activeThreadId]);
 
@@ -79,7 +79,7 @@ const GroupedAccordion = memo<GroupedAccordionProps>(({ GroupItem }) => {
       </Accordion>
       {isExpandingPageSize && <SkeletonList rows={3} />}
       {hasMore && !isExpandingPageSize && (
-        <NavItem icon={MoreHorizontal} title={t('loadMore')} onClick={openAllTopicsDrawer} />
+        <NavItem icon={MoreHorizontal} title={t('loadMore')} onClick={onOpenDrawer} />
       )}
     </Flexbox>
   );

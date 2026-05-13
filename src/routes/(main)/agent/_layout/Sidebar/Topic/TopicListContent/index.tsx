@@ -21,10 +21,11 @@ const TopicListContent = memo(() => {
   const { t } = useTranslation('topic');
   const router = useQueryRoute();
   const topicLength = useChatStore((s) => topicSelectors.currentTopicLength(s));
-  const [agentId, isUndefinedTopics, isInSearchMode] = useChatStore((s) => [
+  const [agentId, isUndefinedTopics, isInSearchMode, openAllTopicsDrawer] = useChatStore((s) => [
     s.activeAgentId,
     topicSelectors.isUndefinedTopics(s),
     topicSelectors.isInSearchMode(s),
+    s.openAllTopicsDrawer,
   ]);
 
   const { topicGroupMode } = useAgentTopicGroupMode();
@@ -33,7 +34,6 @@ const TopicListContent = memo(() => {
 
   if (isInSearchMode) return <SearchResult />;
 
-  // Show skeleton when current session's topic data is not yet loaded
   if (isUndefinedTopics) return <SkeletonList />;
 
   return (
@@ -47,11 +47,11 @@ const TopicListContent = memo(() => {
         />
       )}
       {topicGroupMode === 'flat' ? (
-        <FlatMode />
+        <FlatMode onOpenDrawer={openAllTopicsDrawer} />
       ) : topicGroupMode === 'byProject' ? (
-        <ByProjectMode />
+        <ByProjectMode onOpenDrawer={openAllTopicsDrawer} />
       ) : (
-        <ByTimeMode />
+        <ByTimeMode onOpenDrawer={openAllTopicsDrawer} />
       )}
     </>
   );
