@@ -1,11 +1,20 @@
 'use client';
 
 import { ActionIcon, Flexbox, Text } from '@lobehub/ui';
+import { useClickAway } from 'ahooks';
 import { Drawer } from 'antd';
 import { cssVar } from 'antd-style';
 import { XIcon } from 'lucide-react';
 import type { ReactNode, Ref } from 'react';
-import { cloneElement, isValidElement, memo, Suspense, useCallback, useState } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  memo,
+  Suspense,
+  useCallback,
+  useImperativeHandle,
+  useState,
+} from 'react';
 
 import { DESKTOP_HEADER_ICON_SMALL_SIZE } from '@/const/layoutTokens';
 
@@ -14,11 +23,29 @@ import SkeletonList from './components/SkeletonList';
 import { OverlayContainerContext } from './OverlayContainer';
 import SideBarHeaderLayout from './SideBarHeaderLayout';
 
+export interface SideBarDrawerHandle {
+  close: () => void;
+  open: () => void;
+}
+
 interface SideBarDrawerProps {
   action?: ReactNode;
   children?: ReactNode;
-  onClose: () => void;
-  open: boolean;
+  /**
+   * Backward-compat / lifecycle callback. Called after drawer closes
+   * (X button, click-away, imperative close).
+   */
+  onClose?: () => void;
+  /**
+   * Fires whenever internal open state changes (open, close, click-away).
+   * Used by consumers to sync derived state (e.g. SWR keys).
+   */
+  onOpenChange?: (open: boolean) => void;
+  /**
+   * Backward-compat: external controlled open. If provided, takes precedence
+   * over internal state.
+   */
+  open?: boolean;
   subHeader?: ReactNode;
   title?: ReactNode;
 }
@@ -38,11 +65,55 @@ const setRef = <T,>(ref: Ref<T> | undefined, value: T | null) => {
   (ref as { current: T | null }).current = value;
 };
 
-const SideBarDrawer = memo<SideBarDrawerProps>(
-  ({ subHeader, open, onClose, children, title, action }) => {
+const SideBarDrawer = memo(
+  ({
+    ref,
+    subHeader,
+    open,
+    onClose,
+    onOpenChange,
+    children,
+    title,
+    action,
+  }: SideBarDrawerProps & { ref?: React.RefObject<SideBarDrawerHandle | null> }) => {
     const size = 280;
 
     const [overlayContainer, setOverlayContainer] = useState<HTMLDivElement | null>(null);
+    const [internalOpen, setInternalOpen] = useState(false);
+
+    const isControlled = open !== undefined;
+    const effectiveOpen = open ?? internalOpen;
+
+    const handleOpen = useCallback(() => {
+      setInternalOpen((prev) => {
+        if (!prev) onOpenChange?.(true);
+        return true;
+      });
+    }, [onOpenChange]);
+
+    const handleClose = useCallback(() => {
+      if (!isControlled) {
+        setInternalOpen((prev) => {
+          if (prev) onOpenChange?.(false);
+          return false;
+        });
+      }
+      onClose?.();
+    }, [isControlled, onClose, onOpenChange]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        close: handleClose,
+        open: handleOpen,
+      }),
+      [handleClose, handleOpen],
+    );
+
+    useClickAway(() => {
+      if (!effectiveOpen) return;
+      handleClose();
+    }, overlayContainer);
 
     const renderDrawerContent = useCallback((node: ReactNode) => {
       if (!isValidElement<DrawerRenderNodeProps>(node)) return node;
@@ -67,7 +138,7 @@ const SideBarDrawer = memo<SideBarDrawerProps>(
           drawerRender={renderDrawerContent}
           getContainer={() => document.querySelector(`#${NAV_PANEL_RIGHT_DRAWER_ID}`)!}
           mask={false}
-          open={open}
+          open={effectiveOpen}
           placement="left"
           size={size}
           rootStyle={{
@@ -120,7 +191,7 @@ const SideBarDrawer = memo<SideBarDrawerProps>(
                       icon={XIcon}
                       size={DESKTOP_HEADER_ICON_SMALL_SIZE}
                       style={{ marginInlineEnd: -2 }}
-                      onClick={onClose}
+                      onClick={handleClose}
                     />
                   </>
                 }
@@ -128,7 +199,7 @@ const SideBarDrawer = memo<SideBarDrawerProps>(
               {subHeader}
             </>
           }
-          onClose={onClose}
+          onClose={handleClose}
         >
           <Suspense
             fallback={
