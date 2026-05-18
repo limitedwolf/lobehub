@@ -82,7 +82,6 @@ const convertSchema = (schema: any): any => {
 
     // Only include enum if type is STRING and enum is non-empty.
     // Gemini proto: enum is only allowed for STRING type.
-    // @see https://linear.app/lobehub/issue/LOBE-8661
     if (schema.enum && schema.enum.length > 0 && isStringType(schema.type)) {
       converted.enum = schema.enum;
     }
@@ -100,7 +99,6 @@ const convertSchema = (schema: any): any => {
 
     // Only include required if type is OBJECT and required is non-empty.
     // Gemini proto: required is only allowed for OBJECT type.
-    // @see https://linear.app/lobehub/issue/LOBE-8661
     if (schema.required && schema.required.length > 0 && isObjectType(schema.type)) {
       converted.required = schema.required;
     }

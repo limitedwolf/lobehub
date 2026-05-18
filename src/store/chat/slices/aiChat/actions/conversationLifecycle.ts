@@ -1164,7 +1164,7 @@ export class ConversationLifecycleActionImpl {
 
       // Sub-agent dispatch inherits the parent's runtime selection — a
       // hetero/gateway parent must keep its sub-agents on the same path so
-      // events route through the same wire. See LOBE-8519.
+      // events route through the same wire. See .
       const parentAgentConfig = context.agentId
         ? agentSelectors.getAgentConfigById(context.agentId)(getAgentStoreState())
         : undefined;
@@ -1173,7 +1173,7 @@ export class ConversationLifecycleActionImpl {
         isGatewayMode: this.#get().isGatewayModeEnabled(),
       });
 
-      // TODO(LOBE-8519 follow-up): only client sub-agent dispatch is
+      // TODO: only client sub-agent dispatch is
       // implemented today. Gateway / hetero direct mentions fall through to
       // client and will need their own runner once Step 2 lands.
       if (runtimeType !== 'client') {

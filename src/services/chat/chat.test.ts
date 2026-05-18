@@ -633,7 +633,7 @@ describe('ChatService', () => {
                     // literal captured in contextEngineering.ts at import time, so the
                     // spy has no effect on the downstream pipeline. The effective
                     // behavior is therefore vision=disabled, and the image is
-                    // downgraded to a placeholder (see LOBE-7214).
+                    // downgraded to a placeholder .
                     text: `Hello
 
 [image omitted: not supported by this model]
