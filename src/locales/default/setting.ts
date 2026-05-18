@@ -206,7 +206,21 @@ export default {
   'analytics.telemetry.title': 'Send Anonymous Usage Data',
   'analytics.title': 'Analytics',
 
-  // Heterogeneous agent CLI status (shown on agent profile page in integration mode)
+    'googleDataProtection.cannotConnectGoogle.content':
+    'You are using a non-Google model. Connecting Google tools (Gmail, Drive, Docs) may expose your data to third-party providers. Please switch to a Google model before enabling these tools.',
+  'googleDataProtection.cannotConnectGoogle.title': 'Cannot Connect Google Tool',
+  'googleDataProtection.cannotSendMessage.content':
+    'You have Google tools enabled ({{tools}}) but are using a non-Google model. Sending messages may expose your Google data to third-party providers. Please disable Google tools or switch to a Google model.',
+  'googleDataProtection.cannotSendMessage.title': 'Cannot Send Message',
+  'googleDataProtection.cannotSendWithHistory.content':
+    'Your conversation history contains Google tool usage ({{tools}}), but you are now using a non-Google model. Sending messages may expose your Google data to third-party providers. Please switch to a Google model.',
+  'googleDataProtection.cannotSendWithHistory.title': 'Cannot Send Message',
+  'googleDataProtection.cannotSwitchModel.content':
+    'You have Google tools enabled ({{tools}}). Switching to a non-Google model may expose your Google data to third-party providers. Please disable Google tools before switching models.',
+  'googleDataProtection.cannotSwitchModel.title': 'Cannot Switch Model',
+  'googleDataProtection.understood': 'Understood',
+
+// Heterogeneous agent CLI status (shown on agent profile page in integration mode)
   'heterogeneousStatus.account.label': 'Account',
   'heterogeneousStatus.auth.api': 'API',
   'heterogeneousStatus.auth.label': 'Auth Method',
