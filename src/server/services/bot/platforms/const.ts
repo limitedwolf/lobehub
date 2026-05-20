@@ -364,8 +364,7 @@ export function normalizeAllowFromEntries(raw: unknown): Array<{ id: string; nam
   return [];
 }
 
-// ---------- Watch keywords (LOBE-8891) ----------
-
+// ---------- Watch keywords ---------
 /**
  * Entry shape persisted under `settings.watchKeywords`. `keyword` is what the
  * runtime matches against the inbound message text; `instruction` is an

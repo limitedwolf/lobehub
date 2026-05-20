@@ -322,8 +322,7 @@ export const createAgentExecutors = (context: {
       // Expand dynamically activated tools (from lobe-activator activateTools API)
       // and merge them into the agent config for this LLM call.
       // Built before the StreamingHandler so we can bind the offered tool
-      // names into the transformToolCalls callback (LOBE-8696).
-      const activatedToolIds = runtimeContext?.stepContext?.activatedToolIds;
+ // names into the transformToolCalls callback.      const activatedToolIds = runtimeContext?.stepContext?.activatedToolIds;
       let resolvedAgentConfig = context.agentConfig;
 
       if (activatedToolIds?.length && context.toolsEngine) {

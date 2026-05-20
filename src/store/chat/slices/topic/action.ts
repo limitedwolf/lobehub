@@ -73,8 +73,7 @@ export class ChatTopicActionImpl {
   // Monotonic token for switchTopic. Each call increments it and captures a
   // local copy; after awaited work, a mismatch means a newer switch has
   // started and our continuation is stale — drop it rather than let it
-  // clobber the newer topic (see LOBE-7785).
-  #switchTopicEpoch = 0;
+ // clobber the newer topic .  #switchTopicEpoch = 0;
 
   constructor(set: Setter, get: () => ChatStore, _api?: unknown) {
     void _api;

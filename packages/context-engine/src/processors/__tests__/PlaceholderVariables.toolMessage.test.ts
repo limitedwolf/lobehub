@@ -4,8 +4,7 @@ import type { PipelineContext } from '../../types';
 import { PlaceholderVariablesProcessor } from '../PlaceholderVariables';
 
 /**
- * Regression for LOBE-6882 placeholder approach.
- *
+ * Regression for placeholder approach. *
  * Confirms that PlaceholderVariablesProcessor does substitute `{{...}}` tokens
  * inside `role: 'tool'` messages. If this test ever fails, it means the
  * processor is silently skipping tool messages and the lobehub skill identity

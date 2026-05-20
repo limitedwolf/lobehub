@@ -9,9 +9,7 @@ const log = debug('lobe-server:agent:finalize-abandoned');
 /**
  * Reverse-trigger finalization for an operation whose Vercel function was
  * killed mid-flight. Called by the agent-gateway DO inactivity watchdog when
- * an op has gone silent past the threshold — see LOBE-8533.
- *
- * Body: `{ operationId: string, reason: string }`
+ * an op has gone silent past the threshold.  * * Body: `{ operationId: string, reason: string }`
  *
  * Auth: handled by the `serviceTokenAuth` middleware on the route.
  */

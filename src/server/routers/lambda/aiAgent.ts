@@ -364,8 +364,7 @@ const AgentStreamEventSchema = z.object({
 /**
  * Schema for `aiAgent.heteroIngest` — accepts a batch of producer-side
  * `AgentStreamEvent`s from `lh hetero exec`. `topicId` is required (operationId
- * → topic reverse-lookup is unreliable per LOBE-8516 design decision).
- */
+ * → topic reverse-lookup is unreliable design decision). */
 const HeteroIngestSchema = z.object({
   agentType: z.enum(['claude-code', 'codex']),
   events: z.array(AgentStreamEventSchema).min(1),

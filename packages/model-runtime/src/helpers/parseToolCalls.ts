@@ -9,8 +9,7 @@ import { MessageToolCallSchema } from '../types';
 // carried by a subsequent delta. Passing `null` through the strict
 // MessageToolCallSchema throws ZodError mid-stream and kills the entire
 // operation. Coerce to '' so parsing succeeds; the merge logic below patches
-// the name in once a later delta supplies it. See LOBE-8199.
-const normalizeChunkForParse = <T extends Omit<MessageToolCallChunk, 'index'>>(chunk: T): T => {
+// the name in once a later delta supplies it. Seeconst normalizeChunkForParse = <T extends Omit<MessageToolCallChunk, 'index'>>(chunk: T): T => {
   if (chunk.function && chunk.function.name == null) {
     return { ...chunk, function: { ...chunk.function, name: '' } };
   }

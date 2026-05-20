@@ -8,8 +8,7 @@
  * (not `directory`), so cwd fell back to `process.cwd()`. With no glob/include
  * filter, `tool.*name.*mcp` matched every dist/* bundle and tsbuildinfo.
  *
- * See LOBE-8666 / the agent screenshot that reported the leak.
- */
+ * / the agent screenshot that reported the leak. */
 import { describe, expect, it, vi } from 'vitest';
 
 // The executor module pulls in @/services/electron/localFileService (renderer alias).

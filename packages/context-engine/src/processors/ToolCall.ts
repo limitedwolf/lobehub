@@ -134,8 +134,7 @@ export class ToolCallProcessor extends BaseProcessor {
     // Sanitize `arguments` as a last line of defense against historical messages
     // whose tool_calls arguments are invalid JSON (e.g. persisted before the
     // server-side sanitizer landed, or produced by an older client). Strict
-    // providers like NVIDIA NIM otherwise 400 on the entire request. See LOBE-7761.
-    const tool_calls = message.tools.map(
+ // providers like NVIDIA NIM otherwise 400 on the entire request. See const tool_calls = message.tools.map(
       (tool: any): MessageToolCall => ({
         function: {
           arguments: sanitizeToolCallArguments(tool.arguments),

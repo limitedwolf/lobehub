@@ -134,8 +134,7 @@ describe('file operations', () => {
 
     it('should truncate single very long lines to per-line cap', async () => {
       const filePath = path.join(tmpDir, 'long-line.txt');
-      // 27KB single line of base64-like text — the LOBE-8703 scenario.
-      await writeFile(filePath, 'A'.repeat(27_000));
+ // 27KB single line of base64-like text — the scenario.      await writeFile(filePath, 'A'.repeat(27_000));
 
       const result = await readLocalFile({ path: filePath });
 

@@ -253,9 +253,7 @@ export const openAIParams = {
   chatCompletion: {
     // DeepSeek upstream rejects requests where input alone exceeds the
     // model context window with a 400 carrying `max_completion=0` in the
-    // message. Fail fast before round-tripping. See LOBE-8974.
-    contextPreFlight: { models: deepseekChatModels },
-    handlePayload: buildDeepSeekOpenAIPayload,
+ // message. Fail fast before round-tripping. See contextPreFlight: { models: deepseekChatModels }    handlePayload: buildDeepSeekOpenAIPayload,
   },
   debug: {
     chatCompletion: () => process.env.DEBUG_DEEPSEEK_CHAT_COMPLETION === '1',

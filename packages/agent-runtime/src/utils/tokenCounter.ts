@@ -63,8 +63,7 @@ export interface CompressionCheckResult {
  *
  * Uses {@link countContextTokens} under the hood, so the input estimate
  * accounts for tool calls, reasoning, and tool definitions in addition to
- * `content` (see LOBE-8964 for the calibration data).
- */
+ * `content` (for the calibration data). */
 export function shouldCompress(
   messages: UIChatMessage[],
   options: TokenCountOptions = {},

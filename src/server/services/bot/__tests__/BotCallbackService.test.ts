@@ -296,8 +296,7 @@ describe('BotCallbackService', () => {
       await service.handleCallback(body);
 
       // Crucially: never hits agent_bot_providers — that lookup throws for
-      // messenger-originated runs and was the cause of LOBE-8654.
-      expect(mockFindByPlatformAndAppId).not.toHaveBeenCalled();
+ // messenger-originated runs and was the cause of expect(mockFindByPlatformAndAppId).not.toHaveBeenCalled;
       expect(mockMessengerGetInstallationStore).toHaveBeenCalledWith('telegram');
       expect(mockMessengerStoreResolveByKey).toHaveBeenCalledWith('telegram:singleton');
       expect(mockMessengerBinderCreateClient).toHaveBeenCalled();

@@ -250,8 +250,7 @@ class AgentManagementExecutor extends BaseExecutor<typeof AgentManagementApiName
           : messages;
 
         // callAgent inherits the parent's runtime selection — a hetero/gateway
-        // parent must keep the called sub-agent on the same path. See LOBE-8519.
-        const parentAgentConfig = conversationContext.agentId
+ // parent must keep the called sub-agent on the same path. See const parentAgentConfig = conversationContext.agentId
           ? agentSelectors.getAgentConfigById(conversationContext.agentId)(getAgentStoreState())
           : undefined;
         const runtimeType = selectRuntimeType({
@@ -259,8 +258,8 @@ class AgentManagementExecutor extends BaseExecutor<typeof AgentManagementApiName
           isGatewayMode: get().isGatewayModeEnabled(),
         });
 
-        // TODO(LOBE-8519 follow-up): only client sub-agent dispatch is wired.
-        // Gateway / hetero callAgent invocations fall through to client and
+        // TODO: only client sub-agent dispatch is wired.
+ // Gateway / hetero callAgent invocations fall through to client and
         // will need their own runner once Step 2 lands.
         if (runtimeType !== 'client') {
           console.warn(

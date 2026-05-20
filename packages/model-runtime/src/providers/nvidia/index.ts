@@ -23,9 +23,7 @@ export const params = {
     // exceed the model context window (returns 400 "requested 0 output
     // tokens and your prompt contains at least N+1 input tokens"). Fail
     // fast so the UI can surface a fork / switch-model affordance instead
-    // of a raw provider error. See LOBE-8974.
-    contextPreFlight: { models: nvidiaChatModels },
-    handlePayload: (payload) => {
+ // of a raw provider error. See contextPreFlight: { models: nvidiaChatModels }    handlePayload: (payload) => {
       const { model, thinking, messages, ...rest } = payload;
 
       // Convert reasoning to reasoning_content for NVIDIA API format
