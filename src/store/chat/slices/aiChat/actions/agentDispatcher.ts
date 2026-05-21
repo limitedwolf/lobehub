@@ -10,6 +10,41 @@ import { type HeterogeneousProviderConfig } from '@lobechat/types';
  */
 export type AgentRuntimeType = 'client' | 'gateway' | 'hetero';
 
+/**
+ * Unified intent for a non-hetero, non-group sub-agent invocation.
+ *
+ * All three caller patterns (`callSubAgent` / `callAgent` / `@agent`) map
+ * their parameters into this shape before handing off to
+ * `dispatchNonHeteroSubAgent`. Runtime routing is entirely the dispatcher's
+ * responsibility — callers only declare *what* they want, not *how* to run it.
+ *
+ * Excluded from this contract:
+ * - Hetero agents (handled by the heterogeneous pipeline)
+ * - Group orchestration (handled by `groupOrchestration.triggerSpeak`)
+ * - Async task mode (handled by the `execSubAgent` executor via state.type)
+ */
+export interface AgentInvocationIntent {
+  /**
+   * Which invocation pattern produced this intent.
+   * Preserved for logging / debugging; has no effect on runtime selection.
+   */
+  kind: 'callAgent' | 'callSubAgent' | 'mention';
+  /** Target agent to execute. */
+  targetAgentId: string;
+  /**
+   * Instruction delivered to the sub-agent.
+   * In client mode it is injected as a virtual user message prepended to the
+   * existing message history. In gateway mode it becomes the `message` param
+   * of `executeGatewayAgent` (i.e. a real user message on the server).
+   */
+  instruction: string;
+  /**
+   * ID of the tool result message that triggered this invocation.
+   * Used as `parentMessageId` by the client executor.
+   */
+  parentMessageId: string;
+}
+
 export interface RuntimeSelectionContext {
   /** Per-agent heterogeneous provider config (desktop only — takes priority over gateway). */
   heterogeneousProvider?: HeterogeneousProviderConfig;
