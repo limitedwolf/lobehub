@@ -67,7 +67,7 @@ export class DeviceProxy {
   }
 
   async dispatchAgentRun(params: {
-    agentType: 'claude-code' | 'codex';
+    agentType: 'claude-code' | 'codex' | 'hermes' | 'openclaw';
     cwd?: string;
     deviceId?: string;
     jwt: string;

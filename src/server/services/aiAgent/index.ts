@@ -650,10 +650,11 @@ export class AiAgentService {
     const model = agentConfig.model!;
     const provider = agentConfig.provider!;
 
-    // 3.5. Hetero-agent early exit — Claude Code / Codex agents bypass the
+    // 3.5. Hetero-agent early exit — Claude Code / Codex / OpenClaw / Hermes agents bypass the
     // server-side LLM pipeline.  After topic + message creation we hand off to
     // the device gateway (desktop) or cloud sandbox, which will push events
-    // back via `heteroIngest` / `heteroFinish`.
+    // back via `heteroIngest` / `heteroFinish` (claude-code / codex) or
+    // `agentNotify.notify` (openclaw / hermes).
     //
     // Detection: prefer agencyConfig.heterogeneousProvider.type (set by the UI),
     // fall back to model field for backwards compatibility.
@@ -661,7 +662,11 @@ export class AiAgentService {
     const heteroProviderType = agentConfig.agencyConfig?.heterogeneousProvider?.type;
     const isHeteroAgent = !!heteroProviderType || HETERO_AGENT_MODELS.has(model);
     if (isHeteroAgent) {
-      const heteroType = (heteroProviderType ?? model) as 'claude-code' | 'codex';
+      const heteroType = (heteroProviderType ?? model) as
+        | 'claude-code'
+        | 'codex'
+        | 'hermes'
+        | 'openclaw';
       const operationId = nanoid();
 
       // Create user message so the conversation is visible in the UI immediately.
@@ -759,8 +764,104 @@ export class AiAgentService {
         },
       });
 
-      if (requestedDeviceId) {
-        // Dispatch to the user's connected desktop via device-gateway.
+      // Remote hetero agents (openclaw / hermes) dispatch to the device identified
+      // by agencyConfig.boundDeviceId and communicate back via agentNotify.notify.
+      // They always go through the gateway WS channel — open the stream now so the
+      // frontend can subscribe before the first lh notify arrives.
+      const isRemoteHetero = heteroType === 'openclaw' || heteroType === 'hermes';
+      const remoteDeviceId =
+        requestedDeviceId || agentConfig.agencyConfig?.boundDeviceId || undefined;
+
+      if (isRemoteHetero) {
+        if (!remoteDeviceId) {
+          log('execAgent: openclaw/hermes requires a bound device (boundDeviceId not set)');
+          await this.messageModel.update(assistantMsg.id, {
+            content: '',
+            error: {
+              body: { detail: 'No device bound to this agent. Configure boundDeviceId.' },
+              message: 'No bound device for remote hetero agent',
+              type: 'ServerAgentRuntimeError',
+            },
+          });
+          return {
+            agentId: resolvedAgentId,
+            assistantMessageId: assistantMsg.id,
+            autoStarted: false,
+            createdAt: new Date().toISOString(),
+            error: 'No bound device',
+            message: 'Remote hetero agent requires boundDeviceId',
+            operationId,
+            status: 'error',
+            success: false,
+            timestamp: new Date().toISOString(),
+            topicId,
+            userMessageId: userMsg?.id ?? parentMessageId ?? '',
+          };
+        }
+
+        // Open the stream channel so the gateway WS subscription can receive
+        // notify_update events published by agentNotify.notify.
+        const { createStreamEventManager } = await import('@/server/modules/AgentRuntime/factory');
+        const streamManager = createStreamEventManager();
+        await streamManager
+          .publishAgentRuntimeInit(operationId, {
+            agentId: resolvedAgentId,
+            assistantMessageId: assistantMsg.id,
+            heteroType,
+            topicId,
+            userId: this.userId,
+          })
+          .catch((err) => log('execAgent: failed to init stream for remote hetero: %O', err));
+
+        // lh connect only handles tool_call_request (not agent_run_request),
+        // so we use executeToolCall with the runHeteroTask tool instead of dispatchAgentRun.
+        const result = await deviceProxy.executeToolCall(
+          { deviceId: remoteDeviceId, userId: this.userId },
+          {
+            apiName: 'runHeteroTask',
+            arguments: JSON.stringify({
+              agentId: resolvedAgentId,
+              agentType: heteroType,
+              cwd: undefined,
+              operationId,
+              prompt,
+              taskId: operationId,
+              topicId,
+            }),
+            identifier: 'runHeteroTask',
+          },
+          120_000, // hetero tasks can take longer than the default 30 s
+        );
+        if (!result.success) {
+          log('execAgent: remote hetero dispatch failed: %s', result.error);
+          await streamManager
+            .publishAgentRuntimeEnd(operationId, 0, { error: result.error }, 'error', result.error)
+            .catch(() => {});
+          await this.messageModel.update(assistantMsg.id, {
+            content: '',
+            error: {
+              body: { detail: result.error },
+              message: result.error ?? 'Device dispatch failed',
+              type: 'ServerAgentRuntimeError',
+            },
+          });
+          return {
+            agentId: resolvedAgentId,
+            assistantMessageId: assistantMsg.id,
+            autoStarted: false,
+            createdAt: new Date().toISOString(),
+            error: result.error,
+            message: 'Remote hetero agent dispatch failed',
+            operationId,
+            status: 'error',
+            success: false,
+            timestamp: new Date().toISOString(),
+            topicId,
+            userMessageId: userMsg?.id ?? parentMessageId ?? '',
+          };
+        }
+      } else if (requestedDeviceId) {
+        // Local CLI (claude-code / codex) — dispatch to user's connected desktop.
         const result = await deviceProxy.dispatchAgentRun({
           ...heteroParams,
           deviceId: requestedDeviceId,
@@ -791,10 +892,15 @@ export class AiAgentService {
           };
         }
       } else {
-        // Cloud sandbox path — fire-and-forget; errors surfaced via heteroFinish.
+        // Cloud sandbox path — only for local CLI agents (claude-code / codex).
+        // Remote agents (openclaw / hermes) always require a bound device.
         const { spawnHeteroSandbox } =
           await import('@/server/services/heterogeneousAgent/sandboxRunner');
-        spawnHeteroSandbox({ ...heteroParams, marketService: this.marketService }).catch((err) => {
+        spawnHeteroSandbox({
+          ...heteroParams,
+          agentType: heteroType as 'claude-code' | 'codex',
+          marketService: this.marketService,
+        }).catch((err) => {
           log('execAgent: hetero sandbox spawn failed: %O', err);
         });
       }

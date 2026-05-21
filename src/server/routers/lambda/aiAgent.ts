@@ -357,6 +357,7 @@ const AgentStreamEventSchema = z.object({
     'agent_intervention_response',
     'step_start',
     'step_complete',
+    'notify_update',
     'error',
   ]),
 });

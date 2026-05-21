@@ -1,4 +1,5 @@
 import { log } from '../utils/logger';
+import { checkPlatformCapability } from './checkPlatformCapability';
 import {
   editLocalFile,
   globLocalFiles,
@@ -13,6 +14,7 @@ import { getCommandOutput, killCommand, runCommand } from './shell';
 
 const methodMap: Record<string, (args: any) => Promise<unknown>> = {
   cancelHeteroTask,
+  checkPlatformCapability,
   editFile: editLocalFile,
   getCommandOutput,
   globFiles: globLocalFiles,

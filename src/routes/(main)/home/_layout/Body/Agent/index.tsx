@@ -29,6 +29,7 @@ const Agent = memo<AgentProps>(({ itemKey }) => {
     createAgentMenuItem,
     createGroupChatMenuItem,
     createHeterogeneousAgentMenuItems,
+    createPlatformAgentMenuItem,
     isLoading,
   } = useCreateMenuItems();
 
@@ -41,8 +42,15 @@ const Agent = memo<AgentProps>(({ itemKey }) => {
       ...(heterogeneousItems.length > 0
         ? [{ type: 'divider' as const }, ...heterogeneousItems]
         : []),
+      { type: 'divider' as const },
+      createPlatformAgentMenuItem(),
     ];
-  }, [createAgentMenuItem, createGroupChatMenuItem, createHeterogeneousAgentMenuItems]);
+  }, [
+    createAgentMenuItem,
+    createGroupChatMenuItem,
+    createHeterogeneousAgentMenuItems,
+    createPlatformAgentMenuItem,
+  ]);
 
   const handleOpenConfigGroupModal = useCallback(() => {
     openConfigGroupModal();

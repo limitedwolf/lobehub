@@ -4,7 +4,7 @@ import { Icon } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { App } from 'antd';
 import type { ItemType } from 'antd/es/menu/interface';
-import { BotIcon, FileTextIcon, FolderCogIcon, FolderPlus } from 'lucide-react';
+import { BotIcon, FileTextIcon, FolderCogIcon, FolderPlus, MonitorSmartphone } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -244,6 +244,25 @@ export const useCreateMenuItems = () => {
   );
 
   /**
+   * Create platform agent menu item (openclaw / hermes — remote device agents)
+   * Opens the 3-step creation modal
+   */
+  const createPlatformAgentMenuItem = useCallback(
+    (options?: CreateAgentOptions): ItemType => ({
+      icon: <Icon icon={MonitorSmartphone} />,
+      key: 'newPlatformAgent',
+      label: t('newPlatformAgent'),
+      onClick: (info) => {
+        info.domEvent?.stopPropagation();
+        agentModal?.openCreatePlatformAgentModal(
+          options?.groupId ? { groupId: options.groupId } : undefined,
+        );
+      },
+    }),
+    [t, agentModal],
+  );
+
+  /**
    * Create group chat menu item
    * Creates an empty group and navigates to its profile page
    */
@@ -340,6 +359,7 @@ export const useCreateMenuItems = () => {
     createGroupWithMembers,
     createPage,
     createPageMenuItem,
+    createPlatformAgentMenuItem,
     createSessionGroupMenuItem,
     openCreateModal,
 

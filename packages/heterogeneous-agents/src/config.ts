@@ -1,14 +1,17 @@
-import type { HeterogeneousProviderConfig } from '@lobechat/types';
-
 export type HeterogeneousAgentMenuLabelKey = 'newClaudeCodeAgent' | 'newCodexAgent';
 
+/**
+ * Config for local CLI hetero agents (Claude Code, Codex) that run as
+ * desktop subprocesses via Electron IPC. Remote device agents (openclaw,
+ * hermes) have their own setup flow and are not listed here.
+ */
 export interface HeterogeneousAgentConfig {
   command: string;
   iconId: string;
   menuKey: string;
   menuLabelKey: HeterogeneousAgentMenuLabelKey;
   title: string;
-  type: HeterogeneousProviderConfig['type'];
+  type: 'claude-code' | 'codex';
 }
 
 export const HETEROGENEOUS_AGENT_CONFIGS = [
@@ -30,5 +33,5 @@ export const HETEROGENEOUS_AGENT_CONFIGS = [
   },
 ] as const satisfies readonly HeterogeneousAgentConfig[];
 
-export const getHeterogeneousAgentConfig = (type: HeterogeneousProviderConfig['type']) =>
+export const getHeterogeneousAgentConfig = (type: string) =>
   HETEROGENEOUS_AGENT_CONFIGS.find((config) => config.type === type);
