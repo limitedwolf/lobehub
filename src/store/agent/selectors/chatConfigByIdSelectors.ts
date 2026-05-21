@@ -58,17 +58,26 @@ const getRuntimeEnvConfigById = (agentId: string) => (s: AgentStoreState) =>
 const isLocalSystemEnabledById = (agentId: string) => (s: AgentStoreState) =>
   getRuntimeModeById(agentId)(s) === 'local';
 
+/** Get the selected device ID for the agent (desktop only) */
+const getDeviceIdById =
+  (agentId: string) =>
+  (s: AgentStoreState): string | undefined =>
+    getChatConfigById(agentId)(s).runtimeEnv?.deviceId;
+
 /**
  * Get runtime environment mode by agent ID.
  * Reads from `runtimeMode[platform]`, defaults to 'local' on desktop, 'none' on web.
+ * Legacy 'cloud' values are normalized to 'sandbox' for backward compatibility.
  */
 const getRuntimeModeById =
   (agentId: string) =>
   (s: AgentStoreState): RuntimeEnvMode => {
     const runtimeEnv = getChatConfigById(agentId)(s).runtimeEnv;
     const platform = isDesktop ? 'desktop' : 'web';
+    const mode = runtimeEnv?.runtimeMode?.[platform] ?? (isDesktop ? 'local' : 'none');
 
-    return runtimeEnv?.runtimeMode?.[platform] ?? (isDesktop ? 'local' : 'none');
+    // Legacy backward compatibility: map 'cloud' to 'sandbox'
+    return mode === 'cloud' ? 'sandbox' : mode;
   };
 
 const getSkillActivateModeById =
@@ -78,6 +87,7 @@ const getSkillActivateModeById =
 
 export const chatConfigByIdSelectors = {
   getChatConfigById,
+  getDeviceIdById,
   getEnableHistoryCountById,
   getHistoryCountById,
   getRuntimeEnvConfigById,

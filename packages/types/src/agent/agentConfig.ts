@@ -9,11 +9,12 @@ export type AgentMode = 'auto' | 'plan' | 'ask' | 'implement';
 
 /**
  * Runtime environment mode
- * - local: Access local files and commands (desktop only)
- * - cloud: Run in cloud sandbox
+ * - local: Run on a specific device (desktop only, requires deviceId)
+ * - sandbox: Run in isolated cloud sandbox
+ * - cloud: @deprecated Use 'sandbox' instead, kept for backward compatibility
  * - none: No runtime environment
  */
-export type RuntimeEnvMode = 'cloud' | 'local' | 'none';
+export type RuntimeEnvMode = 'cloud' | 'local' | 'none' | 'sandbox';
 
 export type RuntimePlatform = 'desktop' | 'web';
 
@@ -21,6 +22,11 @@ export type RuntimePlatform = 'desktop' | 'web';
  * Runtime environment configuration
  */
 export interface RuntimeEnvConfig {
+  /**
+   * Device ID when runtimeMode is 'local' (desktop only).
+   * Identifies which bound device to run on.
+   */
+  deviceId?: string;
   /**
    * Runtime environment mode per platform
    */

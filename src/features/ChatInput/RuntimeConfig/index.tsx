@@ -4,6 +4,7 @@ import { Github } from '@lobehub/icons';
 import { Flexbox, Icon, Popover, Skeleton, Tooltip } from '@lobehub/ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
 import {
+  BoxIcon,
   ChevronDownIcon,
   CloudIcon,
   FolderIcon,
@@ -12,9 +13,10 @@ import {
   MonitorOffIcon,
   SquircleDashed,
 } from 'lucide-react';
-import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
+import { memo, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { deviceService } from '@/services/device';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { useChatStore } from '@/store/chat';
@@ -26,6 +28,7 @@ import { useUpdateAgentConfig } from '../hooks/useUpdateAgentConfig';
 import { useChatInputStore } from '../store';
 import ApprovalMode from './ApprovalMode';
 import CloudRepoSwitcher from './CloudRepoSwitcher';
+import { DeviceSelector, SectionHeader } from './DeviceSelector';
 import GitStatus from './GitStatus';
 import ModeSelector from './ModeSelector';
 import { useRepoType } from './useRepoType';
@@ -35,6 +38,7 @@ const MODE_ICONS: Record<RuntimeEnvMode, typeof LaptopIcon> = {
   cloud: CloudIcon,
   local: LaptopIcon,
   none: MonitorOffIcon,
+  sandbox: BoxIcon,
 };
 
 const styles = createStaticStyles(({ css }) => ({
@@ -62,6 +66,11 @@ const styles = createStaticStyles(({ css }) => ({
       color: ${cssVar.colorText};
       background: ${cssVar.colorFillSecondary};
     }
+  `,
+  divider: css`
+    height: 1px;
+    margin-block: 4px;
+    background: ${cssVar.colorBorderSecondary};
   `,
   modeDesc: css`
     font-size: 12px;
@@ -107,16 +116,21 @@ const RuntimeConfig = memo(() => {
   const { updateAgentChatConfig } = useUpdateAgentConfig();
   const [dirPopoverOpen, setDirPopoverOpen] = useState(false);
   const [modePopoverOpen, setModePopoverOpen] = useState(false);
+  const [devices, setDevices] = useState<Awaited<ReturnType<typeof deviceService.listDevices>>>([]);
+  const [devicesLoading, setDevicesLoading] = useState(false);
   const showContextWindow = useChatInputStore((s) =>
     s.rightActions.flat().includes('contextWindow'),
   );
 
-  const [isLoading, runtimeMode, isHeterogeneous, enableAgentMode] = useAgentStore((s) => [
-    agentByIdSelectors.isAgentConfigLoadingById(agentId)(s),
-    chatConfigByIdSelectors.getRuntimeModeById(agentId)(s),
-    agentId ? agentByIdSelectors.isAgentHeterogeneousById(agentId)(s) : false,
-    agentByIdSelectors.getAgentEnableModeById(agentId)(s),
-  ]);
+  const [isLoading, runtimeMode, isHeterogeneous, enableAgentMode, deviceId] = useAgentStore(
+    (s) => [
+      agentByIdSelectors.isAgentConfigLoadingById(agentId)(s),
+      chatConfigByIdSelectors.getRuntimeModeById(agentId)(s),
+      agentId ? agentByIdSelectors.isAgentHeterogeneousById(agentId)(s) : false,
+      agentByIdSelectors.getAgentEnableModeById(agentId)(s),
+      chatConfigByIdSelectors.getDeviceIdById(agentId)(s),
+    ],
+  );
 
   const topicWorkingDirectory = useChatStore(topicSelectors.currentTopicWorkingDirectory);
   const agentWorkingDirectory = useAgentStore((s) =>
@@ -126,6 +140,17 @@ const RuntimeConfig = memo(() => {
 
   const repoType = useRepoType(effectiveWorkingDirectory);
 
+  // Fetch device list when popover opens (desktop only)
+  useEffect(() => {
+    if (modePopoverOpen && isDesktop) {
+      setDevicesLoading(true);
+      deviceService.listDevices().then((list) => {
+        setDevices(list);
+        setDevicesLoading(false);
+      });
+    }
+  }, [modePopoverOpen]);
+
   const dirIconNode = useMemo((): ReactNode => {
     if (!effectiveWorkingDirectory) return <Icon icon={SquircleDashed} size={14} />;
     if (repoType === 'github') return <Github size={14} />;
@@ -134,17 +159,42 @@ const RuntimeConfig = memo(() => {
   }, [effectiveWorkingDirectory, repoType]);
 
   const switchMode = useCallback(
-    async (mode: RuntimeEnvMode) => {
-      if (mode === runtimeMode) return;
+    async (mode: RuntimeEnvMode, opts?: { deviceId?: string }) => {
+      if (mode === runtimeMode && opts?.deviceId === deviceId) return;
 
       const platform = isDesktop ? 'desktop' : 'web';
 
       await updateAgentChatConfig({
-        runtimeEnv: { runtimeMode: { [platform]: mode } },
+        runtimeEnv: {
+          deviceId: opts?.deviceId,
+          runtimeMode: { [platform]: mode },
+        },
       });
     },
-    [runtimeMode, updateAgentChatConfig],
+    [runtimeMode, deviceId, updateAgentChatConfig],
   );
+
+  // Compute the display label for the mode button
+  const activeDevice = useMemo(
+    () => (deviceId ? devices.find((d) => d.deviceId === deviceId) : undefined),
+    [deviceId, devices],
+  );
+
+  const ModeIcon = MODE_ICONS[runtimeMode] || LaptopIcon;
+
+  const modeLabel = useMemo(() => {
+    // When running on a specific device, show device hostname
+    if (runtimeMode === 'local' && activeDevice) {
+      return activeDevice.hostname;
+    }
+    return t(`runtimeEnv.mode.${runtimeMode}`);
+  }, [runtimeMode, activeDevice, t]);
+
+  const displayName = effectiveWorkingDirectory
+    ? effectiveWorkingDirectory.split('/').findLast(Boolean) || effectiveWorkingDirectory
+    : tPlugin('localSystem.workingDirectory.notSet');
+
+  const hasDevices = devices.length > 0;
 
   // Skeleton placeholder to prevent layout jump during loading
   if (!agentId || isLoading) {
@@ -156,66 +206,93 @@ const RuntimeConfig = memo(() => {
     );
   }
 
-  const ModeIcon = MODE_ICONS[runtimeMode];
-  const modeLabel = t(`runtimeEnv.mode.${runtimeMode}`);
-
-  const displayName = effectiveWorkingDirectory
-    ? effectiveWorkingDirectory.split('/').findLast(Boolean) || effectiveWorkingDirectory
-    : tPlugin('localSystem.workingDirectory.notSet');
-
-  const modes: { desc: string; icon: typeof LaptopIcon; label: string; mode: RuntimeEnvMode }[] = [
-    // Local mode is desktop-only
-    ...(isDesktop
-      ? [
-          {
-            desc: t('runtimeEnv.mode.localDesc'),
-            icon: LaptopIcon,
-            label: t('runtimeEnv.mode.local'),
-            mode: 'local' as RuntimeEnvMode,
-          },
-        ]
-      : []),
-    {
-      desc: t('runtimeEnv.mode.cloudDesc'),
-      icon: CloudIcon,
-      label: t('runtimeEnv.mode.cloud'),
-      mode: 'cloud',
-    },
-    {
-      desc: t('runtimeEnv.mode.noneDesc'),
-      icon: MonitorOffIcon,
-      label: t('runtimeEnv.mode.none'),
-      mode: 'none',
-    },
-  ];
+  // ─── Popover Content ───
 
   const modeContent = (
     <Flexbox gap={4} style={{ minWidth: 280 }}>
-      {modes.map(({ mode, icon, label, desc }) => (
+      {/* ── Device section (desktop only) ── */}
+      {isDesktop && (
+        <>
+          <SectionHeader label={t('runtimeEnv.section.device')} />
+          {devicesLoading ? (
+            <Flexbox paddingBlock={12} paddingInline={8}>
+              <Skeleton.Button
+                active
+                size="small"
+                style={{ height: 16, marginBottom: 4, width: '60%' }}
+              />
+              <Skeleton.Button active size="small" style={{ height: 12, width: '40%' }} />
+            </Flexbox>
+          ) : hasDevices ? (
+            <DeviceSelector
+              activeDeviceId={deviceId}
+              devices={devices}
+              onSelect={(id) => switchMode('local', { deviceId: id })}
+            />
+          ) : (
+            <Flexbox
+              className={styles.modeOptionDesc}
+              paddingBlock={8}
+              paddingInline={8}
+            >
+              {t('runtimeEnv.device.empty')}
+            </Flexbox>
+          )}
+
+          <div className={styles.divider} />
+        </>
+      )}
+
+      {/* ── Sandbox ── */}
+      <Flexbox
+        horizontal
+        align={'flex-start'}
+        gap={12}
+        className={cx(
+          styles.modeOption,
+          (runtimeMode === 'sandbox' || runtimeMode === 'cloud') && styles.modeOptionActive,
+        )}
+        onClick={() => switchMode('sandbox')}
+      >
         <Flexbox
-          horizontal
-          align={'flex-start'}
-          className={cx(styles.modeOption, runtimeMode === mode && styles.modeOptionActive)}
-          gap={12}
-          key={mode}
-          onClick={() => switchMode(mode)}
+          align={'center'}
+          className={styles.modeOptionIcon}
+          flex={'none'}
+          height={32}
+          justify={'center'}
+          width={32}
         >
-          <Flexbox
-            align={'center'}
-            className={styles.modeOptionIcon}
-            flex={'none'}
-            height={32}
-            justify={'center'}
-            width={32}
-          >
-            <Icon icon={icon} />
-          </Flexbox>
-          <Flexbox flex={1}>
-            <div className={styles.modeOptionTitle}>{label}</div>
-            <div className={styles.modeOptionDesc}>{desc}</div>
-          </Flexbox>
+          <Icon icon={BoxIcon} />
         </Flexbox>
-      ))}
+        <Flexbox flex={1}>
+          <div className={styles.modeOptionTitle}>{t('runtimeEnv.mode.sandbox')}</div>
+          <div className={styles.modeOptionDesc}>{t('runtimeEnv.mode.sandboxDesc')}</div>
+        </Flexbox>
+      </Flexbox>
+
+      {/* ── Disabled ── */}
+      <Flexbox
+        horizontal
+        align={'flex-start'}
+        className={cx(styles.modeOption, runtimeMode === 'none' && styles.modeOptionActive)}
+        gap={12}
+        onClick={() => switchMode('none')}
+      >
+        <Flexbox
+          align={'center'}
+          className={styles.modeOptionIcon}
+          flex={'none'}
+          height={32}
+          justify={'center'}
+          width={32}
+        >
+          <Icon icon={MonitorOffIcon} />
+        </Flexbox>
+        <Flexbox flex={1}>
+          <div className={styles.modeOptionTitle}>{t('runtimeEnv.mode.none')}</div>
+          <div className={styles.modeOptionDesc}>{t('runtimeEnv.mode.noneDesc')}</div>
+        </Flexbox>
+      </Flexbox>
     </Flexbox>
   );
 

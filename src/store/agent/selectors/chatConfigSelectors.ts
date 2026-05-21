@@ -34,8 +34,10 @@ const isMemoryToolEnabled = (s: AgentStoreState) =>
 const isLocalSystemEnabled = (s: AgentStoreState) =>
   chatConfigByIdSelectors.isLocalSystemEnabledById(s.activeAgentId || '')(s);
 
-const isCloudSandboxEnabled = (s: AgentStoreState) =>
-  chatConfigByIdSelectors.getRuntimeModeById(s.activeAgentId || '')(s) === 'cloud';
+const isCloudSandboxEnabled = (s: AgentStoreState) => {
+  const mode = chatConfigByIdSelectors.getRuntimeModeById(s.activeAgentId || '')(s);
+  return mode === 'cloud' || mode === 'sandbox';
+};
 
 const skillActivateMode = (s: AgentStoreState) =>
   chatConfigByIdSelectors.getSkillActivateModeById(s.activeAgentId || '')(s);
