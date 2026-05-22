@@ -255,6 +255,7 @@ export default {
   'platformAgentConfig.availability.noDevice': 'No device bound',
   'platformAgentConfig.changeDevice': 'Change Device',
   'platformAgentConfig.redetect': 'Re-detect',
+  'platformAgentConfig.selectDevice': 'Select a device',
 
   'checking': 'Checking...',
 

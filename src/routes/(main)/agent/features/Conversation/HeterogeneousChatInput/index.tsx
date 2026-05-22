@@ -1,6 +1,9 @@
 'use client';
 
-import { isRemoteHeterogeneousType } from '@lobechat/heterogeneous-agents';
+import {
+  HETEROGENEOUS_TYPE_LABELS,
+  isRemoteHeterogeneousType,
+} from '@lobechat/heterogeneous-agents';
 import { Alert, Button, Flexbox } from '@lobehub/ui';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -66,7 +69,7 @@ const HeterogeneousChatInput = memo(() => {
       title = t('platformAgent.deviceGuard.deviceOffline.title');
       desc = t('platformAgent.deviceGuard.deviceOffline.desc');
     } else {
-      const name = providerType === 'openclaw' ? 'OpenClaw' : 'Hermes';
+      const name = HETEROGENEOUS_TYPE_LABELS[providerType] ?? providerType;
       title = t('platformAgent.deviceGuard.platformUnavailable.title', { name });
       desc = t('platformAgent.deviceGuard.platformUnavailable.desc', { name });
     }

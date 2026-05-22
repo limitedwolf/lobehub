@@ -1,4 +1,5 @@
 import { isDesktop as defaultIsDesktop } from '@lobechat/const';
+import { isRemoteHeterogeneousType } from '@lobechat/heterogeneous-agents';
 import { type HeterogeneousProviderConfig } from '@lobechat/types';
 
 /**
@@ -25,13 +26,6 @@ export type AgentRuntimeType = 'client' | 'gateway' | 'hetero';
  */
 export interface AgentInvocationIntent {
   /**
-   * Which invocation pattern produced this intent.
-   * Preserved for logging / debugging; has no effect on runtime selection.
-   */
-  kind: 'callAgent' | 'callSubAgent' | 'mention';
-  /** Target agent to execute. */
-  targetAgentId: string;
-  /**
    * Instruction delivered to the sub-agent.
    * In client mode it is injected as a virtual user message prepended to the
    * existing message history. In gateway mode it becomes the `message` param
@@ -39,10 +33,17 @@ export interface AgentInvocationIntent {
    */
   instruction: string;
   /**
+   * Which invocation pattern produced this intent.
+   * Preserved for logging / debugging; has no effect on runtime selection.
+   */
+  kind: 'callAgent' | 'callSubAgent' | 'mention';
+  /**
    * ID of the tool result message that triggered this invocation.
    * Used as `parentMessageId` by the client executor.
    */
   parentMessageId: string;
+  /** Target agent to execute. */
+  targetAgentId: string;
 }
 
 export interface RuntimeSelectionContext {
@@ -80,9 +81,15 @@ export const selectRuntimeType = (
   { isDesktop = defaultIsDesktop }: SelectRuntimeTypeOptions = {},
 ): AgentRuntimeType => {
   if (ctx.parentRuntime) return ctx.parentRuntime;
+  // Remote device agents (openclaw / hermes) always use the gateway path regardless of
+  // desktop/web — they communicate via a device connected with `lh connect`, not via
+  // local desktop IPC. No special desktop handling needed.
+  if (ctx.heterogeneousProvider && isRemoteHeterogeneousType(ctx.heterogeneousProvider.type)) {
+    return 'gateway';
+  }
+  // Local CLI agents (claude-code, codex) run as desktop subprocesses.
   if (isDesktop && ctx.heterogeneousProvider) return 'hetero';
-  // On web, heterogeneous agents always run via Gateway sandbox regardless of the
-  // isGatewayMode user preference — the sandbox is the only execution environment.
+  // On web, all remaining hetero agents run via the Gateway sandbox.
   if (!isDesktop && ctx.heterogeneousProvider) return 'gateway';
   if (ctx.isGatewayMode) return 'gateway';
   return 'client';

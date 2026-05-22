@@ -1,6 +1,9 @@
 'use client';
 
-import type { RemoteHeterogeneousAgentType } from '@lobechat/heterogeneous-agents';
+import {
+  REMOTE_HETEROGENEOUS_AGENT_CONFIGS,
+  type RemoteHeterogeneousAgentType,
+} from '@lobechat/heterogeneous-agents';
 import { Button, Flexbox, Icon } from '@lobehub/ui';
 import { Alert, Input, Modal, Select, Steps, Tag } from 'antd';
 import { createStyles } from 'antd-style';
@@ -28,16 +31,11 @@ const useStyles = createStyles(({ css, token }) => ({
 
     background: ${token.colorFillSecondary};
   `,
-  capabilityTag: css`
-    flex-shrink: 0;
-    margin-inline-end: 0;
-  `,
   deviceItem: css`
     display: flex;
     gap: 8px;
     align-items: center;
   `,
-  modal: css``,
   platformCard: css`
     cursor: pointer;
 
@@ -75,25 +73,6 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }));
 
-interface PlatformDef {
-  desc: string;
-  name: string;
-  type: RemoteHeterogeneousAgentType;
-}
-
-const PLATFORM_DEFS: PlatformDef[] = [
-  {
-    desc: 'Run OpenClaw agents on your local machine',
-    name: 'OpenClaw',
-    type: 'openclaw',
-  },
-  {
-    desc: 'Run Hermes agents on your local machine',
-    name: 'Hermes',
-    type: 'hermes',
-  },
-];
-
 interface AgentProfile {
   avatar?: string;
   description?: string;
@@ -127,6 +106,14 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
     >(undefined);
     const [checkingCapability, setCheckingCapability] = useState(false);
 
+    // Derive platform display list from the registry — adding a new platform to
+    // REMOTE_HETEROGENEOUS_AGENT_CONFIGS automatically includes it here.
+    const platformDefs = REMOTE_HETEROGENEOUS_AGENT_CONFIGS.map((c) => ({
+      desc: t(`platformAgent.create.desc.${c.type}`),
+      name: c.title,
+      type: c.type,
+    }));
+
     // Fetch device list when the modal opens; expose refetch for the refresh button
     const {
       data: devices,
@@ -138,7 +125,7 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
       staleTime: 0, // always re-fetch when explicitly called
     });
 
-    const selectedPlatformDef = PLATFORM_DEFS.find((p) => p.type === platform)!;
+    const selectedPlatformDef = platformDefs.find((p) => p.type === platform)!;
 
     // Reset state when modal opens
     useEffect(() => {
@@ -165,6 +152,15 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
       }
     }, [step, agentProfile, fetchingProfile]);
 
+    const handlePlatformChange = useCallback((type: RemoteHeterogeneousAgentType) => {
+      setPlatform(type);
+      // Reset device + capability state — capability is platform-specific;
+      // stale results from the previous platform must not carry over.
+      setDeviceId(undefined);
+      setCapabilityResult(undefined);
+      setAgentProfile(null);
+    }, []);
+
     const checkCapability = useCallback(
       async (dId: string) => {
         setCheckingCapability(true);
@@ -176,12 +172,12 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
           });
           setCapabilityResult(result);
         } catch {
-          setCapabilityResult({ available: false, reason: 'Check failed' });
+          setCapabilityResult({ available: false, reason: t('platformAgent.create.checkFailed') });
         } finally {
           setCheckingCapability(false);
         }
       },
-      [platform],
+      [platform, t],
     );
 
     const fetchProfile = useCallback(
@@ -292,16 +288,16 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
       if (step === 0) {
         return (
           <Flexbox gap={12}>
-            {PLATFORM_DEFS.map((def) => (
+            {platformDefs.map((def) => (
               <div
                 className={styles.platformCard}
                 data-selected={platform === def.type}
                 key={def.type}
                 role="button"
                 tabIndex={0}
-                onClick={() => setPlatform(def.type)}
+                onClick={() => handlePlatformChange(def.type)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') setPlatform(def.type);
+                  if (e.key === 'Enter' || e.key === ' ') handlePlatformChange(def.type);
                 }}
               >
                 <Flexbox horizontal align="center" gap={8}>
@@ -359,7 +355,7 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
                       <Icon icon={BotIcon} size={14} />
                       <span>{d.hostname}</span>
                       <Tag color="success" style={{ marginInlineEnd: 0 }}>
-                        online
+                        {t('platformAgent.device.online')}
                       </Tag>
                     </div>
                   ),

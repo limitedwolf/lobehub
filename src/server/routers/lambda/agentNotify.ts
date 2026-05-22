@@ -169,6 +169,17 @@ export const agentNotifyRouter = router({
 
         // Update existing message if we have a resolved target
         if (resolvedMessageId) {
+          // Security: verify the message belongs to this topic before writing.
+          // MessageModel.update scopes only by userId; without this check, a remote
+          // runtime could overwrite messages from other conversations.
+          const existingMsg = await ctx.messageModel.findById(resolvedMessageId);
+          if (!existingMsg || existingMsg.topicId !== topicId) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'Message does not belong to this topic',
+            });
+          }
+
           // done=true with empty content + existing placeholder → just signal completion, no update.
           if (done && !content) {
             void publishRemoteHeteroEvent();

@@ -219,9 +219,11 @@ export async function runHeteroTask(params: RunHeteroTaskParams): Promise<string
         const text = signal
           ? `Task cancelled (signal: ${signal})`
           : `Task failed (exit code: ${code})`;
-        void sendAutoNotify(topicId, taskId, text, agentId);
-        // Also publish agent_runtime_end for error/cancel exits.
-        void sendDoneSignal(topicId, agentId);
+        // Send error message first, THEN signal done (sequential).
+        // Fire-and-forget both, but ensure done is always sent even if notify fails.
+        void sendAutoNotify(topicId, taskId, text, agentId).finally(() =>
+          sendDoneSignal(topicId, agentId),
+        );
       } else {
         // Clean exit — openclaw already sent its final message; just signal done.
         void sendDoneSignal(topicId, agentId);

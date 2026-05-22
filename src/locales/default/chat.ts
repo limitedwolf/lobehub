@@ -346,6 +346,13 @@ export default {
   'newPlatformAgent': 'Add Platform Agent',
   'newGroupChat': 'Create Group',
 
+  // Platform agent: per-platform descriptions shown in step 0 of the creation modal
+  'platformAgent.create.desc.openclaw': 'Run OpenClaw agents on your local machine',
+  'platformAgent.create.desc.hermes': 'Run Hermes agents on your local machine',
+
+  // Platform agent: shared device status label (used in Select option labels)
+  'platformAgent.device.online': 'Online',
+
   // Platform agent creation modal (openclaw / hermes)
   'platformAgent.create.title': 'Add Platform Agent',
   'platformAgent.create.step1': 'Select Platform',

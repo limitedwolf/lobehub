@@ -1,6 +1,9 @@
 'use client';
 
-import type { RemoteHeterogeneousAgentType } from '@lobechat/heterogeneous-agents';
+import {
+  HETEROGENEOUS_TYPE_LABELS,
+  type RemoteHeterogeneousAgentType,
+} from '@lobechat/heterogeneous-agents';
 import type { HeterogeneousProviderConfig } from '@lobechat/types';
 import { ActionIcon, Flexbox, Icon, Text, Tooltip } from '@lobehub/ui';
 import { Button, Modal, Select, Tag } from 'antd';
@@ -79,11 +82,6 @@ interface RemoteAgentConfigCardProps {
   provider: HeterogeneousProviderConfig;
 }
 
-const PLATFORM_NAMES: Record<string, string> = {
-  hermes: 'Hermes',
-  openclaw: 'OpenClaw',
-};
-
 const RemoteAgentConfigCard = memo<RemoteAgentConfigCardProps>(
   ({ provider, onBoundDeviceChange }) => {
     const { t } = useTranslation('setting');
@@ -102,7 +100,7 @@ const RemoteAgentConfigCard = memo<RemoteAgentConfigCardProps>(
     const [checkingCapability, setCheckingCapability] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    const platformName = PLATFORM_NAMES[provider.type] ?? provider.type;
+    const platformName = HETEROGENEOUS_TYPE_LABELS[provider.type] ?? provider.type;
 
     const { data: devices, isLoading: loadingDevices } = lambdaQuery.device.listDevices.useQuery(
       undefined,
@@ -171,7 +169,7 @@ const RemoteAgentConfigCard = memo<RemoteAgentConfigCardProps>(
       if (!boundDevice?.online) {
         return (
           <Tag color="warning" style={{ marginInlineEnd: 0 }}>
-            offline
+            {t('platformAgentConfig.device.offline')}
           </Tag>
         );
       }
@@ -289,7 +287,7 @@ const RemoteAgentConfigCard = memo<RemoteAgentConfigCardProps>(
           <Flexbox gap={12} paddingBlock={'12px 4px'}>
             <Select
               loading={loadingDevices}
-              placeholder="Select a device"
+              placeholder={t('platformAgentConfig.selectDevice')}
               style={{ width: '100%' }}
               value={selectedDeviceId}
               options={onlineDevices.map((d) => ({
@@ -298,7 +296,7 @@ const RemoteAgentConfigCard = memo<RemoteAgentConfigCardProps>(
                     <Icon icon={BotIcon} size={14} />
                     <span>{d.hostname}</span>
                     <Tag color="success" style={{ marginInlineEnd: 0 }}>
-                      online
+                      {t('platformAgentConfig.device.online')}
                     </Tag>
                   </div>
                 ),
