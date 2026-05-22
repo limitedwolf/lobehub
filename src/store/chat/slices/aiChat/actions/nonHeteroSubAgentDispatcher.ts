@@ -1,5 +1,8 @@
-import type { HeterogeneousProviderConfig } from '@lobechat/types';
-import type { ConversationContext, UIChatMessage } from '@lobechat/types';
+import type {
+  ConversationContext,
+  HeterogeneousProviderConfig,
+  UIChatMessage,
+} from '@lobechat/types';
 
 import type { ChatStore } from '@/store/chat/store';
 
@@ -17,16 +20,15 @@ import {
 export interface NonHeteroSubAgentDispatchContext {
   /** Conversation context of the *parent* agent (agentId = parent agent). */
   conversationContext: ConversationContext;
-  /**
-   * Explicit runtime inherited from the parent operation.
-   * When set, `selectRuntimeType` returns this value immediately, preserving
-   * the parent's execution environment for the child invocation.
-   */
-  parentRuntime?: AgentRuntimeType;
-  /** Current gateway mode status (`chatStore.isGatewayModeEnabled()`). */
-  isGatewayMode: boolean;
   /** Per-agent heterogeneous provider config used for runtime resolution. */
   heterogeneousProvider?: HeterogeneousProviderConfig;
+  /**
+   * Whether the sub-agent runs inside a portal thread.
+   * Client mode only — has no effect in gateway mode.
+   */
+  inPortalThread?: boolean;
+  /** Current gateway mode status (`chatStore.isGatewayModeEnabled()`). */
+  isGatewayMode: boolean;
   /**
    * Messages passed to the client-side runner.
    * Typically the current conversation messages plus a virtual instruction
@@ -34,15 +36,16 @@ export interface NonHeteroSubAgentDispatchContext {
    */
   messages?: UIChatMessage[];
   /**
-   * Whether the sub-agent runs inside a portal thread.
-   * Client mode only — has no effect in gateway mode.
-   */
-  inPortalThread?: boolean;
-  /**
    * Parent operation ID to link the sub-agent operation as a child.
    * Optional — only provided when the caller has an active operation to chain.
    */
   parentOperationId?: string;
+  /**
+   * Explicit runtime inherited from the parent operation.
+   * When set, `selectRuntimeType` returns this value immediately, preserving
+   * the parent's execution environment for the child invocation.
+   */
+  parentRuntime?: AgentRuntimeType;
 }
 
 /**
