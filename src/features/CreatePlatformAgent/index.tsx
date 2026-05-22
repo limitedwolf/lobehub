@@ -5,7 +5,7 @@ import {
   type RemoteHeterogeneousAgentType,
 } from '@lobechat/heterogeneous-agents';
 import { Button, Flexbox, Icon } from '@lobehub/ui';
-import { Alert, Input, Modal, Select, Steps, Tag } from 'antd';
+import { Alert, Input, Modal, Select, Steps, Tag, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import { BotIcon, CheckCircle2, MonitorSmartphone, RefreshCw, XCircle } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
@@ -284,6 +284,28 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
           </Flexbox>
         );
       }
+
+      // Detect outdated lh desktop version — the gateway returns this pattern when the
+      // tool is unknown to the running desktop build.
+      const isVersionTooLow = capabilityResult.reason?.includes('is not available on this device');
+      if (isVersionTooLow) {
+        return (
+          <Alert
+            showIcon
+            message={t('platformAgent.create.versionTooLow')}
+            type="warning"
+            description={
+              <Flexbox gap={4}>
+                <span>{t('platformAgent.create.versionTooLowHint')}</span>
+                <Typography.Text code copyable>
+                  {t('platformAgent.create.upgradeCmd')}
+                </Typography.Text>
+              </Flexbox>
+            }
+          />
+        );
+      }
+
       return (
         <Flexbox horizontal align="center" gap={4}>
           <Icon color="var(--ant-color-error)" icon={XCircle} size={14} />
@@ -351,9 +373,16 @@ const CreatePlatformAgentModal = memo<CreatePlatformAgentModalProps>(
             <Flexbox gap={12}>
               <Alert
                 showIcon
-                description={t('platformAgent.create.noDevicesHint')}
                 message={t('platformAgent.create.noDevices')}
-                type="warning"
+                type="info"
+                description={
+                  <Flexbox gap={4}>
+                    <span>{t('platformAgent.create.noDevicesHint')}</span>
+                    <Typography.Text code copyable>
+                      {t('platformAgent.create.noDevicesCmd')}
+                    </Typography.Text>
+                  </Flexbox>
+                }
               />
               {refreshButton}
             </Flexbox>

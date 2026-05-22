@@ -378,13 +378,18 @@ export default {
   'platformAgent.create.descriptionPlaceholder': 'Brief description (optional)',
   'platformAgent.create.fetchingProfile': 'Fetching profile...',
   'platformAgent.create.noDevices': 'No devices connected',
-  'platformAgent.create.noDevicesHint': 'Run `lh connect` on the target machine first',
+  'platformAgent.create.noDevicesHint':
+    'Run the command below on the machine you want to connect, then click Refresh:',
+  'platformAgent.create.noDevicesCmd': 'lh connect',
   'platformAgent.create.refresh': 'Refresh',
   'platformAgent.create.selectDevice': 'Select a device',
   'platformAgent.create.checking': 'Checking availability...',
   'platformAgent.create.available': 'Available',
   'platformAgent.create.notInstalled': '{{name}} not installed on this device',
   'platformAgent.create.checkFailed': 'Check failed',
+  'platformAgent.create.versionTooLow': 'lh version is too low',
+  'platformAgent.create.versionTooLowHint': 'Update lh to the latest version:',
+  'platformAgent.create.upgradeCmd': 'npm install -g @lobehub/cli',
   'platformAgent.create.comingSoon': 'Coming Soon',
 
   // Platform agent device guard banner
