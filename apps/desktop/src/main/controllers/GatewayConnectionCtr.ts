@@ -301,11 +301,11 @@ export default class GatewayConnectionCtr extends ControllerModule {
     }
   }
 
-  private getAgentProfile(args: { agentId?: string; platform: string }): {
+  private async getAgentProfile(args: { agentId?: string; platform: string }): Promise<{
     avatar?: string;
     description?: string;
     title?: string;
-  } {
+  }> {
     const { platform, agentId } = args;
 
     if (platform === 'openclaw') {
