@@ -275,6 +275,64 @@ name: skill-name
       expect(mockEditor.setDocument).toHaveBeenCalledWith('json', JSON.stringify(editorData));
     });
 
+    it('should preserve legacy SKILL.md editorData without client-side migration', () => {
+      const { result } = renderHook(() => useDocumentStore());
+      const mockEditor = createMockEditor() as any;
+      const editorData = {
+        root: {
+          children: [
+            { id: '1', type: 'horizontalrule' },
+            {
+              children: [
+                {
+                  text: `description: >-
+Use when a production API returns a misleading 400 validation error.
+name: production-env-var-api-triage`,
+                  type: 'text',
+                },
+              ],
+              tag: 'h2',
+              type: 'heading',
+            },
+            {
+              children: [
+                { children: [{ text: 'original', type: 'text' }], type: 'paragraph' },
+                { children: [{ text: 'updated', type: 'text' }], type: 'paragraph' },
+              ],
+              diffType: 'modify',
+              id: 'body-diff',
+              type: 'diff',
+            },
+          ],
+          type: 'root',
+        },
+      };
+
+      act(() => {
+        result.current.initDocumentWithEditor({
+          content: `---
+description: >-
+  Use when a production API returns a misleading 400 validation error.
+name: production-env-var-api-triage
+---
+
+# Production API Error Triage`,
+          contentFormat: 'skillMarkdown',
+          documentId: 'doc-1',
+          editor: mockEditor,
+          editorData,
+          sourceType: 'notebook',
+        });
+      });
+
+      act(() => {
+        result.current.onEditorInit(mockEditor);
+      });
+
+      expect(mockEditor.setDocument).toHaveBeenCalledWith('json', JSON.stringify(editorData));
+      expect(mockEditor.setDocument).not.toHaveBeenCalledWith('markdown', expect.any(String));
+    });
+
     it('should fall back to editable body when SKILL.md editorData cannot be loaded', () => {
       const { result } = renderHook(() => useDocumentStore());
       const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});

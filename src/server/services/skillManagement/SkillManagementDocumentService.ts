@@ -15,6 +15,7 @@ import {
   SKILL_MANAGEMENT_SOURCE_TYPE,
 } from './constants';
 import {
+  extractSkillIndexBody,
   normalizeSkillIndexContent,
   parseSkillFrontmatter,
   renderSkillIndexContent,
@@ -132,12 +133,15 @@ export class SkillManagementDocumentService {
     const metadata = buildSkillMetadata(frontmatter);
     // NOTICE:
     // Managed skill indexes are Markdown-backed, but document history snapshots are
-    // editor-data-backed. Always keep `content` and `editorData` in sync so the next
-    // automated skill refinement can save a pre-mutation `document_histories` row.
+    // editor-data-backed. Keep `content` as the full SKILL.md source while projecting
+    // only the editable body into `editorData`; the frontmatter is rendered separately
+    // in the document header.
     // Root cause: older managed-skill writes only persisted Markdown content, which made
     // `DocumentService.trySaveCurrentDocumentHistory` no-op for `editorData = NULL`.
     // Removal condition: only if document history can snapshot Markdown content directly.
-    const indexEditorSnapshot = await this.createMarkdownEditorSnapshot(normalizedContent);
+    const indexEditorSnapshot = await this.createMarkdownEditorSnapshot(
+      extractSkillIndexBody(normalizedContent),
+    );
     const duplicateBundles = (
       await this.agentDocumentModel.listByParentAndFilename(input.agentId, null, name)
     ).filter((doc) => doc.fileType === SKILL_BUNDLE_FILE_TYPE);
@@ -351,11 +355,12 @@ export class SkillManagementDocumentService {
     const metadata = buildSkillMetadata(frontmatter);
     // NOTICE:
     // The replacement body must be projected into editor data before updating the backing
-    // document. Without this, history capture works for ordinary agent documents but silently
-    // skips managed skills because there is no valid editor state to snapshot.
+    // document. The YAML frontmatter stays in `content` and the metadata card, not the editor.
     // Root cause: `document_histories.editor_data` stores editor snapshots, not Markdown.
     // Removal condition: only if document history can snapshot Markdown content directly.
-    const editorSnapshot = await this.createMarkdownEditorSnapshot(normalizedContent);
+    const editorSnapshot = await this.createMarkdownEditorSnapshot(
+      extractSkillIndexBody(normalizedContent),
+    );
 
     await this.documentService.trySaveCurrentDocumentHistory(index.documentId, 'llm_call');
     const updatedBundle =
@@ -402,7 +407,9 @@ export class SkillManagementDocumentService {
     });
     const frontmatter = parseSkillFrontmatter(normalizedContent);
     const metadata = buildSkillMetadata(frontmatter);
-    const editorSnapshot = await this.createMarkdownEditorSnapshot(normalizedContent);
+    const editorSnapshot = await this.createMarkdownEditorSnapshot(
+      extractSkillIndexBody(normalizedContent),
+    );
 
     if (normalizedContent !== index.content) {
       await this.documentService.trySaveCurrentDocumentHistory(index.documentId, 'llm_call');

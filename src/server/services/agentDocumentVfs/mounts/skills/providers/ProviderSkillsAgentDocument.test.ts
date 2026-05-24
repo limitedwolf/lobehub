@@ -31,6 +31,13 @@ const createAgentDocument = (overrides: Record<string, unknown> = {}) =>
     ...overrides,
   }) as any;
 
+const skillContent = (name = 'writer', body = '# Skill') => `---
+name: ${name}
+description: Writes content
+---
+
+${body}`;
+
 describe('Agent skill VFS providers', () => {
   const agentDocumentModel = {
     associate: vi.fn(),
@@ -131,9 +138,11 @@ describe('Agent skill VFS providers', () => {
         documentService,
       });
 
+      const content = skillContent();
+
       const result = await provider.create({
         agentId: 'agent-1',
-        content: '# Skill',
+        content,
         skillName: 'writer',
         targetNamespace: 'agent',
       });
@@ -148,26 +157,21 @@ describe('Agent skill VFS providers', () => {
         templateId: 'agent-skill',
         title: 'writer',
       });
-      expect(agentDocumentModel.create).toHaveBeenNthCalledWith(
-        2,
-        'agent-1',
-        'SKILL.md',
-        '# Skill',
-        {
-          editorData: { markdown: '# Skill' },
-          fileType: 'skills/index',
-          metadata: { skill: { vfs: true } },
-          parentId: 'bundle-1',
-          policyLoad: 'disabled',
-          source: 'agent-signal:skill-management',
-          sourceType: 'agent-signal',
-          templateId: 'agent-skill',
-          title: 'SKILL.md',
-        },
-      );
+      expect(agentDocumentModel.create).toHaveBeenNthCalledWith(2, 'agent-1', 'SKILL.md', content, {
+        editorData: { markdown: '# Skill' },
+        fileType: 'skills/index',
+        metadata: { skill: { vfs: true } },
+        parentId: 'bundle-1',
+        policyLoad: 'disabled',
+        source: 'agent-signal:skill-management',
+        sourceType: 'agent-signal',
+        templateId: 'agent-skill',
+        title: 'SKILL.md',
+      });
       expect(documentService.createDocument).not.toHaveBeenCalled();
       expect(agentDocumentModel.associate).not.toHaveBeenCalled();
       expect(result.path).toBe('./lobe/skills/agent/skills/writer/SKILL.md');
+      expect(result.content).toBe(content);
     });
 
     /**
@@ -235,9 +239,11 @@ describe('Agent skill VFS providers', () => {
         documentService,
       });
 
+      const content = skillContent('skill-a', '# Updated Skill');
+
       const result = await provider.update({
         agentId: 'agent-1',
-        content: 'new content',
+        content,
         path: './lobe/skills/agent/skills/skill-a/SKILL.md',
       });
 
@@ -246,10 +252,10 @@ describe('Agent skill VFS providers', () => {
         'llm_call',
       );
       expect(agentDocumentModel.update).toHaveBeenCalledWith('agent-doc-file', {
-        content: 'new content',
-        editorData: { markdown: 'new content' },
+        content,
+        editorData: { markdown: '# Updated Skill' },
       });
-      expect(result.content).toBe('new content');
+      expect(result.content).toBe(content);
     });
 
     it('soft-deletes the folder subtree for an agent skill', async () => {

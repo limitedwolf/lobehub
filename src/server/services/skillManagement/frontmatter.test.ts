@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  extractSkillIndexBody,
   normalizeSkillIndexContent,
   parseSkillFrontmatter,
   validateSkillName,
@@ -110,5 +111,13 @@ describe('normalizeSkillIndexContent', () => {
         description: '   ',
       }),
     ).toThrow('Skill frontmatter description is required');
+  });
+});
+
+describe('extractSkillIndexBody', () => {
+  it('returns only the editable markdown body', () => {
+    expect(
+      extractSkillIndexBody('---\nname: skill-name\ndescription: Skill description\n---\n# Body'),
+    ).toBe('# Body');
   });
 });

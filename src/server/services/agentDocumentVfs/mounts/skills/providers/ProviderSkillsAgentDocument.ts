@@ -1,5 +1,6 @@
 import { createMarkdownEditorSnapshot } from '@/server/services/agentDocuments/headlessEditor';
 import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import { extractSkillIndexBody } from '@/server/services/skillManagement/frontmatter';
 
 import type {
   CreateSkillInput,
@@ -119,19 +120,19 @@ export class ProviderSkillsAgentDocument implements WritableSkillMountProvider {
       throw new AgentDocumentVfsError('Skill already exists', 'CONFLICT');
     }
 
-    const snapshot = await createMarkdownEditorSnapshot(input.content);
+    const editorSnapshot = await createMarkdownEditorSnapshot(extractSkillIndexBody(input.content));
 
     await createSkillTree({
       agentDocumentModel: this.deps.agentDocumentModel,
       agentId: input.agentId,
-      content: snapshot.content,
-      editorData: snapshot.editorData,
+      content: input.content,
+      editorData: editorSnapshot.editorData,
       namespace: this.config.namespace,
       skillName,
     });
 
     return buildSkillFileNode({
-      content: snapshot.content,
+      content: input.content,
       namespace: this.config.namespace,
       skillName,
     });
@@ -143,9 +144,9 @@ export class ProviderSkillsAgentDocument implements WritableSkillMountProvider {
     const documents = await this.deps.agentDocumentModel.findByAgent(input.agentId);
     const document = assertSkillDocument(getSkillFile(documents, this.config.namespace, skillName));
     const existingContent = await projectDocumentContent(document);
-    const snapshot = await createMarkdownEditorSnapshot(input.content);
+    const editorSnapshot = await createMarkdownEditorSnapshot(extractSkillIndexBody(input.content));
 
-    if (existingContent !== snapshot.content) {
+    if (existingContent !== input.content) {
       await this.deps.documentService.trySaveCurrentDocumentHistory(
         document.documentId,
         'llm_call',
@@ -153,12 +154,12 @@ export class ProviderSkillsAgentDocument implements WritableSkillMountProvider {
     }
 
     await this.deps.agentDocumentModel.update(document.id, {
-      content: snapshot.content,
-      editorData: snapshot.editorData,
+      content: input.content,
+      editorData: editorSnapshot.editorData,
     });
 
     return buildSkillFileNode({
-      content: snapshot.content,
+      content: input.content,
       namespace: this.config.namespace,
       skillName,
     });

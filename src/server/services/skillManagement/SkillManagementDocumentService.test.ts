@@ -331,7 +331,7 @@ describe('SkillManagementDocumentService', () => {
         content: skillContent('release-writer', 'Writes release notes'),
         filename: SKILL_INDEX_FILENAME,
         params: expect.objectContaining({
-          editorData: expectedEditorData(skillContent('release-writer', 'Writes release notes')),
+          editorData: expectedEditorData(skillBody()),
           fileType: SKILL_INDEX_FILE_TYPE,
           parentId: 'document-1',
           policyLoad: PolicyLoad.DISABLED,
@@ -380,7 +380,7 @@ describe('SkillManagementDocumentService', () => {
     expect(agentDocumentModel.documents).toHaveLength(2);
     expect(agentDocumentModel.documents.find((doc) => doc.id === source.id)).toEqual(
       expect.objectContaining({
-        editorData: expectedEditorData(skillContent('draft-skill', 'Draft helper', '# Draft')),
+        editorData: expectedEditorData(skillBody('# Draft')),
         fileType: SKILL_INDEX_FILE_TYPE,
         filename: SKILL_INDEX_FILENAME,
         parentId: detail.bundle.documentId,
@@ -485,9 +485,7 @@ describe('SkillManagementDocumentService', () => {
       expect.objectContaining({
         agentDocumentId: created.index.agentDocumentId,
         params: expect.objectContaining({
-          editorData: expectedEditorData(
-            skillContent('researcher', 'Researches docs better', '# Better'),
-          ),
+          editorData: expectedEditorData(skillBody('# Better')),
           metadata: {
             skill: { frontmatter: { description: 'Researches docs better', name: 'researcher' } },
           },
@@ -580,7 +578,7 @@ describe('SkillManagementDocumentService', () => {
       expect.objectContaining({
         agentDocumentId: created.index.agentDocumentId,
         params: expect.objectContaining({
-          editorData: expectedEditorData(skillContent('new-skill', 'Old description')),
+          editorData: expectedEditorData(skillBody()),
         }),
       }),
     );

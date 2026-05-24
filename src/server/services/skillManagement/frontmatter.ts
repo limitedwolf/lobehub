@@ -178,6 +178,19 @@ export const normalizeSkillIndexContent = (input: NormalizeSkillIndexContentInpu
   return body.endsWith('\n') ? serialized : serialized.replace(/\n$/, '');
 };
 
+/**
+ * Extracts the editable Markdown body from a normalized skill index document.
+ *
+ * `documents.content` keeps the full `SKILL.md` source including frontmatter, while editor
+ * snapshots must represent only the user-editable body so the metadata block is not rendered
+ * twice in the page editor.
+ */
+export const extractSkillIndexBody = (content: string): string => {
+  const { body } = parseMatter(content);
+
+  return body.replace(/^\r?\n/, '');
+};
+
 const readSkillFrontmatterFields = (data: Record<string, unknown>): Partial<SkillFrontmatter> => {
   const name = typeof data.name === 'string' ? data.name.trim() : undefined;
   const description = typeof data.description === 'string' ? data.description.trim() : undefined;
