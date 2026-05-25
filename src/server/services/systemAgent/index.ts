@@ -2,10 +2,14 @@ import { chainSummaryTitle } from '@lobechat/prompts';
 import type { UserSystemAgentConfig, UserSystemAgentConfigKey } from '@lobechat/types';
 import { RequestTrigger } from '@lobechat/types';
 import debug from 'debug';
+import type { EnabledAiModel } from 'model-bank';
 
 import { UserModel } from '@/database/models/user';
+import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import type { LobeChatDatabase } from '@/database/type';
+import { getServerGlobalConfig } from '@/server/globalConfig';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { type ProviderConfig } from '@/types/user/settings';
 
 import { resolveSystemAgentModelConfig } from './modelConfig';
 
@@ -35,6 +39,7 @@ const TOPIC_TITLE_SCHEMA = {
  */
 export class SystemAgentService {
   private readonly db: LobeChatDatabase;
+  private enabledModelsPromise?: Promise<EnabledAiModel[]>;
   private readonly userId: string;
 
   constructor(db: LobeChatDatabase, userId: string) {
@@ -104,7 +109,23 @@ export class SystemAgentService {
     const systemAgent = settings?.systemAgent as Partial<UserSystemAgentConfig> | undefined;
 
     const taskConfig = systemAgent?.[taskKey];
-    return resolveSystemAgentModelConfig({ taskConfig, taskKey });
+    const enabledModels = await this.getEnabledModels();
+
+    return resolveSystemAgentModelConfig({ enabledModels, taskConfig, taskKey });
+  }
+
+  private async getEnabledModels(): Promise<EnabledAiModel[]> {
+    if (this.enabledModelsPromise) return this.enabledModelsPromise;
+
+    const { aiProvider } = await getServerGlobalConfig();
+    const aiInfraRepos = new AiInfraRepos(
+      this.db,
+      this.userId,
+      aiProvider as Record<string, ProviderConfig>,
+    );
+
+    this.enabledModelsPromise = aiInfraRepos.getEnabledModels();
+    return this.enabledModelsPromise;
   }
 
   /**

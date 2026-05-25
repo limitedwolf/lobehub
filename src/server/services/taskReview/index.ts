@@ -2,10 +2,14 @@ import type { EvaluateResult, RubricResult } from '@lobechat/eval-rubric';
 import { evaluate } from '@lobechat/eval-rubric';
 import type { EvalBenchmarkRubric, UserSystemAgentConfig } from '@lobechat/types';
 import debug from 'debug';
+import type { EnabledAiModel } from 'model-bank';
 
 import { UserModel } from '@/database/models/user';
+import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import type { LobeChatDatabase } from '@/database/type';
+import { getServerGlobalConfig } from '@/server/globalConfig';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { type ProviderConfig } from '@/types/user/settings';
 
 import { resolveSystemAgentModelConfig } from '../systemAgent/modelConfig';
 
@@ -35,6 +39,7 @@ export interface ReviewResult {
 
 export class TaskReviewService {
   private db: LobeChatDatabase;
+  private enabledModelsPromise?: Promise<EnabledAiModel[]>;
   private userId: string;
 
   constructor(db: LobeChatDatabase, userId: string) {
@@ -105,8 +110,11 @@ export class TaskReviewService {
   private async resolveModelConfig(
     judge: ReviewJudge,
   ): Promise<{ model: string; provider: string }> {
+    const enabledModels = await this.getEnabledModels();
+
     if (judge.model && judge.provider) {
       return resolveSystemAgentModelConfig({
+        enabledModels,
         override: judge,
         taskKey: 'topic',
       });
@@ -118,9 +126,24 @@ export class TaskReviewService {
     const topicConfig = systemAgent?.topic;
 
     return resolveSystemAgentModelConfig({
+      enabledModels,
       override: judge,
       taskConfig: topicConfig,
       taskKey: 'topic',
     });
+  }
+
+  private async getEnabledModels(): Promise<EnabledAiModel[]> {
+    if (this.enabledModelsPromise) return this.enabledModelsPromise;
+
+    const { aiProvider } = await getServerGlobalConfig();
+    const aiInfraRepos = new AiInfraRepos(
+      this.db,
+      this.userId,
+      aiProvider as Record<string, ProviderConfig>,
+    );
+
+    this.enabledModelsPromise = aiInfraRepos.getEnabledModels();
+    return this.enabledModelsPromise;
   }
 }
