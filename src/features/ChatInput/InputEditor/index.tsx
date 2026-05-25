@@ -334,6 +334,8 @@ const InputEditor = memo<{
       {...richRenderProps}
       mentionOption={mentionOption}
       slashOption={slashOption}
+      // Disable spellCheck to suppress Safari/WebKit inline predictive text (Apple Intelligence)
+      spellCheck={false}
       type={'text'}
       variant={'chat'}
       placeholder={
