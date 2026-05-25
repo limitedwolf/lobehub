@@ -13,6 +13,7 @@ import { LOADING_FLAT } from '@/const/message';
 import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
+import { resolveClientServiceModelConfig } from '@/services/serviceModelPolicy/client';
 import { topicService } from '@/services/topic';
 import { type ChatStore } from '@/store/chat';
 import { topicMapKey } from '@/store/chat/utils/topicMapKey';
@@ -205,6 +206,8 @@ export class ChatTopicActionImpl {
 
     // Get current agent for topic
     const topicConfig = systemAgentSelectors.topic(useUserStore.getState());
+    const resolvedTopicConfig = resolveClientServiceModelConfig('topic', topicConfig);
+    const taskConfig = merge(topicConfig, resolvedTopicConfig ?? {});
 
     // Automatically summarize the topic title
     await chatService.fetchPresetTaskResult({
@@ -227,7 +230,7 @@ export class ChatTopicActionImpl {
         internal_updateTopicTitleInSummary(topicId, output);
       },
       params: merge(
-        topicConfig,
+        taskConfig,
         chainSummaryTitle(
           messages,
           userGeneralSettingsSelectors.currentResponseLanguage(useUserStore.getState()),

@@ -7,6 +7,7 @@ import { mutate, useClientDataSWR } from '@/libs/swr';
 import { type UpdateTopicValue } from '@/server/routers/lambda/generationTopic';
 import { chatService } from '@/services/chat';
 import { generationTopicService } from '@/services/generationTopic';
+import { resolveClientServiceModelConfig } from '@/services/serviceModelPolicy/client';
 import { type StoreSetter } from '@/store/types';
 import { useUserStore } from '@/store/user';
 import { systemAgentSelectors, userGeneralSettingsSelectors } from '@/store/user/selectors';
@@ -100,10 +101,15 @@ export class GenerationTopicActionImpl {
     const generationTopicAgentConfig = systemAgentSelectors.generationTopic(
       useUserStore.getState(),
     );
+    const resolvedGenerationTopicAgentConfig = resolveClientServiceModelConfig(
+      'generationTopic',
+      generationTopicAgentConfig,
+    );
+    const taskConfig = merge(generationTopicAgentConfig, resolvedGenerationTopicAgentConfig ?? {});
     // Auto generate topic title from prompt by AI
     await chatService.fetchPresetTaskResult({
       params: merge(
-        generationTopicAgentConfig,
+        taskConfig,
         chainSummaryGenerationTitle(
           prompts,
           'image',

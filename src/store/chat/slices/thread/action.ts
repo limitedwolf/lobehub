@@ -12,6 +12,7 @@ import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { chatService } from '@/services/chat';
+import { resolveClientServiceModelConfig } from '@/services/serviceModelPolicy/client';
 import { threadService } from '@/services/thread';
 import { threadSelectors } from '@/store/chat/selectors';
 import { type ChatStore } from '@/store/chat/store';
@@ -190,6 +191,8 @@ export class ChatThreadActionImpl {
 
     let output = '';
     const threadConfig = systemAgentSelectors.thread(useUserStore.getState());
+    const resolvedThreadConfig = resolveClientServiceModelConfig('thread', threadConfig);
+    const taskConfig = merge(threadConfig, resolvedThreadConfig ?? {});
 
     await chatService.fetchPresetTaskResult({
       onError: () => {
@@ -211,7 +214,7 @@ export class ChatThreadActionImpl {
         internal_updateThreadTitleInSummary(threadId, output);
       },
       params: merge(
-        threadConfig,
+        taskConfig,
         chainSummaryTitle(
           messages,
           userGeneralSettingsSelectors.currentResponseLanguage(useUserStore.getState()),

@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mutate } from '@/libs/swr';
 import { chatService } from '@/services/chat';
 import { threadService } from '@/services/thread';
+import { systemAgentSelectors } from '@/store/user/selectors';
+import type { EnabledProviderWithModels } from '@/types/aiProvider';
 import { type ThreadItem } from '@/types/topic';
 import { ThreadStatus, ThreadType } from '@/types/topic';
 
@@ -77,7 +79,10 @@ vi.mock('@/store/user', () => ({
 
 vi.mock('@/store/user/selectors', () => ({
   systemAgentSelectors: {
-    thread: vi.fn(() => ({})),
+    thread: vi.fn(() => ({
+      model: 'gpt-5-thinking',
+      provider: 'openai',
+    })),
   },
   userGeneralSettingsSelectors: {
     currentResponseLanguage: vi.fn(() => 'en-US'),
@@ -85,6 +90,21 @@ vi.mock('@/store/user/selectors', () => ({
   userProfileSelectors: {
     userAvatar: vi.fn(() => 'avatar-url'),
   },
+}));
+
+const aiInfraStoreState = vi.hoisted(() => ({
+  enabledChatModelList: [
+    {
+      children: [{ id: 'gpt-4o-mini' }],
+      id: 'openai',
+      name: 'OpenAI',
+      source: 'builtin',
+    },
+  ] as EnabledProviderWithModels[],
+}));
+
+vi.mock('@/store/aiInfra', () => ({
+  getAiInfraStoreState: () => aiInfraStoreState,
 }));
 
 beforeEach(() => {
@@ -615,6 +635,12 @@ describe('thread action', () => {
       });
 
       expect(chatService.fetchPresetTaskResult).toHaveBeenCalled();
+      expect(chatService.fetchPresetTaskResult).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ model: 'gpt-4o-mini', provider: 'openai' }),
+        }),
+      );
+      expect(systemAgentSelectors.thread).toHaveBeenCalled();
       expect(internalUpdateSpy).toHaveBeenCalledWith('thread-id', {
         title: 'New Generated Title',
       });

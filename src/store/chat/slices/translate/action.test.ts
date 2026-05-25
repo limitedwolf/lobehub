@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
+import { systemAgentSelectors } from '@/store/user/selectors';
+import type { EnabledProviderWithModels } from '@/types/aiProvider';
 
 import { useChatStore } from '../../store';
 
@@ -31,8 +33,26 @@ vi.mock('@/store/user', () => ({
 
 vi.mock('@/store/user/selectors', () => ({
   systemAgentSelectors: {
-    translation: vi.fn(() => ({})),
+    translation: vi.fn(() => ({
+      model: 'gpt-5-thinking',
+      provider: 'openai',
+    })),
   },
+}));
+
+const aiInfraStoreState = vi.hoisted(() => ({
+  enabledChatModelList: [
+    {
+      children: [{ id: 'gpt-4o-mini' }],
+      id: 'openai',
+      name: 'OpenAI',
+      source: 'builtin',
+    },
+  ] as EnabledProviderWithModels[],
+}));
+
+vi.mock('@/store/aiInfra', () => ({
+  getAiInfraStoreState: () => aiInfraStoreState,
 }));
 
 beforeEach(() => {
@@ -89,6 +109,19 @@ describe('ChatEnhanceAction', () => {
 
       expect(messageService.updateMessageTranslate).toHaveBeenCalled();
       expect(chatService.fetchPresetTaskResult).toHaveBeenCalledTimes(2);
+      expect(chatService.fetchPresetTaskResult).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          params: expect.objectContaining({ model: 'gpt-4o-mini', provider: 'openai' }),
+        }),
+      );
+      expect(chatService.fetchPresetTaskResult).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          params: expect.objectContaining({ model: 'gpt-4o-mini', provider: 'openai' }),
+        }),
+      );
+      expect(systemAgentSelectors.translation).toHaveBeenCalled();
     });
   });
 

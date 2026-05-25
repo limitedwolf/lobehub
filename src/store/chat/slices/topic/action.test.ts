@@ -12,6 +12,8 @@ import { PortalViewType } from '@/store/chat/slices/portal/initialState';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { topicMapKey } from '@/store/chat/utils/topicMapKey';
 import { useSessionStore } from '@/store/session';
+import { systemAgentSelectors } from '@/store/user/selectors';
+import type { EnabledProviderWithModels } from '@/types/aiProvider';
 import { type ChatTopic } from '@/types/topic';
 
 import { useChatStore } from '../../store';
@@ -59,6 +61,21 @@ vi.mock('@/components/AntdStaticMethods', () => ({
     error: vi.fn(),
     destroy: vi.fn(),
   },
+}));
+
+const aiInfraStoreState = vi.hoisted(() => ({
+  enabledChatModelList: [
+    {
+      children: [{ id: 'gpt-4o-mini' }],
+      id: 'openai',
+      name: 'OpenAI',
+      source: 'builtin',
+    },
+  ] as EnabledProviderWithModels[],
+}));
+
+vi.mock('@/store/aiInfra', () => ({
+  getAiInfraStoreState: () => aiInfraStoreState,
 }));
 
 vi.mock('i18next', () => ({
@@ -1325,6 +1342,10 @@ describe('topic action', () => {
       const refreshTopicSpy = vi.spyOn(result.current, 'refreshTopic');
 
       // Mock the `chatService.fetchPresetTaskResult` to simulate the AI response
+      vi.spyOn(systemAgentSelectors, 'topic').mockReturnValue({
+        model: 'gpt-5-thinking',
+        provider: 'openai',
+      });
       vi.spyOn(chatService, 'fetchPresetTaskResult').mockImplementation((params) => {
         if (params) {
           params.onFinish?.('Summarized Title', { type: 'done' });
@@ -1339,8 +1360,11 @@ describe('topic action', () => {
       // Verify that the title was updated and the topic was refreshed
       expect(updateTopicTitleInSummarySpy).toHaveBeenCalledWith(topicId, LOADING_FLAT);
       expect(refreshTopicSpy).toHaveBeenCalled();
-
-      // TODO: need to test with fetchPresetTaskResult
+      expect(chatService.fetchPresetTaskResult).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ model: 'gpt-4o-mini', provider: 'openai' }),
+        }),
+      );
     });
   });
   describe('createTopic', () => {

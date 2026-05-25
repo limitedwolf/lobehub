@@ -12,6 +12,7 @@ import { type PartialDeep } from 'type-fest';
 import { type StateCreator } from 'zustand/vanilla';
 
 import { chatService } from '@/services/chat';
+import { resolveClientServiceModelConfig } from '@/services/serviceModelPolicy/client';
 import { globalHelpers } from '@/store/global/helpers';
 import { useUserStore } from '@/store/user';
 import { systemAgentSelectors } from '@/store/user/slices/settings/selectors';
@@ -293,7 +294,10 @@ export const store: StateCreator<Store, [['zustand/devtools', never]]> = (set, g
   }),
 
   internal_getSystemAgentForMeta: () => {
-    return systemAgentSelectors.agentMeta(useUserStore.getState());
+    const agentMetaConfig = systemAgentSelectors.agentMeta(useUserStore.getState());
+    const resolvedAgentMetaConfig = resolveClientServiceModelConfig('agentMeta', agentMetaConfig);
+
+    return merge(agentMetaConfig, resolvedAgentMetaConfig ?? {});
   },
 
   resetAgentConfig: async () => {

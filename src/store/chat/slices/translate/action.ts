@@ -6,6 +6,7 @@ import { merge } from '@lobechat/utils';
 import { supportLocales } from '@/locales/resources';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
+import { resolveClientServiceModelConfig } from '@/services/serviceModelPolicy/client';
 import { dbMessageSelectors } from '@/store/chat/selectors';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
@@ -49,6 +50,11 @@ export class ChatTranslateActionImpl {
 
     // Get current agent for translation
     const translationSetting = systemAgentSelectors.translation(useUserStore.getState());
+    const resolvedTranslationSetting = resolveClientServiceModelConfig(
+      'translation',
+      translationSetting,
+    );
+    const taskConfig = merge(translationSetting, resolvedTranslationSetting ?? {});
 
     // create translate extra
     await updateMessageTranslate(id, { content: '', from: '', to: targetLang });
@@ -79,7 +85,7 @@ export class ChatTranslateActionImpl {
 
           await updateMessageTranslate(id, { content, from, to: targetLang });
         },
-        params: merge(translationSetting, chainLangDetect(message.content)),
+        params: merge(taskConfig, chainLangDetect(message.content)),
         trace: this.#get().getCurrentTracePayload({ traceName: TraceNameMap.LanguageDetect }),
       });
 
@@ -106,7 +112,7 @@ export class ChatTranslateActionImpl {
             }
           }
         },
-        params: merge(translationSetting, chainTranslate(message.content, targetLang)),
+        params: merge(taskConfig, chainTranslate(message.content, targetLang)),
         trace: this.#get().getCurrentTracePayload({ traceName: TraceNameMap.Translator }),
       });
     } catch (error) {

@@ -6,6 +6,8 @@ import { mutate } from '@/libs/swr';
 import { chatService } from '@/services/chat';
 import { generationTopicService } from '@/services/generationTopic';
 import { useImageStore } from '@/store/image';
+import { systemAgentSelectors } from '@/store/user/selectors';
+import type { EnabledProviderWithModels } from '@/types/aiProvider';
 import { type ImageGenerationTopic } from '@/types/generation';
 
 // Mock @/libs/swr mutate
@@ -43,13 +45,28 @@ vi.mock('@/store/user', () => ({
 vi.mock('@/store/user/selectors', () => ({
   systemAgentSelectors: {
     generationTopic: vi.fn().mockReturnValue({
-      model: 'gpt-4',
+      model: 'gpt-5-thinking',
       provider: 'openai',
     }),
   },
   userGeneralSettingsSelectors: {
     currentResponseLanguage: vi.fn(() => 'en-US'),
   },
+}));
+
+const aiInfraStoreState = vi.hoisted(() => ({
+  enabledChatModelList: [
+    {
+      children: [{ id: 'gpt-4o-mini' }],
+      id: 'openai',
+      name: 'OpenAI',
+      source: 'builtin',
+    },
+  ] as EnabledProviderWithModels[],
+}));
+
+vi.mock('@/store/aiInfra', () => ({
+  getAiInfraStoreState: () => aiInfraStoreState,
 }));
 
 beforeEach(() => {
@@ -213,6 +230,10 @@ describe('GenerationTopicAction', () => {
       act(() => {
         useImageStore.setState({ generationTopics: topics });
       });
+      vi.mocked(systemAgentSelectors.generationTopic).mockReturnValue({
+        model: 'gpt-5-thinking',
+        provider: 'openai',
+      });
 
       // Mock successful AI response
       vi.mocked(chatService.fetchPresetTaskResult).mockImplementation((params) => {
@@ -227,6 +248,11 @@ describe('GenerationTopicAction', () => {
       });
 
       expect(chatService.fetchPresetTaskResult).toHaveBeenCalled();
+      expect(chatService.fetchPresetTaskResult).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ model: 'gpt-4o-mini', provider: 'openai' }),
+        }),
+      );
       expect(generationTopicService.updateTopic).toHaveBeenCalledWith(topicId, {
         title: generatedTitle,
       });
