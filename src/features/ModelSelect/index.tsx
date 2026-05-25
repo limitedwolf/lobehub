@@ -1,7 +1,7 @@
 import { TooltipGroup } from '@lobehub/ui';
 import { Select, type SelectProps } from '@lobehub/ui/base-ui';
 import { createStaticStyles } from 'antd-style';
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { memo, useMemo } from 'react';
 
 import { ModelItemRender, ProviderItemRender, TAG_CLASSNAME } from '@/components/ModelSelect';
@@ -35,9 +35,16 @@ interface ModelOption {
   value: string;
 }
 
+interface ModelFilterParams {
+  model: EnabledProviderWithModels['children'][number];
+  provider: EnabledProviderWithModels;
+}
+
 interface ModelSelectProps extends Pick<SelectProps, 'loading' | 'size' | 'style' | 'variant'> {
   defaultValue?: { model: string; provider?: string };
   initialWidth?: boolean;
+  modelFilter?: (params: ModelFilterParams) => boolean;
+  modelList?: EnabledProviderWithModels[];
   onChange?: (props: { model: string; provider: string }) => void;
   popupWidth?: number;
   requiredAbilities?: (keyof EnabledProviderWithModels['children'][number]['abilities'])[];
@@ -57,8 +64,11 @@ const ModelSelect = memo<ModelSelectProps>(
     variant,
     initialWidth = false,
     popupWidth,
+    modelFilter,
+    modelList,
   }) => {
-    const enabledList = useEnabledChatModels();
+    const defaultEnabledList = useEnabledChatModels();
+    const enabledList = modelList ?? defaultEnabledList;
 
     const options = useMemo<SelectProps['options']>(() => {
       const getChatModels = (provider: EnabledProviderWithModels) => {
@@ -69,7 +79,11 @@ const ModelSelect = memo<ModelSelectProps>(
               )
             : provider.children;
 
-        return models.map((model) => ({
+        const filteredModels = modelFilter
+          ? models.filter((model) => modelFilter({ model, provider }))
+          : models;
+
+        return filteredModels.map((model) => ({
           ...model,
           label: <ModelItemRender {...model} {...model.abilities} showInfoTag={false} />,
           provider: provider.id,
@@ -101,7 +115,7 @@ const ModelSelect = memo<ModelSelectProps>(
           };
         })
         .filter(Boolean) as SelectProps['options'];
-    }, [enabledList, requiredAbilities, showAbility]);
+    }, [enabledList, modelFilter, requiredAbilities, showAbility]);
 
     return (
       <TooltipGroup>
