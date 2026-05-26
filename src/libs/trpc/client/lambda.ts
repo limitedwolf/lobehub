@@ -17,6 +17,11 @@ let last401Time = 0;
 let lastMarket401Time = 0;
 const MIN_401_INTERVAL = 5000; // 5 seconds
 
+// Routes that allow unauthenticated access and own their own auth UX.
+// On these routes we suppress the global 401 → /signin redirect so guests
+// can view public content; the page itself decides when to prompt sign-in.
+const PUBLIC_ROUTE_PREFIXES = ['/page/', '/share/'];
+
 // handle error
 const errorHandlingLink: TRPCLink<LambdaRouter> = () => {
   return ({ op, next }) =>
@@ -56,13 +61,18 @@ const errorHandlingLink: TRPCLink<LambdaRouter> = () => {
                     });
                   }
                 } else {
-                  // Non-market 401: handle as before (LobeChat session expired)
-                  const now = Date.now();
-                  if (now - last401Time > MIN_401_INTERVAL) {
-                    last401Time = now;
-                    // Desktop app doesn't have the web auth routes like `/signin`,
-                    // so skip the login redirect/notification there.
-                    if (!isDesktop) {
+                  const isOnPublicRoute = PUBLIC_ROUTE_PREFIXES.some((prefix) =>
+                    location.pathname.startsWith(prefix),
+                  );
+                  // Non-market 401: handle as session expired.
+                  // Desktop app doesn't have the web auth routes like `/signin`,
+                  // so skip the login redirect/notification there.
+                  // Public routes own their own auth UX — let the page handle 401
+                  // instead of forcing a global redirect.
+                  if (!isDesktop && !isOnPublicRoute) {
+                    const now = Date.now();
+                    if (now - last401Time > MIN_401_INTERVAL) {
+                      last401Time = now;
                       const { getUserStoreState } = await import('@/store/user/store');
                       const { isSignedIn, logout } = getUserStoreState();
                       // If user is still marked as signed in but got 401,

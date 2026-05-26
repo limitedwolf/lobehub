@@ -23,6 +23,7 @@ import TitleBar from '@/features/Electron/titlebar/TitleBar';
 import HotkeyHelperPanel from '@/features/HotkeyHelperPanel';
 import NavPanel from '@/features/NavPanel';
 import PublishedShell from '@/features/PageShare/PublishedShell';
+import ReadOnlyPageViewer from '@/features/PageShare/ReadOnlyPageViewer';
 import { RouteMetaBridge } from '@/features/RouteMeta';
 import { useFeedbackModal } from '@/hooks/useFeedbackModal';
 import { usePlatform } from '@/hooks/usePlatform';
@@ -61,14 +62,27 @@ const Layout: FC = () => {
   const params = useParams<{ id?: string }>();
   const onPageRoute = isPageRoute(location.pathname);
   const pageId = onPageRoute && params.id ? getIdFromIdentifier(params.id, 'docs') : undefined;
-  const { data: probe, error: probeError } = useSharedPageProbe(pageId);
+  const { data: probe, error: probeError, isLoading: isProbeLoading } = useSharedPageProbe(pageId);
+
+  // Block the authenticated tree from mounting until the probe resolves on
+  // /page/ routes. Otherwise guests would briefly mount providers like
+  // PageAgentProvider, fire protected queries, hit 401, and stay suspended.
+  if (onPageRoute && !!pageId && isProbeLoading) {
+    return <Loading debugId="SharedPageProbe" />;
+  }
 
   const isGuestPageRoute = !!pageId && (!!probeError || (probe ? !probe.isOwner : false));
 
+  // Render the guest view inline instead of through nested Outlets:
+  // - Outlet context does not auto-propagate through intermediate layouts
+  //   (PageLayout has a bare `<Outlet />`), so PagesPage would see no probe
+  //   and fall through to PageExplorer → PageAgentProvider → 401 suspend.
+  // - PageLayout's Sidebar also fires protected queries (useFetchDocuments)
+  //   that are irrelevant for guests.
   if (isGuestPageRoute) {
     return (
       <PublishedShell data={probe} error={probeError}>
-        <Outlet context={{ error: probeError, probe }} />
+        {probe ? <ReadOnlyPageViewer data={probe} /> : null}
       </PublishedShell>
     );
   }
