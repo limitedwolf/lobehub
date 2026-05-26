@@ -1,6 +1,7 @@
 import debug from 'debug';
 
 import { getServerDB } from '@/database/core/db-adaptor';
+import type { DecryptedBotProvider } from '@/database/models/agentBotProvider';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
@@ -95,7 +96,7 @@ export class GatewayManager {
       return;
     }
 
-    const client = this.createClient(platform, provider, userId);
+    const client = this.createClient(platform, provider);
     if (!client) {
       log('Unsupported platform: %s', platform);
       return;
@@ -157,7 +158,7 @@ export class GatewayManager {
       }
 
       try {
-        const client = this.createClient(platform, provider, provider.userId);
+        const client = this.createClient(platform, provider);
         if (!client) {
           log('Sync: createClient returned null for %s', key);
           continue;
@@ -186,16 +187,7 @@ export class GatewayManager {
   // Factory
   // ------------------------------------------------------------------
 
-  private createClient(
-    platform: string,
-    provider: {
-      applicationId: string;
-      credentials: Record<string, string>;
-      settings?: Record<string, unknown> | null;
-      userId?: string;
-    },
-    userId?: string,
-  ): PlatformClient | null {
+  private createClient(platform: string, provider: DecryptedBotProvider): PlatformClient | null {
     const def = this.definitionByPlatform.get(platform);
     if (!def) {
       log('No definition registered for platform: %s', platform);
@@ -207,7 +199,7 @@ export class GatewayManager {
     const context: BotPlatformRuntimeContext = {
       appUrl: process.env.APP_URL,
       redisClient: getAgentRuntimeRedisClient() as any,
-      userId,
+      userId: provider.userId,
     };
 
     return def.clientFactory.createClient(config, context);
