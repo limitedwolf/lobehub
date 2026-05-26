@@ -60,6 +60,7 @@ describe('ImessageAdapter webhook handling', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     fetchSpy.mockRestore();
   });
 
@@ -142,6 +143,7 @@ describe('ImessageAdapter parsing and outbound', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     fetchSpy.mockRestore();
   });
 
@@ -190,5 +192,36 @@ describe('ImessageAdapter parsing and outbound', () => {
     expect(fetchSpy.mock.calls[0][0]).toBe(
       'https://bluebubbles.example.com/api/v1/ping?password=server-password',
     );
+  });
+
+  it('applies the request timeout when fetching outbound attachment URLs', async () => {
+    vi.useFakeTimers();
+
+    fetchSpy.mockImplementationOnce(
+      async (_url: string | URL | Request, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Attachment fetch timed out', 'AbortError'));
+          });
+        }),
+    );
+
+    const api = new BlueBubblesApiClient({ ...baseConfig, requestTimeoutMs: 1000 });
+    const sendPromise = api.sendAttachment('iMessage;-;chat-1', {
+      fetchUrl: 'https://assets.example.com/photo.png',
+      mimeType: 'image/png',
+      name: 'photo.png',
+    });
+    const assertion = expect(sendPromise).rejects.toMatchObject({ name: 'AbortError' });
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    await assertion;
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0][0]).toBe('https://assets.example.com/photo.png');
+    expect(fetchSpy.mock.calls[0][1]).toMatchObject({
+      method: 'GET',
+      signal: expect.any(AbortSignal),
+    });
   });
 });

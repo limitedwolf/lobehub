@@ -123,6 +123,21 @@ describe('ImessageMessageService', () => {
     });
     expect(result.messages).toHaveLength(1);
     expect(result.messages?.[0].id).toBe('msg-2');
+    expect(result.totalFound).toBe(1);
+  });
+
+  it('keeps the query metadata total when no author filter is applied', async () => {
+    const api = makeApi();
+    const service = new ImessageMessageService(api as any);
+
+    const result = await service.searchMessages({
+      channelId: 'iMessage;-;chat-1',
+      limit: 5,
+      platform: 'imessage',
+      query: 'hit',
+    });
+
+    expect(result.messages).toHaveLength(2);
     expect(result.totalFound).toBe(2);
   });
 });

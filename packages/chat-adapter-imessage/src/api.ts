@@ -140,7 +140,7 @@ export class BlueBubblesApiClient {
     attachment: BlueBubblesOutboundAttachment,
     options: BlueBubblesSendOptions = {},
   ): Promise<BlueBubblesMessage> {
-    const { buffer, mimeType } = await resolveAttachmentBytes(attachment);
+    const { buffer, mimeType } = await resolveAttachmentBytes(attachment, this.requestTimeoutMs);
     const name = attachment.name || inferFileName(mimeType || attachment.mimeType);
     const form = new FormData();
     const attachmentBytes = buffer.buffer.slice(
@@ -290,6 +290,7 @@ function stripTrailingSlashes(url: string): string {
 
 async function resolveAttachmentBytes(
   attachment: BlueBubblesOutboundAttachment,
+  requestTimeoutMs: number,
 ): Promise<{ buffer: Buffer; mimeType?: string }> {
   if (attachment.data) {
     return { buffer: Buffer.from(attachment.data, 'base64'), mimeType: attachment.mimeType };
@@ -299,7 +300,7 @@ async function resolveAttachmentBytes(
     throw new Error('BlueBubbles attachment requires either data or fetchUrl');
   }
 
-  const response = await fetch(attachment.fetchUrl);
+  const response = await fetchWithTimeout(attachment.fetchUrl, { method: 'GET' }, requestTimeoutMs);
   if (!response.ok) {
     throw new Error(`Failed to fetch attachment ${attachment.fetchUrl}: HTTP ${response.status}`);
   }

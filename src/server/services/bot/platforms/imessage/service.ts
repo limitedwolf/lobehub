@@ -169,15 +169,15 @@ export class ImessageMessageService implements MessageRuntimeService {
       with: ['attachments'],
     });
 
-    const filtered =
-      params.authorId && params.authorId.trim()
-        ? result.data.filter((message) => authorFromMessage(message).id === params.authorId)
-        : result.data;
+    const authorId = params.authorId?.trim();
+    const filtered = authorId
+      ? result.data.filter((message) => authorFromMessage(message).id === authorId)
+      : result.data;
 
     return {
       messages: filtered.map(messageToItem),
       query: params.query,
-      totalFound: result.metadata?.total ?? filtered.length,
+      totalFound: authorId ? filtered.length : (result.metadata?.total ?? filtered.length),
     };
   };
 
