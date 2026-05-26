@@ -95,7 +95,7 @@ export class GatewayManager {
       return;
     }
 
-    const client = this.createClient(platform, provider);
+    const client = this.createClient(platform, provider, userId);
     if (!client) {
       log('Unsupported platform: %s', platform);
       return;
@@ -157,7 +157,7 @@ export class GatewayManager {
       }
 
       try {
-        const client = this.createClient(platform, provider);
+        const client = this.createClient(platform, provider, provider.userId);
         if (!client) {
           log('Sync: createClient returned null for %s', key);
           continue;
@@ -192,7 +192,9 @@ export class GatewayManager {
       applicationId: string;
       credentials: Record<string, string>;
       settings?: Record<string, unknown> | null;
+      userId?: string;
     },
+    userId?: string,
   ): PlatformClient | null {
     const def = this.definitionByPlatform.get(platform);
     if (!def) {
@@ -205,6 +207,7 @@ export class GatewayManager {
     const context: BotPlatformRuntimeContext = {
       appUrl: process.env.APP_URL,
       redisClient: getAgentRuntimeRedisClient() as any,
+      userId,
     };
 
     return def.clientFactory.createClient(config, context);
