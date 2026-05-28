@@ -1,6 +1,4 @@
-import { Flexbox } from '@lobehub/ui';
-import { Drawer } from 'antd';
-import { cssVar } from 'antd-style';
+import { Drawer } from '@lobehub/ui';
 import { memo } from 'react';
 
 import dynamic from '@/libs/next/dynamic';
@@ -10,9 +8,6 @@ import Content from './Content';
 
 const FileViewer = dynamic(() => import('@/features/FileViewer'), { ssr: false });
 
-/**
- * Showing the chunk info of a file
- */
 const ChunkDrawer = memo(() => {
   const [fileId, open, closeChunkDrawer] = useFileStore((s) => [
     s.chunkDetailId,
@@ -24,25 +19,19 @@ const ChunkDrawer = memo(() => {
   return (
     <Drawer
       open={open}
-      size="large"
+      sidebar={<Content />}
+      sidebarWidth={320}
       title={file?.name}
+      width={'min(960px, 90vw)'}
       styles={{
-        body: { padding: 0 },
+        bodyContent: { height: '100%' },
+        sidebar: { height: '100%', overflow: 'hidden', paddingBlock: 0, paddingInline: 0 },
       }}
       onClose={() => {
         closeChunkDrawer();
       }}
     >
-      <Flexbox horizontal height={'100%'} style={{ overflow: 'hidden' }}>
-        {file && (
-          <Flexbox flex={2} style={{ overflow: 'scroll' }}>
-            <FileViewer {...file} />
-          </Flexbox>
-        )}
-        <Flexbox flex={1} style={{ borderInlineStart: `1px solid ${cssVar.colorSplit}` }}>
-          <Content />
-        </Flexbox>
-      </Flexbox>
+      {file && <FileViewer {...file} />}
     </Drawer>
   );
 });

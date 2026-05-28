@@ -4,6 +4,7 @@ export default {
   'addPage': 'Create Page',
   'chunkDrawer.empty': 'No chunks available',
   'chunkDrawer.error': 'Failed to load chunks',
+  'chunkDrawer.page': 'Page {{page}}',
   'detail.basic.createdAt': 'Creation Time',
   'detail.basic.filename': 'File Name',
   'detail.basic.size': 'File Size',

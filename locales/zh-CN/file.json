@@ -4,6 +4,7 @@
   "addPage": "创建文稿",
   "chunkDrawer.empty": "暂无分块",
   "chunkDrawer.error": "分块加载失败",
+  "chunkDrawer.page": "第 {{page}} 页",
   "detail.basic.createdAt": "创建时间",
   "detail.basic.filename": "文件名",
   "detail.basic.size": "文件大小",
