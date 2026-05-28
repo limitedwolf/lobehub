@@ -60,7 +60,7 @@ import {
 import { chainCompressContext } from '@lobechat/prompts';
 import {
   type ChatToolPayload,
-  type ExecSubAgentParams,
+  type ExecSubAgentTaskParams,
   type MessageToolCall,
   type UIChatMessage,
 } from '@lobechat/types';
@@ -289,7 +289,7 @@ export interface RuntimeExecutorContext {
    * Injected by AiAgentService so exec_sub_agent / exec_sub_agents executors
    * can dispatch callAgent-triggered tasks without a circular import.
    */
-  execSubAgent?: (params: ExecSubAgentParams) => Promise<unknown>;
+  execSubAgentTask?: (params: ExecSubAgentTaskParams) => Promise<unknown>;
   hookDispatcher?: HookDispatcher;
   loadAgentState?: (operationId: string) => Promise<AgentState | null>;
   messageModel: MessageModel;
@@ -2808,7 +2808,7 @@ export const createRuntimeExecutors = (
    * Mirrors the client-side exec_sub_agent executor in createAgentExecutors.ts
    * but runs entirely server-side (no polling required).  Flow:
    *   1. Create a task message (role: 'task') as a placeholder visible in the UI.
-   *   2. Fire execSubAgent via the injected callback so the sub-agent runs as
+   *   2. Fire execSubAgentTask via the injected callback so the sub-agent runs as
    *      an independent QStash operation.
    *   3. Return a sub_agent_result context so GeneralChatAgent calls the LLM once
    *      more and the parent agent can acknowledge the delegation.
@@ -2849,9 +2849,9 @@ export const createRuntimeExecutors = (
     const effectiveTaskMessageId = taskMessageId ?? parentMessageId;
 
     let dispatched = false;
-    if (ctx.execSubAgent && topicId && agentId) {
+    if (ctx.execSubAgentTask && topicId && agentId) {
       try {
-        await ctx.execSubAgent({
+        await ctx.execSubAgentTask({
           agentId: targetAgentId,
           groupId: state.metadata?.groupId ?? undefined,
           instruction: task.instruction,
@@ -2876,7 +2876,7 @@ export const createRuntimeExecutors = (
         }
       }
     } else {
-      log('[%s] execSubAgent not available, skipping sub-agent dispatch', taskLogId);
+      log('[%s] execSubAgentTask not available, skipping sub-agent dispatch', taskLogId);
     }
 
     return {
@@ -2906,7 +2906,7 @@ export const createRuntimeExecutors = (
    * Server-side exec_sub_agents executor
    *
    * Same as exec_sub_agent but for a batch.  Each sub-agent is fired
-   * independently via execSubAgent and a task message is created for each.
+   * independently via execSubAgentTask and a task message is created for each.
    */
   exec_sub_agents: async (instruction, state) => {
     const { payload } = instruction as AgentInstructionExecSubAgents;
@@ -2948,9 +2948,9 @@ export const createRuntimeExecutors = (
       }
 
       let taskDispatched = false;
-      if (ctx.execSubAgent && topicId && agentId) {
+      if (ctx.execSubAgentTask && topicId && agentId) {
         try {
-          await ctx.execSubAgent({
+          await ctx.execSubAgentTask({
             agentId: targetAgentId,
             groupId: state.metadata?.groupId ?? undefined,
             instruction: task.instruction,

@@ -33,8 +33,8 @@ import type {
   ExecAgentResult,
   ExecGroupAgentParams,
   ExecGroupAgentResult,
-  ExecSubAgentParams,
-  ExecSubAgentResult,
+  ExecSubAgentTaskParams,
+  ExecSubAgentTaskResult,
   MessagePluginItem,
   UserInterventionConfig,
 } from '@lobechat/types';
@@ -268,7 +268,7 @@ export class AiAgentService {
     this.topicModel = new TopicModel(db, userId);
     this.agentRuntimeService = new AgentRuntimeService(db, userId, {
       ...options?.runtimeOptions,
-      execSubAgent: this.execSubAgent.bind(this),
+      execSubAgentTask: this.execSubAgentTask.bind(this),
     });
     this.marketService = new MarketService({ userInfo: { userId } });
     this.klavisService = new KlavisService({ db, userId });
@@ -2411,12 +2411,12 @@ export class AiAgentService {
    * 2. Delegate to execAgent with threadId in appContext
    * 3. Store operationId in Thread metadata
    */
-  async execSubAgent(params: ExecSubAgentParams): Promise<ExecSubAgentResult> {
+  async execSubAgentTask(params: ExecSubAgentTaskParams): Promise<ExecSubAgentTaskResult> {
     const { groupId, topicId, parentMessageId, agentId, instruction, title, parentOperationId } =
       params;
 
     log(
-      'execSubAgent: agentId=%s, groupId=%s, topicId=%s, instruction=%s',
+      'execSubAgentTask: agentId=%s, groupId=%s, topicId=%s, instruction=%s',
       agentId,
       groupId,
       topicId,
@@ -2449,7 +2449,7 @@ export class AiAgentService {
       throw new Error('Failed to create thread for task execution');
     }
 
-    log('execSubAgent: created thread %s', thread.id);
+    log('execSubAgentTask: created thread %s', thread.id);
 
     // 2. Update Thread status to processing with startedAt timestamp
     const startedAt = new Date().toISOString();
@@ -2472,7 +2472,7 @@ export class AiAgentService {
         );
         inheritedTrigger = parentOp?.trigger ?? undefined;
       } catch (error) {
-        log('execSubAgent: failed to read parent operation trigger: %O', error);
+        log('execSubAgentTask: failed to read parent operation trigger: %O', error);
       }
     }
 
@@ -2491,7 +2491,7 @@ export class AiAgentService {
     });
 
     log(
-      'execSubAgent: delegated to execAgent, operationId=%s, success=%s',
+      'execSubAgentTask: delegated to execAgent, operationId=%s, success=%s',
       result.operationId,
       result.success,
     );
@@ -2586,9 +2586,13 @@ export class AiAgentService {
               totalToolCalls: accumulatedToolCalls,
             },
           });
-          log('execSubAgent: updated thread %s metadata after step %d', threadId, state.stepCount);
+          log(
+            'execSubAgentTask: updated thread %s metadata after step %d',
+            threadId,
+            state.stepCount,
+          );
         } catch (error) {
-          log('execSubAgent: failed to update thread metadata: %O', error);
+          log('execSubAgentTask: failed to update thread metadata: %O', error);
         }
       },
 
@@ -2622,7 +2626,7 @@ export class AiAgentService {
 
         // Log error when task fails
         if (reason === 'error' && finalState.error) {
-          console.error('execSubAgent: task failed for thread %s:', threadId, finalState.error);
+          console.error('execSubAgentTask: task failed for thread %s:', threadId, finalState.error);
         }
 
         try {
@@ -2636,7 +2640,7 @@ export class AiAgentService {
             await this.messageModel.update(sourceMessageId, {
               content: lastAssistantMessage.content,
             });
-            log('execSubAgent: updated task message %s with summary', sourceMessageId);
+            log('execSubAgentTask: updated task message %s with summary', sourceMessageId);
           }
 
           // Format error for proper serialization (Error objects don't serialize with JSON.stringify)
@@ -2659,13 +2663,13 @@ export class AiAgentService {
           });
 
           log(
-            'execSubAgent: thread %s completed with status %s, reason: %s',
+            'execSubAgentTask: thread %s completed with status %s, reason: %s',
             threadId,
             status,
             reason,
           );
         } catch (error) {
-          console.error('execSubAgent: failed to update thread on completion: %O', error);
+          console.error('execSubAgentTask: failed to update thread on completion: %O', error);
         }
       },
     };
