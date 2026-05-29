@@ -2,6 +2,7 @@
  * Tools Engineering - Unified tools processing using ToolsEngine
  */
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
+import { ImageGenerationManifest } from '@lobechat/builtin-tool-image-generation';
 import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
@@ -200,6 +201,7 @@ export const createAgentToolsEngine = (
   const webBrowsingEnabled = searchConfig.useApplicationBuiltinSearchTool;
 
   const chatModeRules = {
+    [ImageGenerationManifest.identifier]: true,
     [KnowledgeBaseManifest.identifier]: kbEnabled,
     [MemoryManifest.identifier]: memoryEnabled,
     [WebBrowsingManifest.identifier]: webBrowsingEnabled,

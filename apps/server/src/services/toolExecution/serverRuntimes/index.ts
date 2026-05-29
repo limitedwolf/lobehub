@@ -20,6 +20,7 @@ import { calculatorRuntime } from './calculator';
 import { cloudSandboxRuntime } from './cloudSandbox';
 import { credsRuntime } from './creds';
 import { groupManagementRuntime } from './groupManagement';
+import { imageGenerationRuntime } from './imageGeneration';
 import { knowledgeBaseRuntime } from './knowledgeBase';
 import { lobeAgentRuntime } from './lobeAgent';
 import { lobeDeliveryCheckerRuntime } from './lobeDeliveryChecker';
@@ -78,6 +79,7 @@ registerRuntimes([
   userInteractionRuntime,
   credsRuntime,
   groupManagementRuntime,
+  imageGenerationRuntime,
   knowledgeBaseRuntime,
   webOnboardingRuntime,
   lobeAgentRuntime,

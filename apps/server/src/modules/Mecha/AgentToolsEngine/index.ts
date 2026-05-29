@@ -10,6 +10,7 @@
  * - No dependency on frontend stores (useToolStore, useAgentStore, etc.)
  */
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
+import { ImageGenerationManifest } from '@lobechat/builtin-tool-image-generation';
 import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
@@ -217,6 +218,7 @@ export const createServerAgentToolsEngine = (
   // web-browsing needs search on). `allowExplicitActivation` is off so the
   // activator can't smuggle anything else in.
   const chatModeRules = {
+    [ImageGenerationManifest.identifier]: true,
     [KnowledgeBaseManifest.identifier]: hasEnabledKnowledgeBases,
     [MemoryManifest.identifier]: globalMemoryEnabled,
     [WebBrowsingManifest.identifier]: isSearchEnabled,

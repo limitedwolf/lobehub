@@ -50,6 +50,11 @@ import {
   GroupManagementStreamings,
 } from '@lobechat/builtin-tool-group-management/client';
 import {
+  ImageGenerationInspectors,
+  ImageGenerationManifest,
+  ImageGenerationRenders,
+} from '@lobechat/builtin-tool-image-generation/client';
+import {
   KnowledgeBaseInspectors,
   KnowledgeBaseManifest,
   KnowledgeBaseRenders,
@@ -176,6 +181,7 @@ export const registerBuiltinToolSurfaces = (): void => {
       BuiltinRender
     >,
     [GroupManagementManifest.identifier]: GroupManagementRenders as Record<string, BuiltinRender>,
+    [ImageGenerationManifest.identifier]: ImageGenerationRenders as Record<string, BuiltinRender>,
     [KnowledgeBaseManifest.identifier]: KnowledgeBaseRenders as Record<string, BuiltinRender>,
     [LobeAgentManifest.identifier]: LobeAgentRenders as Record<string, BuiltinRender>,
     [LobeDeliveryCheckerManifest.identifier]: LobeDeliveryCheckerRenders as Record<
@@ -219,6 +225,10 @@ export const registerBuiltinToolSurfaces = (): void => {
       BuiltinInspector
     >,
     [GroupManagementManifest.identifier]: GroupManagementInspectors as Record<
+      string,
+      BuiltinInspector
+    >,
+    [ImageGenerationManifest.identifier]: ImageGenerationInspectors as Record<
       string,
       BuiltinInspector
     >,
