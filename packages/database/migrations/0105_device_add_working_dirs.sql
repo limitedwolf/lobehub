@@ -1,0 +1,1 @@
+ALTER TABLE "devices" ADD COLUMN IF NOT EXISTS "working_dirs" jsonb DEFAULT '[]'::jsonb;

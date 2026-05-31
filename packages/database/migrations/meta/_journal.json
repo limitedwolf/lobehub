@@ -735,6 +735,13 @@
       "when": 1779966336116,
       "tag": "0104_add_devices_connectors_push_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1780230232589,
+      "tag": "0105_device_add_working_dirs",
+      "breakpoints": true
     }
   ],
   "version": "6"

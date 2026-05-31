@@ -661,6 +661,7 @@ table devices {
   friendly_name text
   default_cwd text
   recent_cwds text[] [not null, default: `[]`]
+  working_dirs jsonb [default: `[]`]
   first_seen_at "timestamp with time zone" [not null, default: `now()`]
   last_seen_at "timestamp with time zone" [not null, default: `now()`]
   accessed_at "timestamp with time zone" [not null, default: `now()`]
