@@ -24,6 +24,7 @@ const createMemorySignal = (
     signalId: string;
     sourceSerializedContext: unknown;
     sourceId: string;
+    sourceThreadId: string;
   }> = {},
 ) => {
   const base = {
@@ -33,10 +34,12 @@ const createMemorySignal = (
       rootSourceId: input.sourceId ?? 'source_1',
     },
     source: {
-      payload:
-        'sourceSerializedContext' in input
+      payload: {
+        ...('sourceSerializedContext' in input
           ? { serializedContext: input.sourceSerializedContext }
-          : { serializedContext: sourceSerializedContext },
+          : { serializedContext: sourceSerializedContext }),
+        ...(input.sourceThreadId ? { threadId: input.sourceThreadId } : {}),
+      },
       sourceId: input.sourceId ?? 'source_1',
       sourceType: 'agent.user.message',
     },
@@ -257,6 +260,33 @@ describe('action planning processors', () => {
     const action = planUserMemory(signal);
 
     expect(action.payload.serializedContext).toBeUndefined();
+  });
+
+  /**
+   * @example
+   * planUserMemory(memorySignal) propagates the source's active threadId so the
+   * downstream memory-agent isolation thread can nest under it via
+   * parentThreadId instead of landing at topic root.
+   */
+  it('propagates threadId from the hydrated source payload', () => {
+    const signal = createMemorySignal({ sourceThreadId: 'thread_42' });
+
+    const action = planUserMemory(signal);
+
+    expect(action.payload.threadId).toBe('thread_42');
+  });
+
+  /**
+   * @example
+   * planUserMemory(memorySignal) omits threadId when the source carries none —
+   * the originating conversation lives at topic root.
+   */
+  it('omits threadId when the source payload has no threadId', () => {
+    const signal = createMemorySignal();
+
+    const action = planUserMemory(signal);
+
+    expect(action.payload.threadId).toBeUndefined();
   });
 
   /**

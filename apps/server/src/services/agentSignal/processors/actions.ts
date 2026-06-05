@@ -8,6 +8,7 @@ import { AGENT_SIGNAL_POLICY_ACTION_TYPES } from '../policies/types';
 
 interface SerializedContextPayload {
   serializedContext?: unknown;
+  threadId?: unknown;
 }
 
 interface SourcePayloadCarrier {
@@ -55,6 +56,19 @@ const getSerializedContext = (signal: SignalFeedbackDomainMemory | SignalFeedbac
 };
 
 /**
+ * Reads `threadId` from the hydrated source payload.
+ *
+ * Only some source types carry an active thread context (e.g. the hydrated
+ * `agentUserMessage` source written by `clientRuntimeComplete` hydration).
+ * Returns undefined for sources without a thread payload — the caller treats
+ * absence as "originating conversation lives at the topic root".
+ */
+const getThreadIdFromSource = (signal: SignalFeedbackDomainMemory | SignalFeedbackDomainSkill) => {
+  const source = signal.source as SignalFeedbackDomainMemory['source'] & SourcePayloadCarrier;
+  return typeof source.payload?.threadId === 'string' ? source.payload.threadId : undefined;
+};
+
+/**
  * Plans a user-memory action from one memory feedback-domain signal.
  *
  * Use when:
@@ -96,6 +110,11 @@ export const planUserMemory = (signal: SignalFeedbackDomainMemory): ActionUserMe
       reason: payload.reason,
       serializedContext: getSerializedContext(signal),
       sourceHints: payload.sourceHints,
+      // Carry the originating thread id (when the source was hydrated from an
+      // in-thread conversation) so the downstream memory-agent isolation
+      // thread can nest via `parentThreadId` instead of being created at
+      // topic root and silently detached from the active thread.
+      threadId: getThreadIdFromSource(signal),
       topicId: payload.topicId,
     },
     signal: {

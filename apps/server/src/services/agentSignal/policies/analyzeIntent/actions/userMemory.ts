@@ -71,6 +71,7 @@ export interface UserMemoryActionHandlerOptions {
     serializedContext?: string;
     sourceHints?: AgentSignalFeedbackSourceHints;
     sourceMessageId?: string;
+    threadId?: string;
     topicId?: string;
   }) => Promise<MemoryAgentActionResult>;
   pluginModel?: Pick<PluginModel, 'query'>;
@@ -155,6 +156,13 @@ export const runMemoryActionAgent = async (
      * from the main topic conversation.
      */
     sourceMessageId?: string;
+    /**
+     * Active thread id of the originating conversation. When set, the
+     * memory-agent isolation thread is created with `parentThreadId` so the
+     * sub-thread is properly nested under the active thread instead of being
+     * detached at topic root.
+     */
+    threadId?: string;
     topicId?: string;
   },
   options: UserMemoryActionHandlerOptions,
@@ -239,7 +247,10 @@ export const runMemoryActionAgent = async (
 
   // Create a child thread under the triggering assistant message so that
   // memory-agent messages are isolated from the main topic conversation
-  // instead of being flattened into it.
+  // instead of being flattened into it. When the originating conversation
+  // was itself running inside a thread, nest the isolation thread under it
+  // via `parentThreadId` so sub-thread work stays scoped to that thread
+  // instead of landing as a sibling at topic root.
   let threadId: string | undefined;
   if (input.topicId && input.sourceMessageId) {
     try {
@@ -247,6 +258,7 @@ export const runMemoryActionAgent = async (
       const thread = await threadModel.create({
         agentId: input.agentId,
         metadata: { operationId },
+        ...(input.threadId ? { parentThreadId: input.threadId } : {}),
         sourceMessageId: input.sourceMessageId,
         title: 'Agent Signal Memory',
         topicId: input.topicId,
@@ -413,6 +425,10 @@ export const handleUserMemoryAction = async (
           : typeof action.payload.messageId === 'string'
             ? action.payload.messageId
             : undefined,
+      // Propagated from the hydrated source payload via planUserMemory so the
+      // isolation thread can nest under the active thread instead of landing
+      // detached at topic root.
+      threadId: typeof action.payload.threadId === 'string' ? action.payload.threadId : undefined,
       topicId: typeof action.payload.topicId === 'string' ? action.payload.topicId : undefined,
     };
     // Stamp the run so the completion path can project the memory receipt (the

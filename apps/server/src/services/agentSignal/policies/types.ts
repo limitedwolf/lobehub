@@ -330,6 +330,12 @@ export interface AgentSignalPolicyActionPayloadMap {
   };
   [AGENT_SIGNAL_POLICY_ACTION_TYPES.userMemoryHandle]: {
     agentId?: string;
+    /**
+     * Assistant message id that completed the triggering turn, when the source
+     * carries an assistant boundary (e.g. hydrated `clientRuntimeComplete`).
+     * Used as the anchor `sourceMessageId` for the memory-agent isolation thread.
+     */
+    assistantMessageId?: string;
     conflictPolicy?: AgentSignalFeedbackDomainConflictPolicy;
     evidence?: AgentSignalFeedbackEvidence[];
     feedbackHint?: Exclude<AgentSignalFeedbackSatisfactionResult, 'neutral'>;
@@ -339,6 +345,13 @@ export interface AgentSignalPolicyActionPayloadMap {
     reason?: string;
     serializedContext?: string;
     sourceHints?: AgentSignalFeedbackSourceHints;
+    /**
+     * Active thread id of the originating conversation. When set, the
+     * memory-agent isolation thread nests under it via `parentThreadId` so
+     * sub-thread work stays scoped to the originating thread instead of
+     * landing at topic root.
+     */
+    threadId?: string;
     topicId?: string;
   };
 }
