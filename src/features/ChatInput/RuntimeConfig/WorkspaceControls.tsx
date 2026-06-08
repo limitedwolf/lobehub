@@ -5,8 +5,6 @@ import { memo } from 'react';
 
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
-import { useUserStore } from '@/store/user';
-import { labPreferSelectors } from '@/store/user/selectors';
 
 import CloudRepoSwitcher from './CloudRepoSwitcher';
 import HeteroDeviceSwitcher from './HeteroDeviceSwitcher';
@@ -34,9 +32,6 @@ interface WorkspaceControlsProps {
  */
 const WorkspaceControls = memo<WorkspaceControlsProps>(
   ({ agentId, alwaysShowWorkspace = false }) => {
-    const enableExecutionDeviceSwitcher = useUserStore(
-      labPreferSelectors.enableExecutionDeviceSwitcher,
-    );
     const runtimeMode = useAgentStore(chatConfigByIdSelectors.getRuntimeModeById(agentId));
     const isHeterogeneous = useAgentStore(agentByIdSelectors.isAgentHeterogeneousById(agentId));
     const agencyConfig = useAgentStore(agentByIdSelectors.getAgencyConfigById(agentId));
@@ -67,7 +62,7 @@ const WorkspaceControls = memo<WorkspaceControlsProps>(
 
     return (
       <>
-        {enableExecutionDeviceSwitcher && <HeteroDeviceSwitcher agentId={agentId} />}
+        <HeteroDeviceSwitcher agentId={agentId} />
         {renderWorkspace()}
       </>
     );
