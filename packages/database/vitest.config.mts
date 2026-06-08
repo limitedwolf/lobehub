@@ -22,6 +22,8 @@ export default defineConfig({
       '@/database': resolve(__dirname, '../database/src'),
       '@/libs/model-runtime': resolve(__dirname, '../model-runtime/src'),
       '@/types': resolve(__dirname, '../types/src'),
+      '@/server/services': resolve(__dirname, '../../apps/server/src/services'),
+      '@/server/modules': resolve(__dirname, '../../apps/server/src/modules'),
       '@': resolve(__dirname, '../../src'),
 
     },
