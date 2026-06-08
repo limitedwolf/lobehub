@@ -1,5 +1,5 @@
 import { isDesktop } from '@lobechat/const';
-import { ActionIcon, DropdownMenu, Flexbox, Icon } from '@lobehub/ui';
+import { ActionIcon, DropdownMenu, Flexbox, Icon, Segmented } from '@lobehub/ui';
 import { confirmModal } from '@lobehub/ui/base-ui';
 import { ShapesUploadIcon } from '@lobehub/ui/icons';
 import isEqual from 'fast-deep-equal';
@@ -22,6 +22,7 @@ import { systemStatusSelectors } from '@/store/global/selectors';
 import { useHomeStore } from '@/store/home';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
 
+import type { ProfileView } from '../../types';
 import { useProfileStore } from '../store';
 import AgentForkTag from './AgentForkTag';
 import ForkConfirmModal from './AgentPublishButton/ForkConfirmModal';
@@ -35,6 +36,12 @@ type HeaderTranslation = TFunction<
   readonly ['setting', 'marketAuth', 'chat', 'file', 'common'],
   undefined
 >;
+
+interface HeaderProps {
+  onProfileViewChange?: (view: ProfileView) => void;
+  profileView?: ProfileView;
+  showOperationStatsSwitcher?: boolean;
+}
 
 const buildAgentProfileMarkdown = (params: {
   description?: string;
@@ -85,7 +92,11 @@ const buildAgentProfileMarkdown = (params: {
   return `${sections.join('\n\n')}\n`;
 };
 
-const Header = memo(() => {
+const Header = ({
+  profileView = 'config',
+  showOperationStatsSwitcher,
+  onProfileViewChange,
+}: HeaderProps) => {
   const { t } = useTranslation(['setting', 'marketAuth', 'chat', 'file', 'common']);
   const navigate = useNavigate();
 
@@ -290,8 +301,25 @@ const Header = memo(() => {
     <>
       <NavHeader
         left={
-          <Flexbox horizontal gap={8}>
+          <Flexbox horizontal align={'center'} gap={8}>
             <AutoSaveHint />
+            {showOperationStatsSwitcher && (
+              <Segmented
+                size="small"
+                value={profileView}
+                options={[
+                  {
+                    label: t('heterogeneousStatus.config.tabLabel', { ns: 'setting' }),
+                    value: 'config',
+                  },
+                  {
+                    label: t('heterogeneousStatus.usage.tabLabel', { ns: 'setting' }),
+                    value: 'usage',
+                  },
+                ]}
+                onChange={(value) => onProfileViewChange?.(value as ProfileView)}
+              />
+            )}
             <AgentStatusTag />
             <AgentVersionReviewTag />
             <AgentForkTag />
@@ -334,6 +362,6 @@ const Header = memo(() => {
       />
     </>
   );
-});
+};
 
-export default Header;
+export default memo(Header);

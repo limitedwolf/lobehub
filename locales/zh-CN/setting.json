@@ -333,6 +333,7 @@
   "heterogeneousStatus.command.edit": "编辑指令",
   "heterogeneousStatus.command.label": "启动指令",
   "heterogeneousStatus.command.placeholder": "指令名称或绝对路径",
+  "heterogeneousStatus.config.tabLabel": "配置",
   "heterogeneousStatus.desktop.tabLabel": "桌面端",
   "heterogeneousStatus.detecting": "正在检测 {{name}} CLI…",
   "heterogeneousStatus.plan.label": "方案",

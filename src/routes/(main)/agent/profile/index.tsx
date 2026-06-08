@@ -1,8 +1,9 @@
 'use client';
 
 import { Flexbox } from '@lobehub/ui';
+import isEqual from 'fast-deep-equal';
 import { type FC } from 'react';
-import { memo, Suspense } from 'react';
+import { memo, Suspense, useEffect, useState } from 'react';
 
 import Loading from '@/components/Loading/BrandTextLoading';
 import AgentBuilder from '@/features/AgentBuilder';
@@ -16,6 +17,7 @@ import ProfileEditor from './features/ProfileEditor';
 import ProfileHydration from './features/ProfileHydration';
 import ProfileProvider from './features/ProfileProvider';
 import { useProfileStore } from './features/store';
+import type { ProfileView } from './types';
 
 const styles = StyleSheet.create({
   contentWrapper: {
@@ -32,6 +34,18 @@ const styles = StyleSheet.create({
 const ProfileArea = memo(() => {
   const editor = useProfileStore((s) => s.editor);
   const isAgentConfigLoading = useAgentStore(agentSelectors.isAgentConfigLoading);
+  const config = useAgentStore(agentSelectors.currentAgentConfig, isEqual);
+  const isHeterogeneous = useAgentStore(agentSelectors.isCurrentAgentHeterogeneous);
+  const [profileView, setProfileView] = useState<ProfileView>('config');
+
+  const showOperationStatsSwitcher =
+    isHeterogeneous && !!config.agencyConfig?.heterogeneousProvider;
+
+  useEffect(() => {
+    if (!showOperationStatsSwitcher && profileView !== 'config') {
+      setProfileView('config');
+    }
+  }, [profileView, showOperationStatsSwitcher]);
 
   return (
     <>
@@ -40,7 +54,11 @@ const ProfileArea = memo(() => {
           <Loading debugId="ProfileArea" />
         ) : (
           <>
-            <Header />
+            <Header
+              profileView={profileView}
+              showOperationStatsSwitcher={showOperationStatsSwitcher}
+              onProfileViewChange={setProfileView}
+            />
             <Flexbox
               horizontal
               height={'100%'}
@@ -55,7 +73,7 @@ const ProfileArea = memo(() => {
               }}
             >
               <WideScreenContainer>
-                <ProfileEditor />
+                <ProfileEditor profileView={showOperationStatsSwitcher ? profileView : 'config'} />
               </WideScreenContainer>
             </Flexbox>
           </>

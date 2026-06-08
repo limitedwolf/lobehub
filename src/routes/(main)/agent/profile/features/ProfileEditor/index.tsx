@@ -12,6 +12,7 @@ import ModelSelect from '@/features/ModelSelect';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 
+import type { ProfileView } from '../../types';
 import AgentSettings from '../AgentSettings';
 import EditorCanvas from '../EditorCanvas';
 import AgentHeader from './AgentHeader';
@@ -21,7 +22,11 @@ import CloudHeterogeneousConfig from './CloudHeterogeneousConfig';
 import HeterogeneousAgentStatusCard from './HeterogeneousAgentStatusCard';
 import RemoteAgentConfigCard from './RemoteAgentConfigCard';
 
-const ProfileEditor = memo(() => {
+interface ProfileEditorProps {
+  profileView?: ProfileView;
+}
+
+const ProfileEditor = memo<ProfileEditorProps>(({ profileView = 'config' }) => {
   const { t } = useTranslation('setting');
   const config = useAgentStore(agentSelectors.currentAgentConfig, isEqual);
   const updateConfig = useAgentStore((s) => s.updateAgentConfig);
@@ -54,11 +59,6 @@ const ProfileEditor = memo(() => {
     isHeterogeneous &&
     !!heterogeneousProvider &&
     isRemoteHeterogeneousType(heterogeneousProvider.type);
-  const operationStatsTab = {
-    key: 'usage',
-    label: t('heterogeneousStatus.usage.tabLabel'),
-    children: <AgentOperationStats />,
-  };
 
   return (
     <>
@@ -72,53 +72,51 @@ const ProfileEditor = memo(() => {
         <AgentHeader />
         {isRemoteHetero && heterogeneousProvider ? (
           // Remote platform agents (openclaw / hermes): show device config and operation stats.
-          <Tabs
-            defaultActiveKey="connection"
-            size="small"
-            items={[
-              {
-                key: 'connection',
-                label: t('platformAgentConfig.title'),
-                children: (
-                  <RemoteAgentConfigCard
-                    provider={heterogeneousProvider}
-                    onBoundDeviceChange={updateBoundDeviceId}
-                  />
-                ),
-              },
-              operationStatsTab,
-            ]}
-          />
+          <Flexbox paddingBlock={'8px 0'}>
+            {profileView === 'usage' ? (
+              <AgentOperationStats />
+            ) : (
+              <RemoteAgentConfigCard
+                provider={heterogeneousProvider}
+                onBoundDeviceChange={updateBoundDeviceId}
+              />
+            )}
+          </Flexbox>
         ) : isHeterogeneous && heterogeneousProvider ? (
-          // Local CLI agents (claude-code, codex): tabs for cloud (web) and desktop environments
-          <Tabs
-            defaultActiveKey={isDesktop ? 'desktop' : 'cloud'}
-            size="small"
-            items={[
-              {
-                key: 'cloud',
-                label: t('heterogeneousStatus.cloud.tabLabel'),
-                children: (
-                  <CloudHeterogeneousConfig
-                    provider={heterogeneousProvider}
-                    onEnvChange={updateHeterogeneousEnv}
-                  />
-                ),
-              },
-              {
-                key: 'desktop',
-                label: t('heterogeneousStatus.desktop.tabLabel'),
-                disabled: !isDesktop,
-                children: (
-                  <HeterogeneousAgentStatusCard
-                    provider={heterogeneousProvider}
-                    onCommandChange={updateHeterogeneousCommand}
-                  />
-                ),
-              },
-              operationStatsTab,
-            ]}
-          />
+          <Flexbox paddingBlock={'8px 0'}>
+            {profileView === 'usage' ? (
+              <AgentOperationStats />
+            ) : (
+              // Local CLI agents (claude-code, codex): tabs for cloud (web) and desktop environments
+              <Tabs
+                defaultActiveKey={isDesktop ? 'desktop' : 'cloud'}
+                size="small"
+                items={[
+                  {
+                    key: 'cloud',
+                    label: t('heterogeneousStatus.cloud.tabLabel'),
+                    children: (
+                      <CloudHeterogeneousConfig
+                        provider={heterogeneousProvider}
+                        onEnvChange={updateHeterogeneousEnv}
+                      />
+                    ),
+                  },
+                  {
+                    key: 'desktop',
+                    label: t('heterogeneousStatus.desktop.tabLabel'),
+                    disabled: !isDesktop,
+                    children: (
+                      <HeterogeneousAgentStatusCard
+                        provider={heterogeneousProvider}
+                        onCommandChange={updateHeterogeneousCommand}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            )}
+          </Flexbox>
         ) : (
           <>
             {/* Config Bar: Model Selector */}

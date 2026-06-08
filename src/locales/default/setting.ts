@@ -212,6 +212,7 @@ export default {
   'heterogeneousStatus.command.edit': 'Edit command',
   'heterogeneousStatus.command.label': 'Launch Command',
   'heterogeneousStatus.command.placeholder': 'Command name or absolute path',
+  'heterogeneousStatus.config.tabLabel': 'Configuration',
   'heterogeneousStatus.detecting': 'Detecting {{name}} CLI...',
   'heterogeneousStatus.plan.label': 'Plan',
   'heterogeneousStatus.redetect': 'Re-detect',
