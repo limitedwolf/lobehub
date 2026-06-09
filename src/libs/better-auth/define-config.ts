@@ -20,6 +20,7 @@ import {
   getVerificationEmailTemplate,
   getVerificationOTPEmailTemplate,
 } from '@/libs/better-auth/email-templates';
+import { devLocalLogin } from '@/libs/better-auth/plugins/dev-local-login';
 import { emailWhitelist } from '@/libs/better-auth/plugins/email-whitelist';
 import { initBetterAuthSSOProviders } from '@/libs/better-auth/sso';
 import { createSecondaryStorage, getTrustedOrigins } from '@/libs/better-auth/utils/config';
@@ -254,6 +255,7 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
     },
     plugins: [
       ...customOptions.plugins,
+      devLocalLogin(),
       emailWhitelist(),
       expo(),
       admin(),

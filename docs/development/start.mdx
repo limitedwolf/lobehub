@@ -77,6 +77,29 @@ for the complete setup process,
 including software installation, project configuration,
 Docker service startup, and database migrations.
 
+### Hono-Lite Dev Runtime (POC)
+
+Alongside the classic `bun run dev` (Next + Vite),
+the `apps/server` package ships a standalone Hono dev runtime —
+`bun run dev:hono-lite` boots Hono on `:3011` and Vite on `:9876`
+with **no Next.js process**.
+It is intended for fast inner-loop work on the backend without
+paying the Next dev-server cost,
+and is currently a T1 dev-only POC
+(no gray-release machinery, no production deploy target).
+
+Typical flow:
+
+```bash
+bun run dev:docker      # Docker services (Postgres, Redis, RustFS, SearXNG)
+bun run dev:hono-lite   # Hono + Vite, no Next
+bun run dev:login       # open the local dev-login URL in your browser
+open http://localhost:9876
+```
+
+See [`apps/server/README.md`](https://github.com/lobehub/lobehub/blob/canary/apps/server/README.md)
+for the routes served, port overrides, known gaps, and troubleshooting.
+
 ## Code Style and Contribution Guide
 
 In the LobeHub project, we place great emphasis on the quality and consistency of the code. For this reason, we have established a series of code style standards and contribution processes to ensure that every developer can smoothly participate in the project. Here are the code style and contribution guidelines you need to follow as a developer.

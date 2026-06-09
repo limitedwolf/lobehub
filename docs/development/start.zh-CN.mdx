@@ -72,6 +72,29 @@ lobehub/
 了解完整的环境搭建流程，
 包括软件安装、项目配置、Docker 服务启动和数据库迁移等步骤。
 
+### Hono-Lite 开发运行时（POC）
+
+除经典的 `bun run dev`（Next + Vite）之外，
+`apps/server` 包还提供了独立的 Hono 开发运行时 ——
+`bun run dev:hono-lite` 会在 `:3011` 启动 Hono、在 `:9876` 启动 Vite，
+**完全不启动 Next.js 进程**。
+该模式用于在不付出 Next 开发服务器成本的前提下，
+专注于后端的快速内循环开发，
+目前仅作为 T1 开发期 POC 提供
+（不包含灰度发布机制，亦不作为生产部署目标）。
+
+典型启动流程：
+
+```bash
+bun run dev:docker      # Docker 服务（Postgres、Redis、RustFS、SearXNG）
+bun run dev:hono-lite   # Hono + Vite，无 Next
+bun run dev:login       # 在浏览器中打开本地开发登录链接
+open http://localhost:9876
+```
+
+可服务的路由清单、端口覆盖、已知缺口与故障排查请参见
+[`apps/server/README.md`](https://github.com/lobehub/lobehub/blob/canary/apps/server/README.md)。
+
 ## 代码风格与贡献指南
 
 在 LobeHub 项目中，我们十分重视代码的质量和一致性。为此，我们制定了一系列的代码风格规范和贡献流程，以确保每位开发者都能顺利地参与到项目中。以下是你作为开发者需要遵守的代码风格和贡献准则。

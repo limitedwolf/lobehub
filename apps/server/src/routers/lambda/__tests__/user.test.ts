@@ -15,15 +15,7 @@ import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 
 import { userRouter } from '../user';
 
-const mockAfterTasks = vi.hoisted((): Promise<void>[] => []);
-
 // Mock modules
-vi.mock('next/server', () => ({
-  after: (callback: () => Promise<void> | void) => {
-    mockAfterTasks.push(Promise.resolve(callback()));
-  },
-}));
-
 vi.mock('@/business/server/user', () => ({
   getReferralStatus: vi.fn(),
   getSubscriptionPlan: vi.fn(),
@@ -47,12 +39,14 @@ describe('userRouter', () => {
     userId: mockUserId,
   };
 
+  // scheduleAfterResponse falls back to setTimeout(0) outside the Next runtime;
+  // drain the timer queue and let the awaited task chain settle.
   const flushAfterTasks = async () => {
-    await Promise.all(mockAfterTasks.splice(0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
   };
 
   beforeEach(() => {
-    mockAfterTasks.length = 0;
     vi.clearAllMocks();
     vi.mocked(getReferralStatus).mockResolvedValue(undefined);
     vi.mocked(getSubscriptionPlan).mockResolvedValue(Plans.Free);

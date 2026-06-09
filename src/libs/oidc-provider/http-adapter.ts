@@ -25,9 +25,9 @@ export const convertHeadersToNodeHeaders = (nextHeaders: Headers): Record<string
 
 /**
  * Create a Node.js HTTP request object for OIDC Provider
- * @param req Next.js request object
+ * @param req standard Request (also accepts NextRequest, which extends Request)
  */
-export const createNodeRequest = async (req: NextRequest): Promise<IncomingMessage> => {
+export const createNodeRequest = async (req: Request): Promise<IncomingMessage> => {
   // Build URL object
   const url = new URL(req.url);
 

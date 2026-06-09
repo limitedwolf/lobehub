@@ -7,6 +7,8 @@ import { pathToFileURL } from 'node:url';
 import dotenv from 'dotenv';
 import dotenvExpand from 'dotenv-expand';
 
+process.title = 'lobe-dev';
+
 interface DevProcessHandle {
   directPid?: number;
   groupPid?: number;

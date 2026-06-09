@@ -71,6 +71,9 @@
     "dev:docker": "docker compose -f docker-compose/dev/docker-compose.yml up -d --wait postgresql redis rustfs searxng",
     "dev:docker:down": "docker compose -f docker-compose/dev/docker-compose.yml down",
     "dev:docker:reset": "docker compose -f docker-compose/dev/docker-compose.yml down -v && rm -rf docker-compose/dev/data && npm run dev:docker && pnpm db:migrate",
+    "dev:hono:server": "npx vite-node --watch --config scripts/viteNodeServer.config.ts apps/server/src/hono/standalone.ts",
+    "dev:hono-lite": "tsx scripts/devHonoLite.mts",
+    "dev:login": "cross-env LOBE_DEV_TOPOLOGY=hono-lite tsx scripts/devLocalLogin.mts",
     "dev:next": "next dev -p 3010",
     "dev:spa": "vite --port 9876",
     "dev:spa:auth": "cross-env AUTH=true vite --port 3013",
@@ -549,6 +552,7 @@
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0",
     "vite": "8.0.14",
+    "vite-node": "3.2.4",
     "vite-plugin-pwa": "^1.2.0",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "3.2.6"
