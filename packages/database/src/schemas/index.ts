@@ -18,6 +18,7 @@ export * from './documentShare';
 export * from './file';
 export * from './generation';
 export * from './llmGenerationTracing';
+export * from './marketDeployment';
 export * from './message';
 export * from './messengerAccountLink';
 export * from './messengerInstallation';

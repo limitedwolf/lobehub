@@ -128,10 +128,10 @@ table agent_cron_jobs {
     agent_id [name: 'agent_cron_jobs_agent_id_idx']
     group_id [name: 'agent_cron_jobs_group_id_idx']
     user_id [name: 'agent_cron_jobs_user_id_idx']
+    workspace_id [name: 'agent_cron_jobs_workspace_id_idx']
     enabled [name: 'agent_cron_jobs_enabled_idx']
     remaining_executions [name: 'agent_cron_jobs_remaining_executions_idx']
     last_executed_at [name: 'agent_cron_jobs_last_executed_at_idx']
-    workspace_id [name: 'agent_cron_jobs_workspace_id_idx']
   }
 }
 
@@ -379,6 +379,7 @@ table agent_operations {
 
   indexes {
     user_id [name: 'agent_operations_user_id_idx']
+    workspace_id [name: 'agent_operations_workspace_id_idx']
     agent_id [name: 'agent_operations_agent_id_idx']
     topic_id [name: 'agent_operations_topic_id_idx']
     thread_id [name: 'agent_operations_thread_id_idx']
@@ -388,7 +389,6 @@ table agent_operations {
     status [name: 'agent_operations_status_idx']
     (user_id, created_at) [name: 'agent_operations_user_id_created_at_idx']
     metadata [name: 'agent_operations_metadata_idx']
-    workspace_id [name: 'agent_operations_workspace_id_idx']
   }
 }
 
@@ -778,8 +778,8 @@ table document_histories {
   indexes {
     document_id [name: 'document_histories_document_id_idx']
     user_id [name: 'document_histories_user_id_idx']
-    saved_at [name: 'document_histories_saved_at_idx']
     workspace_id [name: 'document_histories_workspace_id_idx']
+    saved_at [name: 'document_histories_saved_at_idx']
   }
 }
 
@@ -1027,6 +1027,7 @@ table llm_generation_tracing {
     user_id [name: 'llm_generation_tracing_user_id_idx']
     agent_id [name: 'llm_generation_tracing_agent_id_idx']
     topic_id [name: 'llm_generation_tracing_topic_id_idx']
+    workspace_id [name: 'llm_generation_tracing_workspace_id_idx']
     provider [name: 'llm_generation_tracing_provider_idx']
     model [name: 'llm_generation_tracing_model_idx']
     success [name: 'llm_generation_tracing_success_idx']
@@ -1034,7 +1035,103 @@ table llm_generation_tracing {
     validation_failed [name: 'llm_generation_tracing_validation_failed_idx']
     feedback_signal [name: 'llm_generation_tracing_feedback_signal_idx']
     created_at [name: 'llm_generation_tracing_created_at_idx']
-    workspace_id [name: 'llm_generation_tracing_workspace_id_idx']
+  }
+}
+
+table market_deployment_projects {
+  id text [pk, not null]
+  user_id text [not null]
+  kind text [not null, default: 'htmlArtifact']
+  status text [not null, default: 'active']
+  scope_type text [not null, default: 'message']
+  topic_id text
+  title text
+  description text
+  metadata jsonb
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    user_id [name: 'market_deployment_projects_user_id_idx']
+    topic_id [name: 'market_deployment_projects_topic_id_idx']
+    kind [name: 'market_deployment_projects_kind_idx']
+  }
+}
+
+table market_deployment_releases {
+  id text [pk, not null]
+  project_id text [not null]
+  route_id text [not null]
+  source_id text [not null]
+  user_id text [not null]
+  provider text [not null, default: 'cloudflareR2Worker']
+  status text [not null, default: 'published']
+  r2_bucket text
+  r2_key text [not null]
+  content_hash text [not null]
+  content_type text [not null, default: 'text/html; charset=utf-8']
+  size_bytes integer [not null]
+  published_at "timestamp with time zone" [not null, default: `now()`]
+  unpublished_at "timestamp with time zone"
+  error_message text
+  metadata jsonb
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    project_id [name: 'market_deployment_releases_project_id_idx']
+    route_id [name: 'market_deployment_releases_route_id_idx']
+    source_id [name: 'market_deployment_releases_source_id_idx']
+    user_id [name: 'market_deployment_releases_user_id_idx']
+    status [name: 'market_deployment_releases_status_idx']
+    published_at [name: 'market_deployment_releases_published_at_idx']
+  }
+}
+
+table market_deployment_routes {
+  id text [pk, not null]
+  project_id text [not null]
+  user_id text [not null]
+  route_type text [not null, default: 'path']
+  base_url text [not null]
+  path text
+  domain text
+  status text [not null, default: 'active']
+  is_primary boolean [not null, default: true]
+  metadata jsonb
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    (base_url, path) [name: 'market_deployment_routes_base_url_path_unique', unique]
+    project_id [name: 'market_deployment_routes_project_id_idx']
+    user_id [name: 'market_deployment_routes_user_id_idx']
+    status [name: 'market_deployment_routes_status_idx']
+  }
+}
+
+table market_deployment_sources {
+  id text [pk, not null]
+  project_id text [not null]
+  user_id text [not null]
+  source_type text [not null, default: 'htmlArtifact']
+  topic_id text
+  message_id text
+  artifact_identifier text
+  version_ref text
+  metadata jsonb
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    (user_id, source_type, message_id, artifact_identifier) [name: 'market_deployment_sources_html_artifact_unique', unique]
+    project_id [name: 'market_deployment_sources_project_id_idx']
+    user_id [name: 'market_deployment_sources_user_id_idx']
+    topic_id [name: 'market_deployment_sources_topic_id_idx']
   }
 }
 
@@ -1793,9 +1890,9 @@ table file_chunks {
   indexes {
     (file_id, chunk_id) [pk]
     user_id [name: 'file_chunks_user_id_idx']
+    workspace_id [name: 'file_chunks_workspace_id_idx']
     file_id [name: 'file_chunks_file_id_idx']
     chunk_id [name: 'file_chunks_chunk_id_idx']
-    workspace_id [name: 'file_chunks_workspace_id_idx']
   }
 }
 
@@ -1808,9 +1905,9 @@ table files_to_sessions {
   indexes {
     (file_id, session_id) [pk]
     user_id [name: 'files_to_sessions_user_id_idx']
+    workspace_id [name: 'files_to_sessions_workspace_id_idx']
     file_id [name: 'files_to_sessions_file_id_idx']
     session_id [name: 'files_to_sessions_session_id_idx']
-    workspace_id [name: 'files_to_sessions_workspace_id_idx']
   }
 }
 
@@ -2169,8 +2266,8 @@ table topics {
     provider [name: 'topics_provider_idx']
     (user_id, completed_at) [name: 'topics_user_id_completed_at_idx']
     sender_id [name: 'topics_sender_id_idx']
-    () [name: 'topics_extract_status_gin_idx']
     workspace_id [name: 'topics_workspace_id_idx']
+    () [name: 'topics_extract_status_gin_idx']
   }
 }
 

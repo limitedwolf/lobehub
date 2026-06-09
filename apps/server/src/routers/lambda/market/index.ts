@@ -20,6 +20,7 @@ import {
 import { agentRouter } from './agent';
 import { agentGroupRouter } from './agentGroup';
 import { credsRouter } from './creds';
+import { deploymentsRouter } from './deployments';
 import { oidcRouter } from './oidc';
 import { skillRouter } from './skill';
 import { socialRouter } from './social';
@@ -58,6 +59,9 @@ export const marketRouter = router({
 
   // ============================== Credential Management ==============================
   creds: credsRouter,
+
+  // ============================== Deployment Management ==============================
+  deployments: deploymentsRouter,
 
   // ============================== Skill Management ==============================
   skill: skillRouter,
