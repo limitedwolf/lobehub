@@ -2,7 +2,12 @@
   "name": "@lobechat/server",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
+    "build": "vite build --config ../../scripts/viteHonoBuild.config.ts",
     "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "vite": "8.0.14"
   }
 }
