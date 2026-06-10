@@ -13,11 +13,11 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { marketDeploymentService } from '@/services/marketDeployment';
 import { useChatStore } from '@/store/chat';
 import { chatPortalSelectors } from '@/store/chat/selectors';
 import { ArtifactDisplayMode } from '@/store/chat/slices/portal/initialState';
 import { useGlobalStore } from '@/store/global';
+import { useMarketDeploymentStore } from '@/store/marketDeployment';
 import { oneLineEllipsis } from '@/styles';
 
 const TEXT_HTML_ARTIFACT_TYPE = 'text/html';
@@ -27,6 +27,7 @@ const Title = () => {
   const { message } = App.useApp();
   const [publishing, setPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string>();
+  const publishDeploymentArtifact = useMarketDeploymentStore((s) => s.publishArtifact);
   const [toggleRightPanel, setWorkingSidebarTab] = useGlobalStore((s) => [
     s.toggleRightPanel,
     s.setWorkingSidebarTab,
@@ -74,7 +75,7 @@ const Title = () => {
     setPublishing(true);
 
     try {
-      const deployment = await marketDeploymentService.publishArtifact({
+      const deployment = await publishDeploymentArtifact({
         artifactIdentifier,
         messageId,
         requestedSlug: artifactTitle,

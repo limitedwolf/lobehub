@@ -5,9 +5,9 @@ import { CopyIcon, ExternalLinkIcon, RefreshCwIcon, Trash2Icon } from 'lucide-re
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useClientDataSWR } from '@/libs/swr';
-import { marketDeploymentService } from '@/services/marketDeployment';
 import { useChatStore } from '@/store/chat';
+import { useMarketDeploymentStore } from '@/store/marketDeployment';
+import { marketDeploymentSelectors } from '@/store/marketDeployment/selectors';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   item: css`
@@ -36,21 +36,16 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
 }));
 
-const DEPLOYMENTS_SWR_KEY = 'market-deployments';
-
 const Deployments = memo(() => {
   const { t } = useTranslation('chat');
   const { message } = App.useApp();
   const topicId = useChatStore((s) => s.activeTopicId);
+  const data = useMarketDeploymentStore(marketDeploymentSelectors.getDeploymentsByTopicId(topicId));
+  const useFetchDeployments = useMarketDeploymentStore((s) => s.useFetchDeployments);
 
-  const {
-    data = [],
-    isLoading,
-    mutate,
-  } = useClientDataSWR(
-    topicId ? [DEPLOYMENTS_SWR_KEY, topicId] : null,
-    async ([, topicId]: [string, string]) => marketDeploymentService.listByTopic(topicId),
-  );
+  const { isLoading } = useFetchDeployments(topicId);
+  const refreshDeployments = useMarketDeploymentStore((s) => s.refreshDeployments);
+  const unpublishDeployment = useMarketDeploymentStore((s) => s.unpublish);
 
   const copyUrl = async (url: string) => {
     await copyToClipboard(url);
@@ -58,9 +53,8 @@ const Deployments = memo(() => {
   };
 
   const unpublish = async (id: string) => {
-    await marketDeploymentService.unpublish(id);
+    await unpublishDeployment(id);
     message.success(t('workingPanel.deployments.unpublishSuccess'));
-    await mutate();
   };
 
   return (
@@ -79,7 +73,7 @@ const Deployments = memo(() => {
           loading={isLoading}
           size={'small'}
           title={t('workingPanel.deployments.refresh')}
-          onClick={() => mutate()}
+          onClick={() => refreshDeployments(topicId)}
         />
       </Flexbox>
       {!topicId || data.length === 0 ? (
