@@ -4,15 +4,14 @@ import { defineConfig } from 'vite';
 
 import { honoServerDedupe, honoServerPlugins } from './viteNodeServer.config';
 
-const serverRoot = fileURLToPath(new URL('../apps/server', import.meta.url));
-const entry = (file: string) =>
-  fileURLToPath(new URL(`../apps/server/src/hono/${file}`, import.meta.url));
+const serverRoot = fileURLToPath(new URL('.', import.meta.url));
+const entry = (file: string) => fileURLToPath(new URL(`./src/hono/${file}`, import.meta.url));
 
 export default defineConfig({
   build: {
     emptyOutDir: true,
     minify: false,
-    outDir: fileURLToPath(new URL('../apps/server/dist', import.meta.url)),
+    outDir: fileURLToPath(new URL('./dist', import.meta.url)),
     rollupOptions: {
       input: {
         index: entry('index.ts'),

@@ -4,10 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build --config ../../scripts/viteHonoBuild.config.ts",
+    "build": "vite build --config viteHonoBuild.config.ts",
+    "dev": "vite-node --watch --config viteNodeServer.config.ts src/hono/dev.ts",
+    "start": "node dist/standalone.js",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "vite": "8.0.14"
+    "dotenv": "^17.2.3",
+    "dotenv-expand": "^12.0.3",
+    "vite": "8.0.14",
+    "vite-node": "3.2.4"
   }
 }
