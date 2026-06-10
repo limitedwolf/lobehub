@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET } from './route';
+import { connectorOAuthCallbackAPIHandler } from '../connectorOAuthCallback';
 
 const { mockConsume, mockFindById, mockSync, mockUpdate } = vi.hoisted(() => ({
   mockConsume: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock('@/database/models/connectorTool', () => ({
 vi.mock('~server/services/connector/sync', () => ({ syncConnectorToolsById: mockSync }));
 
 const makeReq = () =>
-  ({ nextUrl: { searchParams: new URLSearchParams('code=abc&state=xyz') } }) as any;
+  new Request('https://app.example.com/oauth/connector/callback?code=abc&state=xyz');
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -62,11 +62,11 @@ beforeEach(() => {
   mockUpdate.mockResolvedValue(undefined);
 });
 
-describe('connector OAuth callback', () => {
+describe('connectorOAuthCallbackAPIHandler', () => {
   it('reports synced:false when auth succeeds but tool sync fails', async () => {
     mockSync.mockRejectedValue(new Error('mcp down'));
 
-    const body = await (await GET(makeReq())).text();
+    const body = await (await connectorOAuthCallbackAPIHandler(makeReq())).text();
 
     expect(body).toContain('"success":true');
     expect(body).toContain('"synced":false');
@@ -75,7 +75,7 @@ describe('connector OAuth callback', () => {
   it('reports synced:true when auth and tool sync both succeed', async () => {
     mockSync.mockResolvedValue({ toolCount: 5 });
 
-    const body = await (await GET(makeReq())).text();
+    const body = await (await connectorOAuthCallbackAPIHandler(makeReq())).text();
 
     expect(body).toContain('"success":true');
     expect(body).toContain('"synced":true');

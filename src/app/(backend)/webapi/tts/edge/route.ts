@@ -1,1 +1,5 @@
-export { edgeTTSAPIHandler as POST } from '~server/api-runtime/speech';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
+
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const POST = handler;

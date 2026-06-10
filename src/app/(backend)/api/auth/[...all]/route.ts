@@ -1,6 +1,6 @@
-import { betterAuthAPIHandler } from '~server/api-runtime/betterAuth';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-const handler = (req: Request) => betterAuthAPIHandler(req);
+const handler = (req: Request) => fetchHonoRuntime(req);
 
 export const GET = handler;
 export const POST = handler;

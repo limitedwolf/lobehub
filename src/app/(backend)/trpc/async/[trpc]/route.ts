@@ -1,1 +1,6 @@
-export { asyncTRPCHandler as GET, asyncTRPCHandler as POST } from '~server/trpc-runtime/async';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
+
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const GET = handler;
+export const POST = handler;

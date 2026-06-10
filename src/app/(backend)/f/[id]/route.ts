@@ -1,4 +1,5 @@
-import { fileProxyAPIHandler } from '~server/api-runtime/fileProxy';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const GET = async (req: Request, ctx: { params: Promise<{ id: string }> }) =>
-  fileProxyAPIHandler(req, await ctx.params);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const GET = handler;

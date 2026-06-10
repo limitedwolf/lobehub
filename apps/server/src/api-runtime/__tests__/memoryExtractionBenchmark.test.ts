@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { memoryExtractionBenchmarkLoCoMoWebhookAPIHandler } from '../memoryExtractionBenchmark';
+
 const replaceParts = vi.fn();
 const upsertSource = vi.fn();
 const extractBenchmarkSource = vi.fn();
@@ -27,7 +29,7 @@ vi.mock('@lobechat/memory-user-memory', () => ({
   BenchmarkLocomoContextProvider: vi.fn().mockImplementation((params) => params),
 }));
 
-describe('benchmark LoCoMo memory extraction webhook', () => {
+describe('memoryExtractionBenchmarkLoCoMoWebhookAPIHandler', () => {
   beforeEach(() => {
     replaceParts.mockReset();
     upsertSource.mockReset();
@@ -42,8 +44,7 @@ describe('benchmark LoCoMo memory extraction webhook', () => {
   });
 
   it('returns per-session ingestion results and inserted part count', async () => {
-    const { POST } = await import('../route');
-    const response = await POST(
+    const response = await memoryExtractionBenchmarkLoCoMoWebhookAPIHandler(
       new Request('http://localhost/api/webhooks/memory-extraction/benchmark-locomo', {
         body: JSON.stringify({
           sampleId: 'conv-26',

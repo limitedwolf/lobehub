@@ -1,1 +1,5 @@
-export { memoryUserMemoryBenchmarkLoCoMoDevAPIHandler as POST } from '~server/api-runtime/memoryBenchmarkDev';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
+
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const POST = handler;

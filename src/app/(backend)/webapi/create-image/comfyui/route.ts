@@ -1,5 +1,7 @@
-import { comfyUICreateImageAPIHandler } from '~server/api-runtime/createImage';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
+
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const POST = handler;
 
 export const maxDuration = 300;
-
-export const POST = (req: Request) => comfyUICreateImageAPIHandler(req);

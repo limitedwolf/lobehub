@@ -7,7 +7,7 @@ import type { FileItem } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
 import { FileService } from '~server/services/file';
 
-import { GET } from './route';
+import { fileProxyAPIHandler } from '../fileProxy';
 
 const fileServiceMocks = vi.hoisted(() => {
   const instance = {
@@ -35,7 +35,7 @@ vi.mock('~server/services/file', () => ({
   FileService: fileServiceMocks.FileService,
 }));
 
-describe('file proxy route', () => {
+describe('fileProxyAPIHandler', () => {
   const db = {} as LobeChatDatabase;
 
   beforeEach(() => {
@@ -53,8 +53,8 @@ describe('file proxy route', () => {
   });
 
   it('should redirect to a cached presigned preview URL instead of a public full file URL', async () => {
-    const response = await GET(new Request('https://lobehub.com/f/file-id'), {
-      params: Promise.resolve({ id: 'file-id' }),
+    const response = await fileProxyAPIHandler(new Request('https://lobehub.com/f/file-id'), {
+      id: 'file-id',
     });
 
     expect(response.status).toBe(302);

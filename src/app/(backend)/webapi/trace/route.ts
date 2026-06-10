@@ -1,3 +1,5 @@
-import { traceAPIHandler } from '~server/api-runtime/trace';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const POST = (req: Request) => traceAPIHandler(req);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const POST = handler;

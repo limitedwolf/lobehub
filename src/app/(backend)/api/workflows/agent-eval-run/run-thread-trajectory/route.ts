@@ -1,3 +1,5 @@
-import workflowsApp from '~server/workflows-hono';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const POST = (req: Request) => workflowsApp.fetch(req);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const POST = handler;

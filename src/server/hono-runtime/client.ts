@@ -63,7 +63,20 @@ const loadProductionHonoApp = () => {
 
   const entry =
     process.env.LOBE_HONO_DIST_ENTRY || path.join(process.cwd(), 'apps/server/dist/index.js');
-  const module = loadExternalModule(entry) as HonoDistModule | HonoFetchApp;
+
+  let module: HonoDistModule | HonoFetchApp;
+  try {
+    module = loadExternalModule(entry) as HonoDistModule | HonoFetchApp;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'MODULE_NOT_FOUND') {
+      throw new Error(
+        `Hono dist entry not found at ${entry}. Build it with \`pnpm --filter @lobechat/server build\`, ` +
+          'or in dev run `bun run dev` / set LOBE_DEV_HONO_TARGET to a running Hono server.',
+        { cause: error },
+      );
+    }
+    throw error;
+  }
   const app = isHonoFetchApp(module)
     ? module
     : isHonoFetchApp(module.default)

@@ -2,7 +2,7 @@
 import type { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET, POST } from './route';
+import { betterAuthAPIHandler } from '../betterAuth';
 
 type RouteHandler = (request: Request) => Promise<Response>;
 
@@ -29,7 +29,7 @@ const createPostRequest = (body: string, contentType = 'application/json') =>
     method: 'POST',
   }) as NextRequest;
 
-describe('/api/auth/[...all] route', () => {
+describe('betterAuthAPIHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.get.mockResolvedValue(Response.json({ ok: true }));
@@ -37,7 +37,7 @@ describe('/api/auth/[...all] route', () => {
   });
 
   it('returns 400 for malformed JSON auth requests before Better Auth handles them', async () => {
-    const response = await POST(
+    const response = await betterAuthAPIHandler(
       createPostRequest('{"email":"user@example.com","password":"secret",}'),
     );
 
@@ -54,7 +54,7 @@ describe('/api/auth/[...all] route', () => {
       Response.json(await request.json()),
     );
 
-    const response = await POST(
+    const response = await betterAuthAPIHandler(
       createPostRequest(JSON.stringify({ email: 'user@example.com', password: 'secret' })),
     );
 
@@ -66,7 +66,7 @@ describe('/api/auth/[...all] route', () => {
   });
 
   it('delegates non-JSON auth requests to Better Auth', async () => {
-    const response = await POST(
+    const response = await betterAuthAPIHandler(
       createPostRequest(
         'email=user%40example.com&password=secret',
         'application/x-www-form-urlencoded',
@@ -80,7 +80,7 @@ describe('/api/auth/[...all] route', () => {
   it('delegates GET requests to Better Auth', async () => {
     const request = new Request('https://localhost/api/auth/get-session') as NextRequest;
 
-    const response = await GET(request);
+    const response = await betterAuthAPIHandler(request);
 
     expect(response.status).toBe(200);
     expect(mocks.get).toHaveBeenCalledWith(request);

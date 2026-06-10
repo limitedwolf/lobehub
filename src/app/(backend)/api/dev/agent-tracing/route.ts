@@ -1,1 +1,5 @@
-export { agentTracingAPIHandler as GET } from '~server/api-runtime/dev';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
+
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const GET = handler;

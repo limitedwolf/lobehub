@@ -1,9 +1,6 @@
-import { marketSocialAPIHandler } from '~server/api-runtime/market';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-type RouteContext = { params: Promise<{ segments?: string[] }> };
-
-const handler = async (req: Request, ctx: RouteContext) =>
-  marketSocialAPIHandler(req, await ctx.params);
+const handler = (req: Request) => fetchHonoRuntime(req);
 
 export const GET = handler;
 export const POST = handler;

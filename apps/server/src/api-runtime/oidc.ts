@@ -339,7 +339,7 @@ export const oidcProviderAPIHandler = async (request: Request) => {
           }
         });
         providerLog('Middleware call initiated, waiting for its callback OR nodeResponse.end()...');
-      });
+      }, reject);
     });
 
     providerLog('Promise surrounding middleware call resolved.');

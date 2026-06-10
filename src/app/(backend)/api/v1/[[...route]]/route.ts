@@ -1,6 +1,6 @@
-import { openAPIHandler } from '~server/api-runtime/openapi';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-const handler = (req: Request) => openAPIHandler(req);
+const handler = (req: Request) => fetchHonoRuntime(req);
 
 export const GET = handler;
 export const POST = handler;

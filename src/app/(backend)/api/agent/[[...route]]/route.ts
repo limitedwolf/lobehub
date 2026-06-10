@@ -1,6 +1,6 @@
-import app from '~server/agent-hono';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-const handler = (request: Request) => app.fetch(request);
+const handler = (req: Request) => fetchHonoRuntime(req);
 
 export const GET = handler;
 export const POST = handler;

@@ -1,4 +1,5 @@
-import { videoWebhookAPIHandler } from '~server/api-runtime/videoWebhook';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const POST = async (req: Request, ctx: { params: Promise<{ provider: string }> }) =>
-  videoWebhookAPIHandler(req, await ctx.params);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const POST = handler;

@@ -2,7 +2,7 @@
 import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET } from '../route';
+import { agentStreamAPIHandler } from '../agentStream';
 
 // Mock dependencies first
 const mockStreamEventManager = {
@@ -14,7 +14,7 @@ vi.mock('~server/modules/AgentRuntime', () => ({
   createStreamEventManager: vi.fn(() => mockStreamEventManager),
 }));
 
-describe('/api/agent/stream route', () => {
+describe('agentStreamAPIHandler', () => {
   const MOCK_TIMESTAMP = 1758203237000;
 
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('/api/agent/stream route', () => {
   describe('GET handler', () => {
     it('should return 400 when operationId parameter is missing', async () => {
       const request = new NextRequest('https://test.com/api/agent/stream');
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -41,7 +41,7 @@ describe('/api/agent/stream route', () => {
       const request = new NextRequest(
         'https://test.com/api/agent/stream?operationId=test-operation',
       );
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/event-stream');
@@ -62,7 +62,7 @@ describe('/api/agent/stream route', () => {
         'https://test.com/api/agent/stream?operationId=test-operation&lastEventId=123',
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
       const decoder = new TextDecoder();
       const reader = response.body!.getReader();
 
@@ -133,7 +133,7 @@ describe('/api/agent/stream route', () => {
       ];
       mockStreamEventManager.getStreamHistory.mockResolvedValue(mockEvents);
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
       const decoder = new TextDecoder();
       const reader = response.body!.getReader();
 
@@ -215,7 +215,7 @@ describe('/api/agent/stream route', () => {
       ];
       mockStreamEventManager.getStreamHistory.mockResolvedValue(mockEvents);
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
       const decoder = new TextDecoder();
       const reader = response.body!.getReader();
 
@@ -285,7 +285,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         new Error('Redis connection failed'),
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
       const decoder = new TextDecoder();
       const reader = response.body!.getReader();
 
@@ -347,7 +347,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
 
       mockStreamEventManager.subscribeStreamEvents.mockResolvedValue(undefined);
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
 
@@ -373,7 +373,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
 
       mockStreamEventManager.subscribeStreamEvents.mockResolvedValue(undefined);
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
 
@@ -394,7 +394,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         'https://test.com/api/agent/stream?operationId=test-operation',
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
       const decoder = new TextDecoder();
       const reader = response.body!.getReader();
 
@@ -456,7 +456,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       // Verify the subscription was set up correctly
       expect(mockStreamEventManager.subscribeStreamEvents).toHaveBeenCalledWith(
@@ -491,7 +491,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       // Verify we captured the callback
       expect(capturedCallback).toBeDefined();
@@ -527,7 +527,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       // Verify we captured the callback
       expect(capturedCallback).toBeDefined();
@@ -563,7 +563,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(capturedCallback).toBeDefined();
       expect(response.status).toBe(200);
@@ -624,7 +624,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(capturedCallback).toBeDefined();
       expect(capturedSignal).toBeDefined();
@@ -661,7 +661,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
       expect(capturedCallback).toBeDefined();
@@ -695,7 +695,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
       expect(capturedCallback).toBeDefined();
@@ -730,7 +730,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
       expect(capturedCallback).toBeDefined();
@@ -777,7 +777,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         },
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
       expect(capturedCallback).toBeDefined();
@@ -818,7 +818,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         `https://test.com/api/agent/stream?operationId=${operationId}`,
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
     });
@@ -828,7 +828,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         'https://test.com/api/agent/stream?operationId=test&lastEventId=12345',
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
     });
@@ -838,7 +838,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
         'https://test.com/api/agent/stream?operationId=test&includeHistory=false',
       );
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(200);
       expect(mockStreamEventManager.getStreamHistory).not.toHaveBeenCalled();
@@ -847,7 +847,7 @@ data: {"type":"stream_end","timestamp":300,"operationId":"test-operation","data"
     it('should handle invalid URL gracefully', async () => {
       const request = new NextRequest('https://test.com/api/agent/stream?operationId=');
 
-      const response = await GET(request);
+      const response = await agentStreamAPIHandler(request);
 
       expect(response.status).toBe(400);
       const data = await response.json();

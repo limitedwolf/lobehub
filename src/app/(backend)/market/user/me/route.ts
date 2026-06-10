@@ -1,5 +1,7 @@
-import { marketUserMeAPIHandler } from '~server/api-runtime/market';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const PUT = (req: Request) => marketUserMeAPIHandler(req);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const PUT = handler;
 
 export const dynamic = 'force-dynamic';

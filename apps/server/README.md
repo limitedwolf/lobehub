@@ -26,16 +26,27 @@ apps/server/src/
 └── workflows-hono/    # /api/workflows/* Hono sub-app (agent-signal, memory, task)
 ```
 
-The package's exports resolve via the `@/server/*` alias (dual-path tsconfig: `apps/server/src/*` first, `src/server/*` fallback for the SSR-page helpers that still live there).
+The package's exports resolve via the `~server/*` alias (`apps/server/src/*`); `@/server/*` now refers only to the Next SSR-page helpers remaining in `src/server/`.
+
+## Next as a Shell
+
+Every `src/app/(backend)/**/route.ts` is a thin forwarder into this package:
+
+- In dev, `fetchHonoRuntime` proxies each request to the standalone Hono server (`LOBE_DEV_HONO_TARGET`, default `http://localhost:3011`).
+- In production, it loads the vite-built `apps/server/dist/index.js` in-process via an opaque runtime `require` (override with `LOBE_HONO_DIST_ENTRY`), so the backend never passes through `next build`.
+- Route file paths, HTTP method export names, and segment config (`maxDuration`, `dynamic`) are contractual — the cloud repo re-exports them by path. `src/app/(backend)/route-shell.guard.test.ts` enforces that route files stay logic-free.
+- Exceptions: `webapi/revalidate` (Next ISR machinery) and `hono-runtime/[...path]` (the binding route itself).
+
+The root `build` / `build:raw` scripts run `build:hono` first so the dist always pairs with the Next build.
 
 ## Dev Modes
 
-| Mode                | Command                 | Topology                                 |
-| ------------------- | ----------------------- | ---------------------------------------- |
-| **Classic**         | `bun run dev`           | Next (`:3010`) + Vite (`:9876`)          |
-| **Hono-Lite** (POC) | `bun run dev:hono-lite` | Hono (`:3011`) + Vite (`:9876`), no Next |
+| Mode                | Command                 | Topology                                               |
+| ------------------- | ----------------------- | ------------------------------------------------------ |
+| **Classic**         | `bun run dev`           | Hono (`:3011`) + Next shell (`:3010`) + Vite (`:9876`) |
+| **Hono-Lite** (POC) | `bun run dev:hono-lite` | Hono (`:3011`) + Vite (`:9876`), no Next               |
 
-Both modes coexist on this branch — pick whichever fits the task.
+Both modes coexist on this branch — pick whichever fits the task. Classic dev now spawns the Hono server automatically and points the Next API shells at it.
 
 ### Standalone Server (this package only)
 

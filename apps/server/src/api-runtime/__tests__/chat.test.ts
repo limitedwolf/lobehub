@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { auth } from '@/auth';
 import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
-import { POST } from './route';
+import { chatAPIHandler } from '../chat';
 
 vi.mock('@/app/(backend)/middleware/auth/utils', () => ({
   checkAuthMethod: vi.fn(),
@@ -45,11 +45,9 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('POST handler', () => {
+describe('chatAPIHandler', () => {
   describe('init chat model', () => {
     it('should initialize ModelRuntime correctly with valid session', async () => {
-      const mockParams = Promise.resolve({ provider: 'test-provider' });
-
       const mockChatResponse = new Response(JSON.stringify({ success: true }), {
         headers: { 'Content-Type': 'application/json' },
       });
@@ -60,7 +58,7 @@ describe('POST handler', () => {
 
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      await POST(request as unknown as Request, { params: mockParams });
+      await chatAPIHandler(request as unknown as Request, { provider: 'test-provider' });
 
       expect(initModelRuntimeFromDB).toHaveBeenCalledWith(
         expect.anything(),
@@ -73,9 +71,7 @@ describe('POST handler', () => {
     it('should return Unauthorized error when no session exists', async () => {
       vi.mocked(auth.api.getSession).mockResolvedValue(null);
 
-      const mockParams = Promise.resolve({ provider: 'test-provider' });
-
-      const response = await POST(request, { params: mockParams });
+      const response = await chatAPIHandler(request, { provider: 'test-provider' });
 
       expect(response.status).toBe(401);
     });
@@ -83,7 +79,6 @@ describe('POST handler', () => {
 
   describe('chat', () => {
     it('should correctly handle chat completion with valid payload', async () => {
-      const mockParams = Promise.resolve({ provider: 'test-provider' });
       const mockChatPayload = { message: 'Hello, world!' };
       request = new Request(new URL('https://test.com'), {
         method: 'POST',
@@ -98,7 +93,9 @@ describe('POST handler', () => {
 
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await POST(request as unknown as Request, { params: mockParams });
+      const response = await chatAPIHandler(request as unknown as Request, {
+        provider: 'test-provider',
+      });
 
       expect(response).toEqual(mockChatResponse);
       expect(mockRuntime.chat).toHaveBeenCalledWith(mockChatPayload, {
@@ -108,7 +105,6 @@ describe('POST handler', () => {
     });
 
     it('should return an error response when chat completion fails', async () => {
-      const mockParams = Promise.resolve({ provider: 'test-provider' });
       const mockChatPayload = { message: 'Hello, world!' };
       request = new Request(new URL('https://test.com'), {
         method: 'POST',
@@ -128,7 +124,7 @@ describe('POST handler', () => {
 
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await POST(request, { params: mockParams });
+      const response = await chatAPIHandler(request, { provider: 'test-provider' });
 
       expect(response.status).toBe(500);
       expect(await response.json()).toEqual({

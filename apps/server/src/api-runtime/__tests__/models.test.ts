@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { auth } from '@/auth';
 import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
-import { GET } from './route';
+import { modelsAPIHandler } from '../models';
 
 vi.mock('@/app/(backend)/middleware/auth/utils', () => ({
   checkAuthMethod: vi.fn(),
@@ -46,11 +46,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('GET handler', () => {
+describe('modelsAPIHandler', () => {
   describe('error handling', () => {
     it('should return the thrown error message without exposing stack trace', async () => {
-      const mockParams = Promise.resolve({ provider: 'google' });
-
       const errorWithStack = new Error('Something went wrong');
       errorWithStack.stack =
         'Error: Something went wrong\n    at Object.<anonymous> (/path/to/file.ts:10:15)';
@@ -62,7 +60,7 @@ describe('GET handler', () => {
       };
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'google' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(500);
@@ -75,8 +73,6 @@ describe('GET handler', () => {
     });
 
     it('should return custom error messages', async () => {
-      const mockParams = Promise.resolve({ provider: 'google' });
-
       class CustomError extends Error {
         constructor(message: string) {
           super(message);
@@ -94,7 +90,7 @@ describe('GET handler', () => {
       };
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'google' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(500);
@@ -103,8 +99,6 @@ describe('GET handler', () => {
     });
 
     it('should preserve structured model fetch error context', async () => {
-      const mockParams = Promise.resolve({ provider: 'google' });
-
       const structuredError = {
         errorType: AgentRuntimeErrorType.ProviderBizError,
         error: { code: 'PROVIDER_ERROR', message: 'API limit exceeded' },
@@ -117,7 +111,7 @@ describe('GET handler', () => {
       };
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'google' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(471);
@@ -129,8 +123,6 @@ describe('GET handler', () => {
     });
 
     it('should return generic status code for model fetch errors', async () => {
-      const mockParams = Promise.resolve({ provider: 'google' });
-
       const mockRuntime: LobeRuntimeAI = {
         baseURL: 'abc',
         chat: vi.fn(),
@@ -138,7 +130,7 @@ describe('GET handler', () => {
       };
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'google' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(500);
@@ -147,8 +139,6 @@ describe('GET handler', () => {
     });
 
     it('should prefer wrapped cause message for model fetch errors', async () => {
-      const mockParams = Promise.resolve({ provider: 'openrouter' });
-
       const cause = new Error('OpenRouter models API request failed with status 401');
       const wrappedError = new Error('Failed to fetch OpenRouter models', { cause });
 
@@ -159,7 +149,7 @@ describe('GET handler', () => {
       };
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'openrouter' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(500);
@@ -170,11 +160,9 @@ describe('GET handler', () => {
     });
 
     it('should return generic status code for setup errors', async () => {
-      const mockParams = Promise.resolve({ provider: 'google' });
-
       vi.mocked(initModelRuntimeFromDB).mockRejectedValue(new Error('Setup failed'));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'google' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(500);
@@ -183,14 +171,12 @@ describe('GET handler', () => {
     });
 
     it('should preserve structured setup error type and message', async () => {
-      const mockParams = Promise.resolve({ provider: 'githubcopilot' });
-
       vi.mocked(initModelRuntimeFromDB).mockRejectedValue({
         error: { message: 'Invalid GitHub Copilot API key' },
         errorType: AgentRuntimeErrorType.InvalidProviderAPIKey,
       });
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'githubcopilot' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(401);
@@ -201,8 +187,6 @@ describe('GET handler', () => {
     });
 
     it('should include provider in error response', async () => {
-      const mockParams = Promise.resolve({ provider: 'openai' });
-
       const mockRuntime: LobeRuntimeAI = {
         baseURL: 'abc',
         chat: vi.fn(),
@@ -210,7 +194,7 @@ describe('GET handler', () => {
       };
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'openai' });
       const responseBody = await response.json();
 
       expect(responseBody.body.provider).toBe('openai');
@@ -219,8 +203,6 @@ describe('GET handler', () => {
 
   describe('success cases', () => {
     it('should return model list on success', async () => {
-      const mockParams = Promise.resolve({ provider: 'openai' });
-
       const mockModelList = [
         { id: 'gpt-4', name: 'GPT-4' },
         { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
@@ -233,7 +215,7 @@ describe('GET handler', () => {
       };
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
 
-      const response = await GET(request, { params: mockParams });
+      const response = await modelsAPIHandler(request, { provider: 'openai' });
       const responseBody = await response.json();
 
       expect(response.status).toBe(200);

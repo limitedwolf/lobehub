@@ -1,3 +1,5 @@
-import { oidcCallbackDesktopAPIHandler } from '~server/api-runtime/oidc';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const GET = (req: Request) => oidcCallbackDesktopAPIHandler(req);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const GET = handler;

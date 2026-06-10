@@ -1,4 +1,5 @@
-import { pullModelsAPIHandler } from '~server/api-runtime/models';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const POST = async (req: Request, ctx: { params: Promise<{ provider: string }> }) =>
-  pullModelsAPIHandler(req, await ctx.params);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const POST = handler;

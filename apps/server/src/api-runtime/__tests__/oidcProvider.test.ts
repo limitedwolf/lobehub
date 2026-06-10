@@ -32,7 +32,22 @@ vi.mock('~server/services/oidc/oidcProvider', () => ({
   })),
 }));
 
-describe('OIDC route', () => {
+const makeRequest = () =>
+  new Request('https://example.com/oidc/token', {
+    body: 'grant_type=refresh_token',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    method: 'POST',
+  }) as unknown as NextRequest;
+
+const callWithTimeout = (handler: (req: NextRequest) => Promise<Response>, request: NextRequest) =>
+  Promise.race([
+    handler(request),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('OIDC route timed out')), 50),
+    ),
+  ]);
+
+describe('oidcProviderAPIHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -48,22 +63,24 @@ describe('OIDC route', () => {
   it('returns a 500 response when creating the Node request fails', async () => {
     mocks.createNodeRequest.mockRejectedValueOnce(new Error('body stream aborted'));
 
-    const { POST } = await import('./route');
-    const request = new Request('https://example.com/oidc/token', {
-      body: 'grant_type=refresh_token',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      method: 'POST',
-    }) as unknown as NextRequest;
-
-    const response = await Promise.race([
-      POST(request),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('OIDC route timed out')), 50),
-      ),
-    ]);
+    const { oidcProviderAPIHandler } = await import('../oidc');
+    const response = await callWithTimeout(oidcProviderAPIHandler, makeRequest());
 
     expect(response.status).toBe(500);
     await expect(response.text()).resolves.toContain('body stream aborted');
+    expect(mocks.middleware).not.toHaveBeenCalled();
+  });
+
+  it('returns a 500 response when the OIDC provider flow fails', async () => {
+    mocks.providerCallback.mockImplementationOnce(() => {
+      throw new Error('callback exploded');
+    });
+
+    const { oidcProviderAPIHandler } = await import('../oidc');
+    const response = await callWithTimeout(oidcProviderAPIHandler, makeRequest());
+
+    expect(response.status).toBe(500);
+    await expect(response.text()).resolves.toContain('callback exploded');
     expect(mocks.middleware).not.toHaveBeenCalled();
   });
 });

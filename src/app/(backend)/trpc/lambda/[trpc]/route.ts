@@ -1,1 +1,6 @@
-export { lambdaTRPCHandler as GET, lambdaTRPCHandler as POST } from '~server/trpc-runtime/lambda';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
+
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const GET = handler;
+export const POST = handler;

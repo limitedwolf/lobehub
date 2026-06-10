@@ -1,3 +1,5 @@
-import { agentStreamAPIHandler } from '~server/api-runtime/agentStream';
+import { fetchHonoRuntime } from '@/server/hono-runtime/client';
 
-export const GET = (req: Request) => agentStreamAPIHandler(req);
+const handler = (req: Request) => fetchHonoRuntime(req);
+
+export const GET = handler;
