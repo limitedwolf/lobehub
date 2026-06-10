@@ -31,11 +31,11 @@ import { getServerDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { FileService } from '@/server/services/file';
-import { processBackgroundVideoPolling } from '@/server/services/generation/videoBackgroundPolling';
-import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
 import { AsyncTaskStatus, AsyncTaskType } from '@/types/asyncTask';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { FileService } from '~server/services/file';
+import { processBackgroundVideoPolling } from '~server/services/generation/videoBackgroundPolling';
+import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
 import { createVideoTaskSubmitError } from './error';
 

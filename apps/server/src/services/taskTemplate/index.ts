@@ -14,7 +14,7 @@ import { z } from 'zod';
 
 import { appEnv } from '@/envs/app';
 import { isTrustedClientEnabled } from '@/libs/trusted-client';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 const clampRecommendationCount = (count?: number) =>
   Math.min(Math.max(1, count ?? TASK_TEMPLATE_RECOMMEND_COUNT), TASK_TEMPLATE_RECOMMEND_MAX_COUNT);

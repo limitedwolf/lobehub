@@ -3,7 +3,7 @@ import debug from 'debug';
 import type {
   OnThreadCompletePayload,
   OnTrajectoryCompletePayload,
-} from '@/server/workflows/agentEvalRun';
+} from '~server/workflows/agentEvalRun';
 
 const threadLog = debug('lobe-server:workflows:on-thread-complete');
 const trajectoryLog = debug('lobe-server:workflows:on-trajectory-complete');
@@ -47,8 +47,8 @@ export const agentEvalRunOnThreadCompleteAPIHandler = async (request: Request) =
       await Promise.all([
         import('@/database/models/agentEval'),
         import('@/database/server'),
-        import('@/server/services/agentEvalRun'),
-        import('@/server/workflows/agentEvalRun/utils'),
+        import('~server/services/agentEvalRun'),
+        import('~server/workflows/agentEvalRun/utils'),
       ]);
     const db = await getServerDB();
     const wsId = await workflowUtils.resolveAgentEvalRunWorkspace(db, runId);
@@ -97,7 +97,7 @@ export const agentEvalRunOnThreadCompleteAPIHandler = async (request: Request) =
         '[on-thread-complete] All test cases done for run %s, triggering finalize',
         runId,
       );
-      const { AgentEvalRunWorkflow } = await import('@/server/workflows/agentEvalRun');
+      const { AgentEvalRunWorkflow } = await import('~server/workflows/agentEvalRun');
       await AgentEvalRunWorkflow.triggerFinalizeRun({ runId, userId });
     }
 
@@ -152,8 +152,8 @@ export const agentEvalRunOnTrajectoryCompleteAPIHandler = async (request: Reques
       await Promise.all([
         import('@/database/models/agentEval'),
         import('@/database/server'),
-        import('@/server/services/agentEvalRun'),
-        import('@/server/workflows/agentEvalRun/utils'),
+        import('~server/services/agentEvalRun'),
+        import('~server/workflows/agentEvalRun/utils'),
       ]);
     const db = await getServerDB();
     const wsId = await workflowUtils.resolveAgentEvalRunWorkspace(db, runId);
@@ -191,7 +191,7 @@ export const agentEvalRunOnTrajectoryCompleteAPIHandler = async (request: Reques
         '[on-trajectory-complete] All test cases done for run %s, triggering finalize',
         runId,
       );
-      const { AgentEvalRunWorkflow } = await import('@/server/workflows/agentEvalRun');
+      const { AgentEvalRunWorkflow } = await import('~server/workflows/agentEvalRun');
       await AgentEvalRunWorkflow.triggerFinalizeRun({ runId, userId });
     }
 

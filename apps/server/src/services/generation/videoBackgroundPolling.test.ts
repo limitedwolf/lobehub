@@ -3,15 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationModel } from '@/database/models/generation';
 import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { VideoGenerationService } from '@/server/services/generation/video';
-import { processBackgroundVideoPolling } from '@/server/services/generation/videoBackgroundPolling';
 import { AsyncTaskError, AsyncTaskStatus } from '@/types/asyncTask';
 import { FileSource } from '@/types/files';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { VideoGenerationService } from '~server/services/generation/video';
+import { processBackgroundVideoPolling } from '~server/services/generation/videoBackgroundPolling';
 
 vi.mock('@/database/models/asyncTask');
 vi.mock('@/database/models/generation');
-vi.mock('@/server/services/generation/video');
+vi.mock('~server/services/generation/video');
 vi.mock('@/utils/sanitizeFileName', () => ({
   sanitizeFileName: vi.fn((...args) => args.join('-')),
 }));
@@ -20,7 +20,7 @@ vi.mock('debug', () => ({
   default: () => vi.fn(),
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 

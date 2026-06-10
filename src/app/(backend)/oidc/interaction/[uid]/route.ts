@@ -4,8 +4,8 @@ import { NextResponse } from 'next/server';
 
 import { authEnv } from '@/envs/auth';
 import { defaultClients } from '@/libs/oidc-provider/config';
-import { OIDCService } from '@/server/services/oidc';
 import type { OidcInteractionDetailsResponse, OidcInteractionErrorResponse } from '@/types/oidc';
+import { OIDCService } from '~server/services/oidc';
 
 const log = debug('lobe-oidc:interaction');
 

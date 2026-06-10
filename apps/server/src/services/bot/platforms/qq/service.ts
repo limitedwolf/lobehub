@@ -36,8 +36,8 @@ import type {
 } from '@lobechat/builtin-tool-message/executionRuntime';
 import type { QQApiClient } from '@lobechat/chat-adapter-qq';
 
-import type { MessageRuntimeService } from '@/server/services/toolExecution/serverRuntimes/message/adapters/types';
-import { PlatformUnsupportedError } from '@/server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
+import type { MessageRuntimeService } from '~server/services/toolExecution/serverRuntimes/message/adapters/types';
+import { PlatformUnsupportedError } from '~server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
 
 /**
  * Parse channelId into thread type and target ID.

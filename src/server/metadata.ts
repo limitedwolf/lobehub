@@ -7,8 +7,8 @@ import { OG_URL } from '@/const/url';
 import { isCustomORG } from '@/const/version';
 import { type Locales } from '@/locales/resources';
 import { locales } from '@/locales/resources';
-import { getCanonicalUrl } from '@/server/utils/url';
 import { formatDescLength, formatTitleLength } from '@/utils/genOG';
+import { getCanonicalUrl } from '~server/utils/url';
 
 export class Meta {
   public generate({

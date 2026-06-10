@@ -2,7 +2,7 @@ import debug from 'debug';
 import type { Context } from 'hono';
 
 import { getServerDB } from '@/database/core/db-adaptor';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { AiAgentService } from '~server/services/aiAgent';
 
 const log = debug('lobe-server:agent:exec');
 

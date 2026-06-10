@@ -13,7 +13,7 @@ import {
 
 import { AgentModel } from '@/database/models/agent';
 import { PluginModel } from '@/database/models/plugin';
-import { DiscoverService } from '@/server/services/discover';
+import { DiscoverService } from '~server/services/discover';
 
 import { type ToolExecutionContext, type ToolExecutionResult } from '../types';
 import { type ServerRuntimeRegistration } from './types';

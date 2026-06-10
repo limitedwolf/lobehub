@@ -1,20 +1,20 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AiAgentService } from '@/server/services/aiAgent';
+import { AiAgentService } from '~server/services/aiAgent';
 
 import { runStep, runStepHealth } from '../runStep';
 
 const mockGetOperationMetadata = vi.fn();
 const mockExecuteStep = vi.fn();
 
-vi.mock('@/server/modules/AgentRuntime', () => ({
+vi.mock('~server/modules/AgentRuntime', () => ({
   AgentRuntimeCoordinator: vi.fn().mockImplementation(() => ({
     getOperationMetadata: mockGetOperationMetadata,
   })),
 }));
 
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     executeStep: mockExecuteStep,
   })),

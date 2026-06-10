@@ -3,7 +3,7 @@ import { SEARCH_SEARXNG_NOT_CONFIG } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 
 import { toolsEnv } from '@/envs/tools';
-import { SearXNGClient } from '@/server/services/search/impls/searxng/client';
+import { SearXNGClient } from '~server/services/search/impls/searxng/client';
 
 import { type SearchServiceImpl } from '../type';
 

@@ -14,10 +14,10 @@ import { UserModel } from '@/database/models/user';
 import {
   emitToolOutcomeSafely,
   resolveToolOutcomeScope,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
-import { MarketService } from '@/server/services/market';
-import { SkillImporter } from '@/server/services/skill/importer';
+} from '~server/services/agentSignal/procedure';
+import { redisPolicyStateStore } from '~server/services/agentSignal/store/adapters/redis/policyStateStore';
+import { MarketService } from '~server/services/market';
+import { SkillImporter } from '~server/services/skill/importer';
 
 import { type ServerRuntimeRegistration } from './types';
 

@@ -1,1 +1,1 @@
-export { memoryUserMemoryBenchmarkLoCoMoDevAPIHandler as POST } from '@/server/api-runtime/memoryBenchmarkDev';
+export { memoryUserMemoryBenchmarkLoCoMoDevAPIHandler as POST } from '~server/api-runtime/memoryBenchmarkDev';

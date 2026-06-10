@@ -3,12 +3,9 @@ import { NextResponse } from 'next/server';
 
 import { AgentEvalRunModel } from '@/database/models/agentEval';
 import { getServerDB } from '@/database/server';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
-import {
-  AgentEvalRunWorkflow,
-  type OnThreadCompletePayload,
-} from '@/server/workflows/agentEvalRun';
-import { resolveAgentEvalRunWorkspace } from '@/server/workflows/agentEvalRun/utils';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
+import { AgentEvalRunWorkflow, type OnThreadCompletePayload } from '~server/workflows/agentEvalRun';
+import { resolveAgentEvalRunWorkspace } from '~server/workflows/agentEvalRun/utils';
 
 const log = debug('lobe-server:workflows:on-thread-complete');
 

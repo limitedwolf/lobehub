@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-import { SLACK_API_BASE } from '@/server/services/bot/platforms/slack/api';
+import { SLACK_API_BASE } from '~server/services/bot/platforms/slack/api';
 
 const SLACK_AUTHORIZE_URL = 'https://slack.com/oauth/v2/authorize';
 const SLACK_OAUTH_ACCESS_URL = `${SLACK_API_BASE}/oauth.v2.access`;

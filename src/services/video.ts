@@ -1,7 +1,7 @@
 import debug from 'debug';
 
 import { lambdaClient } from '@/libs/trpc/client';
-import { type CreateVideoServicePayload } from '@/server/routers/lambda/video';
+import { type CreateVideoServicePayload } from '~server/routers/lambda/video';
 
 const log = debug('lobe-video:service');
 

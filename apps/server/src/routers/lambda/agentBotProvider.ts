@@ -8,16 +8,16 @@ import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceA
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 import {
   assertBotAccessSettings,
   invalidateBotAfterUpdate,
   mergeBotSettingsForPersist,
-} from '@/server/services/bot/agentBotProviderSettings';
-import { getBotMessageRouter } from '@/server/services/bot/BotMessageRouter';
-import { mergeWithDefaults, platformRegistry } from '@/server/services/bot/platforms';
-import { GatewayService } from '@/server/services/gateway';
-import { getBotRuntimeStatus } from '@/server/services/gateway/runtimeStatus';
+} from '~server/services/bot/agentBotProviderSettings';
+import { getBotMessageRouter } from '~server/services/bot/BotMessageRouter';
+import { mergeWithDefaults, platformRegistry } from '~server/services/bot/platforms';
+import { GatewayService } from '~server/services/gateway';
+import { getBotRuntimeStatus } from '~server/services/gateway/runtimeStatus';
 
 const agentBotProviderProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

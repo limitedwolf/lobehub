@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DiscordApi } from '@/server/services/bot/platforms/discord/api';
+import { DiscordApi } from '~server/services/bot/platforms/discord/api';
 
 import { issueLinkToken } from '../../linkTokenStore';
 import { buildDiscordSwitchButtons, MessengerDiscordBinder } from './binder';
@@ -23,11 +23,11 @@ vi.mock('../../linkTokenStore', () => ({
   issueLinkToken: vi.fn(),
 }));
 
-vi.mock('@/server/services/bot/platforms/discord/api', () => ({
+vi.mock('~server/services/bot/platforms/discord/api', () => ({
   DiscordApi: vi.fn(),
 }));
 
-vi.mock('@/server/services/bot/platforms/discord/client', () => ({
+vi.mock('~server/services/bot/platforms/discord/client', () => ({
   DiscordClientFactory: vi.fn(),
 }));
 

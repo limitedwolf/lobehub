@@ -2,8 +2,8 @@ import { TRPCError } from '@trpc/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KnowledgeRepo } from '@/database/repositories/knowledge';
-import { fileRouter } from '@/server/routers/lambda/file';
 import { AsyncTaskStatus } from '@/types/asyncTask';
+import { fileRouter } from '~server/routers/lambda/file';
 
 const buildMockFileAccessUrl = ({ id }: { id: string }) => `https://lobehub.com/f/${id}`;
 
@@ -175,7 +175,7 @@ const mockFileServiceGetFullFileUrl = vi.fn();
 const mockFileServiceGetFileAccessUrl = vi.fn();
 const mockFileServiceGetFileMetadata = vi.fn();
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn(() => ({
     deleteFile: vi.fn(),
     deleteFiles: vi.fn(),
@@ -207,7 +207,7 @@ vi.mock('@/database/models/document', () => ({
   })),
 }));
 
-vi.mock('@/server/services/document', () => ({
+vi.mock('~server/services/document', () => ({
   DocumentService: vi.fn(() => ({
     deleteDocuments: mockDocumentServiceDeleteDocuments,
   })),

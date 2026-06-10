@@ -1,7 +1,7 @@
 import type { ChatToolPayload } from '@lobechat/types';
 import debug from 'debug';
 
-import type { ToolExecutionResultResponse } from '@/server/services/toolExecution/types';
+import type { ToolExecutionResultResponse } from '~server/services/toolExecution/types';
 
 import { getAgentRuntimeRedisClient } from './redis';
 import { GLOBAL_DEFAULT_TIMEOUT_MS, MAX_TIMEOUT_MS, MIN_TIMEOUT_MS } from './resolveToolTimeout';

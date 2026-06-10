@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DocumentModel } from '@/database/models/document';
 import { TopicDocumentModel } from '@/database/models/topicDocument';
-import { DocumentService } from '@/server/services/document';
+import { DocumentService } from '~server/services/document';
 
 import { NotebookRuntimeService } from '../index';
 
 vi.mock('@/database/models/document');
 vi.mock('@/database/models/topicDocument');
-vi.mock('@/server/services/document');
+vi.mock('~server/services/document');
 
 describe('NotebookRuntimeService', () => {
   let service: NotebookRuntimeService;

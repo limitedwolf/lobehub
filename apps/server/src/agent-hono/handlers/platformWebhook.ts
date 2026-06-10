@@ -1,7 +1,7 @@
 import debug from 'debug';
 import type { Context } from 'hono';
 
-import { getBotMessageRouter } from '@/server/services/bot';
+import { getBotMessageRouter } from '~server/services/bot';
 
 const log = debug('lobe-server:bot:webhook-route');
 

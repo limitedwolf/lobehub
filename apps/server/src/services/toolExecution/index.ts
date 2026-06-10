@@ -8,12 +8,12 @@ import {
   buildBlockedToolResponse,
   getConnectorToolPermission,
 } from '@/libs/mcp/connectorPermissionCheck';
-import { deviceGateway } from '@/server/services/deviceGateway';
-import { contentBlocksToString } from '@/server/services/mcp/contentProcessor';
+import { deviceGateway } from '~server/services/deviceGateway';
+import { contentBlocksToString } from '~server/services/mcp/contentProcessor';
 import {
   DEFAULT_TOOL_RESULT_MAX_LENGTH,
   truncateToolResult,
-} from '@/server/utils/truncateToolResult';
+} from '~server/utils/truncateToolResult';
 
 import { DiscoverService } from '../discover';
 import { type MCPService } from '../mcp';

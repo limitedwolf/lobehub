@@ -2,7 +2,7 @@
 import type { AgentStreamEvent } from '@lobechat/agent-gateway-client';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type IStreamEventManager } from '@/server/modules/AgentRuntime/types';
+import { type IStreamEventManager } from '~server/modules/AgentRuntime/types';
 
 import type { HeterogeneousPersistenceHandler } from '..';
 import { HeterogeneousAgentService, StaleHeteroOperationError } from '..';

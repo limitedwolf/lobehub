@@ -2,29 +2,29 @@ import { AgentSignalReviewContextModel } from '@/database/models/agentSignal/rev
 import { BriefModel } from '@/database/models/brief';
 import type { BriefItem } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { AGENT_SIGNAL_DEFAULTS } from '@/server/services/agentSignal/constants';
-import { isAgentSignalEnabledForUser } from '@/server/services/agentSignal/featureGate';
-import { persistAgentSignalReceipts } from '@/server/services/agentSignal/services/receiptService';
+import { AGENT_SIGNAL_DEFAULTS } from '~server/services/agentSignal/constants';
+import { isAgentSignalEnabledForUser } from '~server/services/agentSignal/featureGate';
+import { persistAgentSignalReceipts } from '~server/services/agentSignal/services/receiptService';
 import {
   createBriefSelfReviewService,
   getNightlySelfReviewBriefMetadata,
   NIGHTLY_REVIEW_BRIEF_TRIGGER,
-} from '@/server/services/agentSignal/services/selfIteration/review/brief';
-import type { SelfReviewProposalMetadata } from '@/server/services/agentSignal/services/selfIteration/review/proposal';
-import { getSelfReviewProposalFromBriefMetadata } from '@/server/services/agentSignal/services/selfIteration/review/proposal';
-import { createSelfReviewProposalApplyService } from '@/server/services/agentSignal/services/selfIteration/review/proposalApply';
-import { createSelfReviewProposalPreflightService } from '@/server/services/agentSignal/services/selfIteration/review/proposalPreflight';
+} from '~server/services/agentSignal/services/selfIteration/review/brief';
+import type { SelfReviewProposalMetadata } from '~server/services/agentSignal/services/selfIteration/review/proposal';
+import { getSelfReviewProposalFromBriefMetadata } from '~server/services/agentSignal/services/selfIteration/review/proposal';
+import { createSelfReviewProposalApplyService } from '~server/services/agentSignal/services/selfIteration/review/proposalApply';
+import { createSelfReviewProposalPreflightService } from '~server/services/agentSignal/services/selfIteration/review/proposalPreflight';
 import {
   createToolSet,
   type OperationReservation,
   type ToolReceiptInput,
   type ToolWriteResult,
-} from '@/server/services/agentSignal/services/selfIteration/tools/shared';
-import { Risk } from '@/server/services/agentSignal/services/selfIteration/types';
-import { redisSourceEventStore } from '@/server/services/agentSignal/store/adapters/redis/sourceEventStore';
-import type { BriefResolveOptions } from '@/server/services/brief';
-import { BriefService } from '@/server/services/brief';
-import { SkillManagementDocumentService } from '@/server/services/skillManagement/SkillManagementDocumentService';
+} from '~server/services/agentSignal/services/selfIteration/tools/shared';
+import { Risk } from '~server/services/agentSignal/services/selfIteration/types';
+import { redisSourceEventStore } from '~server/services/agentSignal/store/adapters/redis/sourceEventStore';
+import type { BriefResolveOptions } from '~server/services/brief';
+import { BriefService } from '~server/services/brief';
+import { SkillManagementDocumentService } from '~server/services/skillManagement/SkillManagementDocumentService';
 
 export interface SelfReviewProposalBriefResolutionInput {
   /** User action requested by the Daily Brief card. */

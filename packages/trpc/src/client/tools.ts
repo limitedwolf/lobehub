@@ -2,7 +2,7 @@ import { createTRPCClient, httpBatchLink, type TRPCLink } from '@trpc/client';
 import { observable } from '@trpc/server/observable';
 import superjson from 'superjson';
 
-import { type ToolsRouter } from '@/server/routers/tools';
+import { type ToolsRouter } from '~server/routers/tools';
 
 // 401 error debouncing for market auth
 let lastMarket401Time = 0;

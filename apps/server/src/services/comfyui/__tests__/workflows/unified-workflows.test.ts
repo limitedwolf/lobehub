@@ -4,15 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TEST_FLUX_MODELS,
   TEST_SD35_MODELS,
-} from '@/server/services/comfyui/__tests__/fixtures/testModels';
-import { mockContext } from '@/server/services/comfyui/__tests__/helpers/mockContext';
-import { setupAllMocks } from '@/server/services/comfyui/__tests__/setup/unifiedMocks';
-import { WorkflowError } from '@/server/services/comfyui/errors';
-import { buildFluxDevWorkflow } from '@/server/services/comfyui/workflows/flux-dev';
-import { buildFluxKontextWorkflow } from '@/server/services/comfyui/workflows/flux-kontext';
-import { buildFluxSchnellWorkflow } from '@/server/services/comfyui/workflows/flux-schnell';
-import { buildSD35Workflow } from '@/server/services/comfyui/workflows/sd35';
-import { buildSimpleSDWorkflow } from '@/server/services/comfyui/workflows/simple-sd';
+} from '~server/services/comfyui/__tests__/fixtures/testModels';
+import { mockContext } from '~server/services/comfyui/__tests__/helpers/mockContext';
+import { setupAllMocks } from '~server/services/comfyui/__tests__/setup/unifiedMocks';
+import { WorkflowError } from '~server/services/comfyui/errors';
+import { buildFluxDevWorkflow } from '~server/services/comfyui/workflows/flux-dev';
+import { buildFluxKontextWorkflow } from '~server/services/comfyui/workflows/flux-kontext';
+import { buildFluxSchnellWorkflow } from '~server/services/comfyui/workflows/flux-schnell';
+import { buildSD35Workflow } from '~server/services/comfyui/workflows/sd35';
+import { buildSimpleSDWorkflow } from '~server/services/comfyui/workflows/simple-sd';
 
 // Create inline test parameters to avoid external dependencies
 const TEST_PARAMETERS = {

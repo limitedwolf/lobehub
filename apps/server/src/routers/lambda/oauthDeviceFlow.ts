@@ -7,11 +7,11 @@ import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceA
 import { AiProviderModel } from '@/database/models/aiProvider';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 import {
   getOAuthService,
   GithubCopilotOAuthService,
-} from '@/server/services/oauthDeviceFlow/providers/githubCopilot';
+} from '~server/services/oauthDeviceFlow/providers/githubCopilot';
 
 const oauthProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

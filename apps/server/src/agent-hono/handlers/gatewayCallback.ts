@@ -7,7 +7,7 @@ import {
   BOT_RUNTIME_STATUSES,
   type BotRuntimeStatus,
   updateBotRuntimeStatus,
-} from '@/server/services/gateway/runtimeStatus';
+} from '~server/services/gateway/runtimeStatus';
 
 const log = debug('lobe-server:agent:gateway-callback');
 

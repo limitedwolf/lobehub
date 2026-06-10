@@ -8,12 +8,12 @@ import { aiModelRouter } from '../aiModel';
 vi.mock('@/database/models/aiModel');
 vi.mock('@/database/models/user');
 vi.mock('@/database/repositories/aiInfra');
-vi.mock('@/server/globalConfig', () => ({
+vi.mock('~server/globalConfig', () => ({
   getServerGlobalConfig: vi.fn().mockReturnValue({
     aiProvider: {},
   }),
 }));
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: vi.fn().mockResolvedValue({
       encrypt: vi.fn(),

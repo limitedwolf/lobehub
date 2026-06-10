@@ -1,1 +1,1 @@
-export { agentTracingAPIHandler as GET } from '@/server/api-runtime/dev';
+export { agentTracingAPIHandler as GET } from '~server/api-runtime/dev';

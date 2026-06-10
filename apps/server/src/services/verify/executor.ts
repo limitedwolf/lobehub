@@ -15,7 +15,7 @@ import { VerifyCheckResultModel } from '@/database/models/verifyCheckResult';
 import { VerifyEvidenceModel } from '@/database/models/verifyEvidence';
 import { VerifyRunModel } from '@/database/models/verifyRun';
 import type { LobeChatDatabase } from '@/database/type';
-import { AiGenerationService } from '@/server/services/aiGeneration';
+import { AiGenerationService } from '~server/services/aiGeneration';
 
 import { coverageGaps, readRequiredEvidence } from './evidenceCoverage';
 import { buildJudgePrompt, type JudgeEvidence, VERIFY_JUDGE_PROMPT_VERSION } from './prompts';

@@ -9,7 +9,7 @@ import { ChatGroupModel } from '@/database/models/chatGroup';
 import { type UserModel } from '@/database/models/user';
 import { AgentGroupRepository } from '@/database/repositories/agentGroup';
 import { type ChatGroupConfig } from '@/database/types/chatGroup';
-import { getServerDefaultAgentConfig } from '@/server/globalConfig';
+import { getServerDefaultAgentConfig } from '~server/globalConfig';
 
 type DefaultAgentConfig = Awaited<ReturnType<UserModel['getUserSettingsDefaultAgentConfig']>>;
 

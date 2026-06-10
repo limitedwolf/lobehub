@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 
 import { authEnv } from '@/envs/auth';
 import { createNodeRequest, createNodeResponse } from '@/libs/oidc-provider/http-adapter';
-import { getOIDCProvider } from '@/server/services/oidc/oidcProvider';
+import { getOIDCProvider } from '~server/services/oidc/oidcProvider';
 
 const log = debug('lobe-oidc:route'); // Create a debug instance with a namespace
 

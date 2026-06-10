@@ -15,19 +15,19 @@ import {
 import { inferCrudType } from '@/libs/mcp/utils';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { callConnectorToolById, ConnectorToolCallError } from '@/server/services/connector/exec';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { callConnectorToolById, ConnectorToolCallError } from '~server/services/connector/exec';
 import {
   buildAuthorizationUrl,
   discoverConnectorOAuth,
   getConnectorRedirectUri,
   registerDynamicClient,
-} from '@/server/services/connector/oauth';
+} from '~server/services/connector/oauth';
 import {
   generateConnectorOAuthState,
   saveConnectorOAuthState,
-} from '@/server/services/connector/stateStore';
-import { syncConnectorToolsById } from '@/server/services/connector/sync';
+} from '~server/services/connector/stateStore';
+import { syncConnectorToolsById } from '~server/services/connector/sync';
 
 const connectorProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

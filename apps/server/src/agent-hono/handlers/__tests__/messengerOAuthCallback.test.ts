@@ -3,9 +3,9 @@ import type { Context } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MessengerInstallationModel } from '@/database/models/messengerInstallation';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { exchangeCode } from '@/server/services/messenger/oauth/slackOAuth';
-import { consumeOAuthState } from '@/server/services/messenger/oauth/stateStore';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { exchangeCode } from '~server/services/messenger/oauth/slackOAuth';
+import { consumeOAuthState } from '~server/services/messenger/oauth/stateStore';
 
 import { messengerOAuthCallback } from '../messengerOAuthCallback';
 
@@ -20,15 +20,15 @@ vi.mock('@/database/models/messengerInstallation', () => ({
   },
 }));
 
-vi.mock('@/server/services/messenger/oauth/stateStore', () => ({
+vi.mock('~server/services/messenger/oauth/stateStore', () => ({
   consumeOAuthState: vi.fn(),
 }));
 
-vi.mock('@/server/services/messenger/oauth/slackOAuth', () => ({
+vi.mock('~server/services/messenger/oauth/slackOAuth', () => ({
   exchangeCode: vi.fn(),
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: vi.fn(),
   },

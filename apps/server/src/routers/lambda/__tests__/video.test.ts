@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AsyncTaskModel } from '@/database/models/asyncTask';
-import { FileService } from '@/server/services/file';
 import { AsyncTaskStatus } from '@/types/asyncTask';
+import { FileService } from '~server/services/file';
 
 // ---- hoisted mocks (available inside vi.mock factories) ----
 
@@ -36,7 +36,7 @@ const {
 // ---- module-level mocks ----
 
 vi.mock('@/database/models/asyncTask');
-vi.mock('@/server/services/file');
+vi.mock('~server/services/file');
 vi.mock('@/database/models/user', () => ({
   UserModel: {
     findById: mockFindUserById,
@@ -49,7 +49,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 vi.mock('@/database/server', () => ({
   getServerDB: vi.fn().mockResolvedValue(mockServerDB),
 }));
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn().mockResolvedValue({ createVideo: mockCreateVideo }),
 }));
 vi.mock('@/business/server/video-generation/chargeBeforeGenerate', () => ({
@@ -75,7 +75,7 @@ vi.mock('@lobechat/business-model-bank/model-config', () => ({
 vi.mock('@/business/server/video-generation/getVideoFreeQuota', () => ({
   getVideoFreeQuota: vi.fn().mockResolvedValue({ remaining: 10 }),
 }));
-vi.mock('@/server/services/generation/videoBackgroundPolling', () => ({
+vi.mock('~server/services/generation/videoBackgroundPolling', () => ({
   processBackgroundVideoPolling: mockProcessBackgroundVideoPolling,
 }));
 vi.mock('@/envs/app', () => ({

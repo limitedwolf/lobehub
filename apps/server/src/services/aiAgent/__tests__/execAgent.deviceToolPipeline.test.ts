@@ -46,7 +46,7 @@ vi.mock('@/database/models/agent', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agent', () => ({
+vi.mock('~server/services/agent', () => ({
   AgentService: vi.fn().mockImplementation(() => ({
     getAgentConfig: mockGetAgentConfig,
   })),
@@ -86,13 +86,13 @@ vi.mock('@/database/models/thread', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     createOperation: mockCreateOperation,
   })),
 }));
 
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn().mockImplementation(() => ({
     getLobehubSkillManifests: vi.fn().mockResolvedValue([]),
   })),
@@ -104,13 +104,13 @@ vi.mock('@/server/services/composio', () => ({
   })),
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     uploadFromUrl: vi.fn(),
   })),
 }));
 
-vi.mock('@/server/modules/Mecha', () => {
+vi.mock('~server/modules/Mecha', () => {
   // Return the hoisted mocks so each test can configure them
   mockGenerateToolsDetailed.mockReturnValue({ enabledToolIds: [], tools: [] });
   mockGetEnabledPluginManifests.mockReturnValue(new Map());
@@ -126,7 +126,7 @@ vi.mock('@/server/modules/Mecha', () => {
   };
 });
 
-vi.mock('@/server/services/deviceGateway', () => ({
+vi.mock('~server/services/deviceGateway', () => ({
   deviceGateway: {
     get isConfigured() {
       // Will be overridden per-test via vi.spyOn or re-mock
@@ -209,7 +209,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
   describe('deviceContext forwarded to createServerAgentToolsEngine', () => {
     it('should pass deviceContext when gateway is configured', async () => {
       // Override deviceGateway.isConfigured
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(true);
       mockQueryDeviceList.mockResolvedValue([
         { deviceId: 'dev-1', deviceName: 'My PC', platform: 'win32' },
@@ -232,7 +232,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
     });
 
     it('should not pass deviceContext when gateway is not configured', async () => {
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(false);
 
       mockGetAgentConfig.mockResolvedValue(createBaseAgentConfig());
@@ -247,7 +247,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
 
   describe('RemoteDevice systemRole override', () => {
     it('should override RemoteDevice systemRole with dynamic prompt when enabled by ToolsEngine', async () => {
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(true);
       mockQueryDeviceList.mockResolvedValue([
         { deviceId: 'dev-1', deviceName: 'My PC', platform: 'win32' },
@@ -281,7 +281,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
     });
 
     it('should NOT have RemoteDevice in manifestMap when gateway is not configured', async () => {
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(false);
 
       // ToolsEngine returns empty manifestMap (RemoteDevice disabled by enableChecker)
@@ -303,7 +303,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
 
   describe('toolExecutorMap gating on gatewayConfigured (regression for #13769)', () => {
     it('should mark local-system as client when gateway is NOT configured (standalone Electron)', async () => {
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(false);
 
       mockGetEnabledPluginManifests.mockReturnValue(
@@ -318,7 +318,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
     });
 
     it('should NOT mark local-system as client when gateway IS configured (cloud)', async () => {
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(true);
       mockQueryDeviceList.mockResolvedValue([
         { deviceId: 'dev-1', deviceName: 'My PC', platform: 'win32' },
@@ -350,7 +350,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
       mockGetEnabledPluginManifests.mockReturnValue(new Map([['my-stdio-mcp', stdioManifest]]));
       mockGetAgentConfig.mockResolvedValue(createBaseAgentConfig({ plugins: ['my-stdio-mcp'] }));
 
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
 
       // Gateway NOT configured → should mark as client
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(false);
@@ -376,7 +376,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
       // Remote Device proxy to the device registered with the gateway, never
       // back to the caller. (The Phase 6.4 clientRuntime=desktop
       // short-circuit that bypassed this gate was removed.)
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(true);
       mockQueryDeviceList.mockResolvedValue([
         { deviceId: 'dev-1', deviceName: 'Remote VM', platform: 'linux' },
@@ -404,7 +404,7 @@ describe('AiAgentService.execAgent - device tool pipeline ()', () => {
         meta: { title: 'Stdio' },
       };
 
-      const { deviceGateway } = await import('@/server/services/deviceGateway');
+      const { deviceGateway } = await import('~server/services/deviceGateway');
       vi.spyOn(deviceGateway, 'isConfigured', 'get').mockReturnValue(true);
       mockQueryDeviceList.mockResolvedValue([
         { deviceId: 'dev-1', deviceName: 'Remote VM', platform: 'linux' },

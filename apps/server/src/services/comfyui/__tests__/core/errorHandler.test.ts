@@ -1,14 +1,14 @@
 import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ErrorHandlerService } from '@/server/services/comfyui/core/errorHandlerService';
+import { ErrorHandlerService } from '~server/services/comfyui/core/errorHandlerService';
 import {
   ConfigError,
   ServicesError,
   UtilsError,
   WorkflowError,
-} from '@/server/services/comfyui/errors';
-import { ModelResolverError } from '@/server/services/comfyui/errors/modelResolverError';
+} from '~server/services/comfyui/errors';
+import { ModelResolverError } from '~server/services/comfyui/errors/modelResolverError';
 
 describe('ErrorHandlerService', () => {
   let service: ErrorHandlerService;

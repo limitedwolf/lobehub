@@ -3,7 +3,7 @@ import {
   RemoteDeviceIdentifier,
 } from '@lobechat/builtin-tool-remote-device';
 
-import { deviceGateway } from '@/server/services/deviceGateway';
+import { deviceGateway } from '~server/services/deviceGateway';
 
 import { type ServerRuntimeRegistration } from './types';
 

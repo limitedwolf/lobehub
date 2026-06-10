@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { MarketService } from '@/server/services/market';
+import type { MarketService } from '~server/services/market';
 
 const decodeJITPayload = (authorization?: string) => {
   const token = authorization?.replace('Bearer ', '') || '';

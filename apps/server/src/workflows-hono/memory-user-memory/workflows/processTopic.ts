@@ -11,11 +11,11 @@ import { createWorkflow } from '@upstash/workflow/hono';
 
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { getServerDB } from '@/database/server';
-import { type MemoryExtractionPayloadInput } from '@/server/services/memory/userMemory/extract';
+import { type MemoryExtractionPayloadInput } from '~server/services/memory/userMemory/extract';
 import {
   MemoryExtractionExecutor,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
+} from '~server/services/memory/userMemory/extract';
 
 import { createWorkflowQstashClient } from '../../qstashClient';
 

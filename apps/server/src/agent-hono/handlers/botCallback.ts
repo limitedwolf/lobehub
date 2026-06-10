@@ -2,7 +2,7 @@ import debug from 'debug';
 import type { Context } from 'hono';
 
 import { getServerDB } from '@/database/core/db-adaptor';
-import { BotCallbackService } from '@/server/services/bot/BotCallbackService';
+import { BotCallbackService } from '~server/services/bot/BotCallbackService';
 
 const log = debug('lobe-server:agent:bot-callback');
 

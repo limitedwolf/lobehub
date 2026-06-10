@@ -3,7 +3,7 @@ import { CURRENT_VERSION } from '@lobechat/const';
 import { type CallReportRequest } from '@lobehub/market-types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DiscoverService } from '@/server/services/discover';
+import { DiscoverService } from '~server/services/discover';
 
 import {
   scheduleToolCallReport,
@@ -11,7 +11,7 @@ import {
 } from './scheduleToolCallReport';
 
 // Mock DiscoverService
-vi.mock('@/server/services/discover', () => ({
+vi.mock('~server/services/discover', () => ({
   DiscoverService: vi.fn().mockImplementation(() => ({
     reportCall: vi.fn().mockResolvedValue(undefined),
   })),

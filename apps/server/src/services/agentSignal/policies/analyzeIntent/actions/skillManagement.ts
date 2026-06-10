@@ -7,7 +7,7 @@ import type {
 import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
 
 import type { LobeChatDatabase } from '@/database/type';
-import type { AgentSignalOperationMarker } from '@/server/services/agentSignal/operationMarker';
+import type { AgentSignalOperationMarker } from '~server/services/agentSignal/operationMarker';
 
 import type { RuntimeProcessorContext } from '../../../runtime/context';
 import { defineActionHandler } from '../../../runtime/middleware';

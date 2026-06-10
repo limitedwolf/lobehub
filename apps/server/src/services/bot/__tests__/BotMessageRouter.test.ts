@@ -41,13 +41,13 @@ vi.mock('../dmPairingStore', () => ({
   releasePairingClaim: mockReleasePairingClaim,
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: mockInitWithEnvKey,
   },
 }));
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   getAgentRuntimeRedisClient: mockGetAgentRuntimeRedisClient,
 }));
 
@@ -94,7 +94,7 @@ vi.mock('chat', () => ({
   ConsoleLogger: vi.fn(),
 }));
 
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     interruptTask: vi.fn().mockResolvedValue({ success: true }),
   })),

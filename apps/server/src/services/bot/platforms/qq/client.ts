@@ -3,12 +3,12 @@ import { createQQAdapter, QQApiClient } from '@lobechat/chat-adapter-qq';
 import type { Chat as ChatBot, Message } from 'chat';
 import debug from 'debug';
 
-import type { AttachmentSource } from '@/server/services/aiAgent/ingestAttachment';
+import type { AttachmentSource } from '~server/services/aiAgent/ingestAttachment';
 import {
   BOT_RUNTIME_STATUSES,
   getRuntimeStatusErrorMessage,
   updateBotRuntimeStatus,
-} from '@/server/services/gateway/runtimeStatus';
+} from '~server/services/gateway/runtimeStatus';
 
 import { stripMarkdown } from '../stripMarkdown';
 import {

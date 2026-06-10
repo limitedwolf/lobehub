@@ -1,5 +1,5 @@
 import { serverDB } from '@/database/server';
-import { UserService } from '@/server/services/user';
+import { UserService } from '~server/services/user';
 
 type Params = Promise<{ id: string; image: string }>;
 

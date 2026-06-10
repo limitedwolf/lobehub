@@ -26,7 +26,7 @@ vi.mock('@/libs/oidc-provider/http-adapter', () => ({
   createNodeResponse: mocks.createNodeResponse,
 }));
 
-vi.mock('@/server/services/oidc/oidcProvider', () => ({
+vi.mock('~server/services/oidc/oidcProvider', () => ({
   getOIDCProvider: vi.fn(async () => ({
     callback: mocks.providerCallback,
   })),

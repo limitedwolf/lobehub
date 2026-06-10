@@ -6,7 +6,7 @@ import { ChevronRightIcon } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { SerializedMessengerPlatformDefinition } from '@/server/services/messenger/platforms/types';
+import type { SerializedMessengerPlatformDefinition } from '~server/services/messenger/platforms/types';
 
 import { type MessengerPlatform, PlatformAvatar } from './constants';
 

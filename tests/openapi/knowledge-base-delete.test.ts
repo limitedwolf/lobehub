@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 import { KnowledgeBaseService } from '../../packages/openapi/src/services/knowledge-base.service';
 
-vi.mock('@/server/services/file');
+vi.mock('~server/services/file');
 
 describe('KnowledgeBaseService.deleteKnowledgeBase', () => {
   let db: LobeChatDatabase;

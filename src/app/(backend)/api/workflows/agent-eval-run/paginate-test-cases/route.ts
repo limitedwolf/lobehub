@@ -8,8 +8,8 @@ import { qstashClient } from '@/libs/qstash';
 import {
   AgentEvalRunWorkflow,
   type PaginateTestCasesPayload,
-} from '@/server/workflows/agentEvalRun';
-import { resolveAgentEvalRunWorkspace } from '@/server/workflows/agentEvalRun/utils';
+} from '~server/workflows/agentEvalRun';
+import { resolveAgentEvalRunWorkspace } from '~server/workflows/agentEvalRun/utils';
 
 const CHUNK_SIZE = 20; // Max items to process directly
 const PAGE_SIZE = 50; // Items per page

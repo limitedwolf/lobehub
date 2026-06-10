@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { MessageModel } from '@/database/models/message';
 import { TopicShareModel } from '@/database/models/topicShare';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 vi.mock('@/database/models/message', () => ({
   MessageModel: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock('@/database/models/topicShare', () => ({
   },
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn(),
 }));
 

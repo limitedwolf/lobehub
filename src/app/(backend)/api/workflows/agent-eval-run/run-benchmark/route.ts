@@ -4,8 +4,8 @@ import debug from 'debug';
 import { AgentEvalRunModel, AgentEvalTestCaseModel } from '@/database/models/agentEval';
 import { getServerDB } from '@/database/server';
 import { qstashClient } from '@/libs/qstash';
-import { AgentEvalRunWorkflow, type RunBenchmarkPayload } from '@/server/workflows/agentEvalRun';
-import { resolveAgentEvalRunWorkspace } from '@/server/workflows/agentEvalRun/utils';
+import { AgentEvalRunWorkflow, type RunBenchmarkPayload } from '~server/workflows/agentEvalRun';
+import { resolveAgentEvalRunWorkspace } from '~server/workflows/agentEvalRun/utils';
 
 const log = debug('lobe-server:workflows:run-benchmark');
 

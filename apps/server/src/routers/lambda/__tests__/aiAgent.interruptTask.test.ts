@@ -18,14 +18,14 @@ vi.mock('@/database/core/db-adaptor', () => ({
 const mockInterruptOperation = vi.fn();
 
 // Mock AgentRuntimeService
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     interruptOperation: mockInterruptOperation,
   })),
 }));
 
 // Mock AiChatService
-vi.mock('@/server/services/aiChat', () => ({
+vi.mock('~server/services/aiChat', () => ({
   AiChatService: vi.fn().mockImplementation(() => ({})),
 }));
 

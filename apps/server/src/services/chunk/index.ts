@@ -2,14 +2,14 @@ import { type LobeChatDatabase } from '@lobechat/database';
 
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { FileModel } from '@/database/models/file';
-import { type ChunkContentParams } from '@/server/modules/ContentChunk';
-import { ContentChunk } from '@/server/modules/ContentChunk';
 import {
   AsyncTaskError,
   AsyncTaskErrorType,
   AsyncTaskStatus,
   AsyncTaskType,
 } from '@/types/asyncTask';
+import { type ChunkContentParams } from '~server/modules/ContentChunk';
+import { ContentChunk } from '~server/modules/ContentChunk';
 
 export class ChunkService {
   private userId: string;
@@ -47,7 +47,7 @@ export class ChunkService {
 
     // Async router will read keyVaults from DB, no need to pass jwtPayload
     // Dynamic import to avoid circular dependency
-    const { createAsyncCaller } = await import('@/server/routers/async');
+    const { createAsyncCaller } = await import('~server/routers/async');
     const asyncCaller = await createAsyncCaller({ userId: this.userId });
 
     // trigger embedding task asynchronously
@@ -93,7 +93,7 @@ export class ChunkService {
 
     // Async router will read keyVaults from DB, no need to pass jwtPayload
     // Dynamic import to avoid circular dependency
-    const { createAsyncCaller } = await import('@/server/routers/async');
+    const { createAsyncCaller } = await import('~server/routers/async');
     const asyncCaller = await createAsyncCaller({ userId: this.userId });
 
     // trigger parse file task asynchronously

@@ -25,9 +25,9 @@ import { agents, users } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 import { authedProcedure, publicProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { getServerFeatureFlagsStateFromRuntimeConfig } from '@/server/featureFlags';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { SlackApi } from '@/server/services/bot/platforms/slack/api';
+import { getServerFeatureFlagsStateFromRuntimeConfig } from '~server/featureFlags';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { SlackApi } from '~server/services/bot/platforms/slack/api';
 import {
   consumeLinkToken,
   MessengerDiscordBinder,
@@ -36,7 +36,7 @@ import {
   MessengerTelegramBinder,
   peekConsumedLinkToken,
   peekLinkToken,
-} from '@/server/services/messenger';
+} from '~server/services/messenger';
 
 const platformEnum = z.enum([
   'telegram',

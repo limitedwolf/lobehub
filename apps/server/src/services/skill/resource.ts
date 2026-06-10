@@ -8,7 +8,7 @@ import { getMimeType } from '@lobechat/utils';
 import debug from 'debug';
 import { sha256 } from 'js-sha256';
 
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 import { SkillResourceError } from './errors';
 

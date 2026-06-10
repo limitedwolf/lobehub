@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GenerationTopicModel } from '@/database/models/generationTopic';
 import { type GenerationTopicItem } from '@/database/schemas/generation';
-import { FileService } from '@/server/services/file';
-import { GenerationService } from '@/server/services/generation';
+import { FileService } from '~server/services/file';
+import { GenerationService } from '~server/services/generation';
 
 import { generationTopicRouter } from '../generationTopic';
 
 vi.mock('@/database/models/generationTopic');
-vi.mock('@/server/services/file');
-vi.mock('@/server/services/generation');
+vi.mock('~server/services/file');
+vi.mock('~server/services/generation');
 
 describe('generationTopicRouter', () => {
   const mockCtx = {

@@ -81,32 +81,32 @@ import { UserModel } from '@/database/models/user';
 import { type LobeChatDatabase } from '@/database/type';
 import { fileEnv } from '@/envs/file';
 import { type ExecutionPlan, isDeviceCapablePlan } from '@/helpers/executionTarget';
-import { serverMessagesEngine } from '@/server/modules/Mecha/ContextEngineering';
-import { type EvalContext } from '@/server/modules/Mecha/ContextEngineering/types';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
-import type { HookDispatcher } from '@/server/services/agentRuntime/hooks/HookDispatcher';
+import { toAgentContextDocuments } from '@/utils/agentDocumentContextMapping';
+import { nanoid } from '@/utils/uuid';
+import { serverMessagesEngine } from '~server/modules/Mecha/ContextEngineering';
+import { type EvalContext } from '~server/modules/Mecha/ContextEngineering/types';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
+import type { HookDispatcher } from '~server/services/agentRuntime/hooks/HookDispatcher';
 import type {
   ExecGroupMemberParams,
   ExecGroupMemberResult,
-} from '@/server/services/agentRuntime/types';
+} from '~server/services/agentRuntime/types';
 import {
   type DeviceAccessReason,
   isDeviceToolIdentifier,
   logDeviceToolAudit,
-} from '@/server/services/aiAgent/deviceToolAudit';
-import { FileService } from '@/server/services/file';
-import { MessageService } from '@/server/services/message';
-import { OnboardingService } from '@/server/services/onboarding';
+} from '~server/services/aiAgent/deviceToolAudit';
+import { FileService } from '~server/services/file';
+import { MessageService } from '~server/services/message';
+import { OnboardingService } from '~server/services/onboarding';
 import {
   type ServerAgentMemberRunner,
   type ServerSubAgentRunner,
   type ToolExecutionResultResponse,
   type ToolExecutionService,
-} from '@/server/services/toolExecution';
-import { archiveToolResultIfNeeded } from '@/server/services/toolExecution/archiveToolResult';
-import { toAgentContextDocuments } from '@/utils/agentDocumentContextMapping';
-import { nanoid } from '@/utils/uuid';
+} from '~server/services/toolExecution';
+import { archiveToolResultIfNeeded } from '~server/services/toolExecution/archiveToolResult';
 
 import { dispatchClientTool } from './dispatchClientTool';
 import { formatErrorEventData } from './formatErrorEventData';
@@ -1175,7 +1175,7 @@ export const createRuntimeExecutors = (
         let credsListStr = '';
         if (ctx.userId) {
           try {
-            const { MarketService } = await import('@/server/services/market');
+            const { MarketService } = await import('~server/services/market');
             const marketService = new MarketService({ userInfo: { userId: ctx.userId } });
             const credsResult = await marketService.market.creds.list();
             const userCreds = (credsResult as any)?.data ?? [];

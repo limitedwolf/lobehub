@@ -17,7 +17,7 @@ EmailService
 ### Basic Example
 
 ```typescript
-import { EmailService } from '@/server/services/email';
+import { EmailService } from '~server/services/email';
 
 const emailService = new EmailService();
 
@@ -110,8 +110,8 @@ EMAIL_SERVICE_PROVIDER=resend
 You can also use well-known email services (Gmail, SendGrid, etc.):
 
 ```typescript
-import { EmailImplType, EmailService } from '@/server/services/email';
-import { NodemailerImpl } from '@/server/services/email/impls/nodemailer';
+import { EmailImplType, EmailService } from '~server/services/email';
+import { NodemailerImpl } from '~server/services/email/impls/nodemailer';
 
 const emailService = new EmailService(EmailImplType.Nodemailer);
 // Configure in constructor with service name
@@ -132,7 +132,7 @@ console.log('Preview URL:', result.previewUrl);
 Before sending emails, verify your SMTP configuration:
 
 ```typescript
-import { EmailService } from '@/server/services/email';
+import { EmailService } from '~server/services/email';
 
 const emailService = new EmailService();
 
@@ -151,7 +151,7 @@ Example integration for email verification:
 ```typescript
 import { betterAuth } from 'better-auth';
 
-import { EmailService } from '@/server/services/email';
+import { EmailService } from '~server/services/email';
 
 export const auth = betterAuth({
   emailAndPassword: {

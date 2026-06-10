@@ -10,8 +10,8 @@ import { TaskModel } from '@/database/models/task';
 import { WorkspaceModel } from '@/database/models/workspace';
 import { tasks } from '@/database/schemas';
 import { appEnv } from '@/envs/app';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
-import { emitAgentDocumentToolOutcomeSafely } from '@/server/services/agentDocuments/toolOutcome';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
+import { emitAgentDocumentToolOutcomeSafely } from '~server/services/agentDocuments/toolOutcome';
 
 import { type ServerRuntimeRegistration } from './types';
 

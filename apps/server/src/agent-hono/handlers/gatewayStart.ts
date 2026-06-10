@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 
-import { GatewayService } from '@/server/services/gateway';
+import { GatewayService } from '~server/services/gateway';
 
 /**
  * Non-Vercel `ensureRunning` entry point — used by the standalone server

@@ -59,7 +59,7 @@ vi.mock('@/database/models/agentBotProvider', () => ({
   },
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: { initWithEnvKey: mockInitWithEnvKey },
 }));
 

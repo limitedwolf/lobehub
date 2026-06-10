@@ -4,10 +4,10 @@ import { ChatErrorType } from '@lobechat/types';
 
 import { checkAuth } from '@/app/(backend)/middleware/auth';
 import { resolveValidWorkspaceIdFromRequest } from '@/app/(backend)/webapi/_utils/workspace';
-import { createTraceOptions, initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import type { ChatStreamPayload } from '@/types/openai/chat';
 import { createErrorResponse } from '@/utils/errorResponse';
 import { getTracePayload } from '@/utils/trace';
+import { createTraceOptions, initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 interface ProviderParams {
   provider: string;

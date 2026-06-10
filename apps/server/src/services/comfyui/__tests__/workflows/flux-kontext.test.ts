@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TEST_FLUX_MODELS } from '@/server/services/comfyui/__tests__/fixtures/testModels';
-import { mockContext } from '@/server/services/comfyui/__tests__/helpers/mockContext';
-import { setupAllMocks } from '@/server/services/comfyui/__tests__/setup/unifiedMocks';
-import { buildFluxKontextWorkflow } from '@/server/services/comfyui/workflows/flux-kontext';
+import { TEST_FLUX_MODELS } from '~server/services/comfyui/__tests__/fixtures/testModels';
+import { mockContext } from '~server/services/comfyui/__tests__/helpers/mockContext';
+import { setupAllMocks } from '~server/services/comfyui/__tests__/setup/unifiedMocks';
+import { buildFluxKontextWorkflow } from '~server/services/comfyui/workflows/flux-kontext';
 
 // Setup basic mocks
 vi.mock('../utils/promptSplitter', () => ({

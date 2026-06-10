@@ -4,7 +4,7 @@ import { detectTruncatedJSON, safeParseJSON } from '@lobechat/utils';
 import debug from 'debug';
 
 import { ComposioService } from '@/server/services/composio';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 import { getServerRuntime, hasServerRuntime } from './serverRuntimes';
 import { type IToolExecutor, type ToolExecutionContext, type ToolExecutionResult } from './types';

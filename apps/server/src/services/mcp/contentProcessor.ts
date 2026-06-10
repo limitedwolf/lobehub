@@ -3,8 +3,8 @@ import pMap from 'p-map';
 
 import { fileEnv } from '@/envs/file';
 import { type AudioContent, type ImageContent, type ToolCallContent } from '@/libs/mcp';
-import { type FileService } from '@/server/services/file';
 import { nanoid } from '@/utils/uuid';
+import { type FileService } from '~server/services/file';
 
 const log = debug('lobe-mcp:content-processor');
 

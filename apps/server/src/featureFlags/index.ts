@@ -8,17 +8,17 @@ import {
   getServerFeatureFlagsValue,
   mapFeatureFlagsEnvToState,
 } from '@/config/featureFlags';
+import { merge } from '@/utils/merge';
 import type {
   RuntimeConfigDomain,
   RuntimeConfigProvider,
   RuntimeConfigSelector,
-} from '@/server/runtimeConfig';
+} from '~server/runtimeConfig';
 import {
   CompositeRuntimeConfigProvider,
   EnvRuntimeConfigProvider,
   RedisRuntimeConfigProvider,
-} from '@/server/runtimeConfig';
-import { merge } from '@/utils/merge';
+} from '~server/runtimeConfig';
 
 const debug = createDebug('lobe:featureFlags');
 

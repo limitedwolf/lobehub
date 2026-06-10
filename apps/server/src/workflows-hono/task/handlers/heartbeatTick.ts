@@ -1,7 +1,7 @@
 import debug from 'debug';
 import type { Context } from 'hono';
 
-import { runHeartbeatTick } from '@/server/services/taskRunner/heartbeatTick';
+import { runHeartbeatTick } from '~server/services/taskRunner/heartbeatTick';
 
 const log = debug('lobe-server:workflows:task:heartbeat-tick');
 

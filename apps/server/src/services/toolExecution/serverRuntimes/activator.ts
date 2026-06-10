@@ -12,8 +12,8 @@ import { filterBuiltinSkills } from '@/helpers/skillFilters';
 import {
   emitToolOutcomeSafely,
   resolveToolOutcomeScope,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
+} from '~server/services/agentSignal/procedure';
+import { redisPolicyStateStore } from '~server/services/agentSignal/store/adapters/redis/policyStateStore';
 
 import { type ServerRuntimeRegistration } from './types';
 

@@ -10,7 +10,7 @@ import { FileSource } from '@lobechat/types';
 import debug from 'debug';
 import { and, eq } from 'drizzle-orm';
 
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 import type { NewFile } from '../schemas';
 import type { GenerationItem, GenerationWithAsyncTask, NewGeneration } from '../schemas/generation';

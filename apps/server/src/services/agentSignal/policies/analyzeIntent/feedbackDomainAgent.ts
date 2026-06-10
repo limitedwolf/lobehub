@@ -6,7 +6,7 @@ import debug from 'debug';
 import { z } from 'zod';
 
 import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 import type {
   AgentSignalFeedbackEvidence,

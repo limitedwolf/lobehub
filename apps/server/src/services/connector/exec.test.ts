@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectorToolPermission } from '@/database/schemas';
-import { mcpService } from '@/server/services/mcp';
+import { mcpService } from '~server/services/mcp';
 
 import { callConnectorToolById } from './exec';
 import { ensureFreshConnectorToken } from './tokens';
 
-vi.mock('@/server/services/mcp', () => ({ mcpService: { callTool: vi.fn() } }));
+vi.mock('~server/services/mcp', () => ({ mcpService: { callTool: vi.fn() } }));
 vi.mock('./tokens', () => ({ ensureFreshConnectorToken: vi.fn(async (c) => c) }));
 
 const connector = {

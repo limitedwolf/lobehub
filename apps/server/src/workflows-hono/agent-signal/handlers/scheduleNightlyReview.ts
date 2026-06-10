@@ -4,8 +4,8 @@ import { isRecord } from '@lobechat/utils';
 import type { Context } from 'hono';
 
 import { getServerDB } from '@/database/server';
-import type { DispatchNightlyReviewRequestsOptions } from '@/server/services/agentSignal/services';
-import { createServerNightlyReviewScheduleService } from '@/server/services/agentSignal/services';
+import type { DispatchNightlyReviewRequestsOptions } from '~server/services/agentSignal/services';
+import { createServerNightlyReviewScheduleService } from '~server/services/agentSignal/services';
 
 const DEFAULT_USER_LIMIT = 500;
 const DEFAULT_TARGET_LIMIT = 20;

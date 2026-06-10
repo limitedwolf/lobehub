@@ -4,7 +4,7 @@ import { type NextRequest } from 'next/server';
 import { createLambdaContext } from '@/libs/trpc/lambda/context';
 import { prepareRequestForTRPC } from '@/libs/trpc/utils/request-adapter';
 import { createResponseMeta } from '@/libs/trpc/utils/responseMeta';
-import { mobileRouter } from '@/server/routers/mobile';
+import { mobileRouter } from '~server/routers/mobile';
 
 const handler = (req: NextRequest) => {
   // Clone the request to avoid "Response body object should not be disturbed or locked" error

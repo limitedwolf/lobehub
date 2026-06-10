@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SlackApi } from '@/server/services/bot/platforms/slack/api';
+import { SlackApi } from '~server/services/bot/platforms/slack/api';
 
 import { issueLinkToken } from '../../linkTokenStore';
 import { MessengerSlackBinder } from './binder';
@@ -14,11 +14,11 @@ vi.mock('../../linkTokenStore', () => ({
   issueLinkToken: vi.fn(),
 }));
 
-vi.mock('@/server/services/bot/platforms/slack/api', () => ({
+vi.mock('~server/services/bot/platforms/slack/api', () => ({
   SlackApi: vi.fn(),
 }));
 
-vi.mock('@/server/services/bot/platforms/slack/client', () => ({
+vi.mock('~server/services/bot/platforms/slack/client', () => ({
   SlackClientFactory: vi.fn(),
 }));
 

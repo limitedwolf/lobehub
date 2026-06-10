@@ -8,8 +8,8 @@ import { EmbeddingModel } from '@/database/models/embedding';
 import { FileModel } from '@/database/models/file';
 import { MessageModel } from '@/database/models/message';
 import { SearchRepo } from '@/database/repositories/search';
-import { ChunkService } from '@/server/services/chunk';
-import { DocumentService } from '@/server/services/document';
+import { ChunkService } from '~server/services/chunk';
+import { DocumentService } from '~server/services/document';
 
 import { chunkRouter } from '../chunk';
 
@@ -20,8 +20,8 @@ vi.mock('@/database/models/embedding', () => ({ EmbeddingModel: vi.fn() }));
 vi.mock('@/database/models/file', () => ({ FileModel: vi.fn() }));
 vi.mock('@/database/models/message', () => ({ MessageModel: vi.fn() }));
 vi.mock('@/database/repositories/search', () => ({ SearchRepo: vi.fn() }));
-vi.mock('@/server/services/chunk', () => ({ ChunkService: vi.fn() }));
-vi.mock('@/server/services/document', () => ({ DocumentService: vi.fn() }));
+vi.mock('~server/services/chunk', () => ({ ChunkService: vi.fn() }));
+vi.mock('~server/services/document', () => ({ DocumentService: vi.fn() }));
 vi.mock('@/database/server', () => ({ getServerDB: vi.fn() }));
 
 describe('chunkRouter.getFileContents — ID branching', () => {

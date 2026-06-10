@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MarketService } from '@/server/services/market';
+import type { MarketService } from '~server/services/market';
 
 import { MarketSandboxProvider, redactSandboxParams } from './market';
 

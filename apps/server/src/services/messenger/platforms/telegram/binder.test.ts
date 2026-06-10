@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TelegramApi } from '@/server/services/bot/platforms/telegram/api';
-import { TelegramClientFactory } from '@/server/services/bot/platforms/telegram/client';
+import { TelegramApi } from '~server/services/bot/platforms/telegram/api';
+import { TelegramClientFactory } from '~server/services/bot/platforms/telegram/client';
 
 import { issueLinkToken } from '../../linkTokenStore';
 import { MessengerTelegramBinder } from './binder';
@@ -19,11 +19,11 @@ vi.mock('../../linkTokenStore', () => ({
   issueLinkToken: vi.fn(),
 }));
 
-vi.mock('@/server/services/bot/platforms/telegram/api', () => ({
+vi.mock('~server/services/bot/platforms/telegram/api', () => ({
   TelegramApi: vi.fn(),
 }));
 
-vi.mock('@/server/services/bot/platforms/telegram/client', () => ({
+vi.mock('~server/services/bot/platforms/telegram/client', () => ({
   TelegramClientFactory: vi.fn(),
 }));
 

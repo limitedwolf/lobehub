@@ -14,7 +14,7 @@ const getFileByteArray = vi.fn();
 const getFileContent = vi.fn();
 const deleteFile = vi.fn();
 
-vi.mock('@/server/modules/S3', () => ({
+vi.mock('~server/modules/S3', () => ({
   FileS3: vi.fn(() => ({
     deleteFile,
     getFileByteArray,

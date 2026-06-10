@@ -24,14 +24,14 @@ import {
 import { MessageModel } from '@/database/models/message';
 import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
-import { AgentService } from '@/server/services/agent';
-import { AgentRuntimeService } from '@/server/services/agentRuntime/AgentRuntimeService';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { AgentService } from '~server/services/agent';
+import { AgentRuntimeService } from '~server/services/agentRuntime/AgentRuntimeService';
+import { AiAgentService } from '~server/services/aiAgent';
 import {
   AgentEvalRunWorkflow,
   type ResumeAgentTrajectoryPayload,
   type ResumeThreadTrajectoryPayload,
-} from '@/server/workflows/agentEvalRun';
+} from '~server/workflows/agentEvalRun';
 
 /** Round cost to at most 6 decimal places to avoid floating-point noise */
 const roundCost = (v: number): number => Math.round(v * 1e6) / 1e6;

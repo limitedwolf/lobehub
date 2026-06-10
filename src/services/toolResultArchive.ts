@@ -1,5 +1,5 @@
 import { lambdaClient } from '@/libs/trpc/client';
-import { ARCHIVE_BYPASS_IDENTIFIERS, truncateToolResult } from '@/server/utils/truncateToolResult';
+import { ARCHIVE_BYPASS_IDENTIFIERS, truncateToolResult } from '~server/utils/truncateToolResult';
 
 interface ArchiveParams {
   agentId?: string | null;

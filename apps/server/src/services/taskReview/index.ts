@@ -5,7 +5,7 @@ import debug from 'debug';
 
 import { UserModel } from '@/database/models/user';
 import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 import { resolveSystemAgentModelConfig } from '../systemAgent/modelConfig';
 

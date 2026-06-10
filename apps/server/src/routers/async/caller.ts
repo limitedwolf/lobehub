@@ -6,7 +6,7 @@ import { appEnv } from '@/envs/app';
 import { LOBE_CHAT_AUTH_HEADER } from '@/envs/auth';
 import { createAsyncCallerFactory } from '@/libs/trpc/async';
 import { signInternalJWT } from '@/libs/trpc/utils/internalJwt';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 import { type AsyncRouter } from './index';
 import { asyncRouter } from './index';

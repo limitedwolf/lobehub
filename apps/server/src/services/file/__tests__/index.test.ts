@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FileModel } from '@/database/models/file';
-import { TempFileManager } from '@/server/utils/tempFileManager';
+import { TempFileManager } from '~server/utils/tempFileManager';
 
 import { FileService } from '../index';
 
@@ -39,7 +39,7 @@ vi.mock('../impls', () => ({
 
 vi.mock('@/database/models/file');
 
-vi.mock('@/server/utils/tempFileManager');
+vi.mock('~server/utils/tempFileManager');
 
 vi.mock('@/utils/uuid', () => ({
   nanoid: () => 'test-id',

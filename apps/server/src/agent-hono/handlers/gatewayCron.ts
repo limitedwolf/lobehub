@@ -3,16 +3,16 @@ import type { Context } from 'hono';
 
 import { getServerDB } from '@/database/core/db-adaptor';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import type { BotPlatformRuntimeContext } from '@/server/services/bot/platforms';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import type { BotPlatformRuntimeContext } from '~server/services/bot/platforms';
 import {
   platformRegistry,
   resolveBotProviderConfig,
   resolveConnectionMode,
-} from '@/server/services/bot/platforms';
-import { BotConnectQueue } from '@/server/services/gateway/botConnectQueue';
-import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
+} from '~server/services/bot/platforms';
+import { BotConnectQueue } from '~server/services/gateway/botConnectQueue';
+import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
 const log = debug('lobe-server:bot:gateway:cron');
 
@@ -139,7 +139,7 @@ async function processConnectQueue(remainingMs: number): Promise<number> {
 export async function gatewayCron(c: Context): Promise<Response> {
   // When the external message gateway is enabled, sync connections via gateway.
   if (process.env.MESSAGE_GATEWAY_URL && process.env.MESSAGE_GATEWAY_SERVICE_TOKEN) {
-    const { GatewayService } = await import('@/server/services/gateway');
+    const { GatewayService } = await import('~server/services/gateway');
     const service = new GatewayService();
 
     if (service.useMessageGateway) {

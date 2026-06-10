@@ -4,15 +4,15 @@ import { type WorkflowContext } from '@upstash/workflow';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { type ListTopicsForMemoryExtractorCursor } from '@/database/models/topic';
 import { getServerDB } from '@/database/server';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { type MemoryExtractionPayloadInput } from '@/server/services/memory/userMemory/extract';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { type MemoryExtractionPayloadInput } from '~server/services/memory/userMemory/extract';
 import {
   buildWorkflowPayloadInput,
   MemoryExtractionExecutor,
   MemoryExtractionWorkflowService,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
-import { forEachBatchSequential } from '@/server/services/memory/userMemory/topicBatching';
+} from '~server/services/memory/userMemory/extract';
+import { forEachBatchSequential } from '~server/services/memory/userMemory/topicBatching';
 
 const TOPIC_PAGE_SIZE = 50;
 const TOPIC_BATCH_SIZE = 4;

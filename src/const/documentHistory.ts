@@ -1,4 +1,4 @@
-import type { DocumentHistorySaveSource } from '@/server/services/document/types';
+import type { DocumentHistorySaveSource } from '~server/services/document/types';
 
 export const DOCUMENT_HISTORY_QUERY_LIST_LIMIT = 50;
 

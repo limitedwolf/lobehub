@@ -8,9 +8,9 @@ import { serverDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
 import { authEnv } from '@/envs/auth';
 import { createNodeRequest, createNodeResponse } from '@/libs/oidc-provider/http-adapter';
-import { OIDCService } from '@/server/services/oidc';
-import { getOIDCProvider } from '@/server/services/oidc/oidcProvider';
-import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
+import { OIDCService } from '~server/services/oidc';
+import { getOIDCProvider } from '~server/services/oidc/oidcProvider';
+import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
 const callbackLog = debug('lobe-oidc:callback:desktop');
 const clearSessionLog = debug('lobe-oidc:clear-session');

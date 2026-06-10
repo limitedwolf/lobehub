@@ -1,9 +1,9 @@
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { WebBrowsingExecutionRuntime } from '@lobechat/builtin-tool-web-browsing/executionRuntime';
 
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
-import { SearchService } from '@/server/services/search';
-import { WebBrowsingDocumentService } from '@/server/services/webBrowsing';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
+import { SearchService } from '~server/services/search';
+import { WebBrowsingDocumentService } from '~server/services/webBrowsing';
 
 import { type ServerRuntimeRegistration } from './types';
 

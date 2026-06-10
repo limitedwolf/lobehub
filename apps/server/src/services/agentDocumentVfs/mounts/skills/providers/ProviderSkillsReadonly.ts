@@ -1,6 +1,6 @@
 import type { SkillResourceMeta } from '@lobechat/types';
 
-import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import { AgentDocumentVfsError } from '~server/services/agentDocumentVfs/errors';
 
 import { getUnifiedSkillNamespaceRootPath, type SkillNamespace } from '../path';
 import type { SkillMountNode } from '../types';

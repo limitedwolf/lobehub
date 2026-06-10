@@ -1,4 +1,4 @@
-import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import { AgentDocumentVfsError } from '~server/services/agentDocumentVfs/errors';
 
 import { SkillMountPathResolver } from './SkillMountPathResolver';
 import type { ResolvedSkillMountPath, SkillMountContext, SkillMountNode } from './types';

@@ -3,14 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationModel } from '@/database/models/generation';
-import { FileService } from '@/server/services/file';
 import { AsyncTaskStatus } from '@/types/asyncTask';
+import { FileService } from '~server/services/file';
 
 import { generationRouter } from '../generation';
 
 vi.mock('@/database/models/asyncTask');
 vi.mock('@/database/models/generation');
-vi.mock('@/server/services/file');
+vi.mock('~server/services/file');
 
 describe('generationRouter', () => {
   const mockCtx = {

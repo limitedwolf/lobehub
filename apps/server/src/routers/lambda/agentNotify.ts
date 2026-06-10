@@ -9,8 +9,8 @@ import { MessageModel } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { createStreamEventManager } from '@/server/modules/AgentRuntime/factory';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { createStreamEventManager } from '~server/modules/AgentRuntime/factory';
+import { AiAgentService } from '~server/services/aiAgent';
 
 // Module-level singleton so we don't create a new Redis connection per request.
 let _streamManager: ReturnType<typeof createStreamEventManager> | undefined;

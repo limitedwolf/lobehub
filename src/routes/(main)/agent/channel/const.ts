@@ -1,7 +1,7 @@
 import * as Icons from '@lobehub/ui/icons';
 import type { FC } from 'react';
 
-import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
+import type { SerializedPlatformDefinition } from '~server/services/bot/platforms/types';
 
 /** Known icon names from @lobehub/ui/icons that correspond to chat platforms. */
 const ICON_NAMES = [

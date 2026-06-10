@@ -25,8 +25,8 @@ import { emailWhitelist } from '@/libs/better-auth/plugins/email-whitelist';
 import { initBetterAuthSSOProviders } from '@/libs/better-auth/sso';
 import { createSecondaryStorage, getTrustedOrigins } from '@/libs/better-auth/utils/config';
 import { parseSSOProviders } from '@/libs/better-auth/utils/server';
-import { EmailService } from '@/server/services/email';
-import { UserService } from '@/server/services/user';
+import { EmailService } from '~server/services/email';
+import { UserService } from '~server/services/user';
 
 // Configure HTTP proxy for OAuth provider requests in development (e.g., Google token exchange)
 // Node.js native fetch doesn't respect system proxy settings

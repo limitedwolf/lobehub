@@ -4,12 +4,12 @@ import { RequestTrigger } from '@lobechat/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 import { createRuntimeProcessorContext } from '../../../runtime/context';
 import { createFeedbackSatisfactionJudgeProcessor } from '../feedbackSatisfaction';
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 

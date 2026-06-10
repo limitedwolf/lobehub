@@ -9,7 +9,7 @@ import type {
 } from '@lobechat/llm-generation-tracing';
 import debug from 'debug';
 
-import { FileS3 } from '@/server/modules/S3';
+import { FileS3 } from '~server/modules/S3';
 
 const compressZstd = promisify(zstdCompress);
 const decompressZstd = promisify(zstdDecompress);

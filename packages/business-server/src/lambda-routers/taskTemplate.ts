@@ -1,1 +1,1 @@
-export { taskTemplateRouter } from '@/server/routers/lambda/taskTemplate';
+export { taskTemplateRouter } from '~server/routers/lambda/taskTemplate';

@@ -1,6 +1,6 @@
 import { analyticsEnv } from '@/envs/analytics';
-import { serializeForHtml } from '@/server/utils/serializeForHtml';
 import { type AnalyticsConfig } from '@/types/spaServerConfig';
+import { serializeForHtml } from '~server/utils/serializeForHtml';
 
 export const VITE_DEV_ORIGIN = 'http://localhost:9876';
 

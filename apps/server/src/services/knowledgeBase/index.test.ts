@@ -5,8 +5,8 @@ import { ChunkModel } from '@/database/models/chunk';
 import { DocumentModel } from '@/database/models/document';
 import { FileModel } from '@/database/models/file';
 import { SearchRepo } from '@/database/repositories/search';
-import { getServerDefaultFilesConfig } from '@/server/globalConfig';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { getServerDefaultFilesConfig } from '~server/globalConfig';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 import { DocumentService } from '../document';
 import { KnowledgeBaseSearchService } from './index';
@@ -16,8 +16,8 @@ vi.mock('@/database/models/document', () => ({ DocumentModel: vi.fn() }));
 vi.mock('@/database/models/file', () => ({ FileModel: vi.fn() }));
 vi.mock('@/database/repositories/search', () => ({ SearchRepo: vi.fn() }));
 vi.mock('../document', () => ({ DocumentService: vi.fn() }));
-vi.mock('@/server/globalConfig', () => ({ getServerDefaultFilesConfig: vi.fn() }));
-vi.mock('@/server/modules/ModelRuntime', () => ({ initModelRuntimeFromDB: vi.fn() }));
+vi.mock('~server/globalConfig', () => ({ getServerDefaultFilesConfig: vi.fn() }));
+vi.mock('~server/modules/ModelRuntime', () => ({ initModelRuntimeFromDB: vi.fn() }));
 
 describe('KnowledgeBaseSearchService', () => {
   const userId = 'user_test';

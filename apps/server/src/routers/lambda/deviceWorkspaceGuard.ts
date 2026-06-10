@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 
 import type { DeviceModel } from '@/database/models/device';
-import { isPathWithinRoot } from '@/server/services/deviceGateway';
+import { isPathWithinRoot } from '~server/services/deviceGateway';
 
 /**
  * Validate that a client-supplied workspace root is actually one the user has

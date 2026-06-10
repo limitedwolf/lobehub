@@ -2,8 +2,8 @@
  * Shared utility for component information
  * Single source of truth for component type resolution and path generation
  */
-import { COMPONENT_NODE_MAPPINGS } from '@/server/services/comfyui/config/constants';
-import { SYSTEM_COMPONENTS } from '@/server/services/comfyui/config/systemComponents';
+import { COMPONENT_NODE_MAPPINGS } from '~server/services/comfyui/config/constants';
+import { SYSTEM_COMPONENTS } from '~server/services/comfyui/config/systemComponents';
 
 export interface ComponentInfo {
   displayName: string;

@@ -4,7 +4,7 @@ import { and, asc, count, desc, eq, ilike, or } from 'drizzle-orm';
 import type { AiProviderSelectItem } from '@/database/schemas';
 import { aiModels, aiProviders } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 import { BaseService } from '../common/base.service';
 import { processPaginationConditions } from '../helpers/pagination';

@@ -1,6 +1,6 @@
 import { Client } from '@upstash/qstash';
 
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
 
 const { upstashWorkflowExtraHeaders } = parseMemoryExtractionConfig();
 

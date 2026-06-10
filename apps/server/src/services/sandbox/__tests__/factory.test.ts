@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { MarketService } from '@/server/services/market';
+import type { MarketService } from '~server/services/market';
 
 const baseOptions = {
   marketService: {} as MarketService,

@@ -10,7 +10,7 @@ import {
   STYLE_ADJECTIVE_PATTERNS,
   STYLE_KEYWORDS,
   STYLE_SYNONYMS,
-} from '@/server/services/comfyui/config/promptToolConst';
+} from '~server/services/comfyui/config/promptToolConst';
 
 describe('promptToolConst', () => {
   describe('STYLE_KEYWORDS', () => {

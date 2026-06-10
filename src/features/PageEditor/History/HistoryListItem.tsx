@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuthorInfo } from '@/business/client/hooks/useAuthorInfo';
 import { useEventCallback } from '@/hooks/useEventCallback';
-import type { DocumentHistorySaveSource } from '@/server/routers/lambda/_schema/documentHistory';
+import type { DocumentHistorySaveSource } from '~server/routers/lambda/_schema/documentHistory';
 
 import { formatHistoryAbsoluteTime, formatHistoryRowTime } from './formatHistoryDate';
 import { historyItemSelectors, useHistoryItemsStore } from './HistoryItemsProvider';

@@ -17,11 +17,11 @@ import { useTranslation } from 'react-i18next';
 
 import { FormInput, FormPassword } from '@/components/FormInput';
 import InfoTooltip from '@/components/InfoTooltip';
+import { isDev } from '@/utils/env';
 import type {
   FieldSchema,
   SerializedPlatformDefinition,
-} from '@/server/services/bot/platforms/types';
-import { isDev } from '@/utils/env';
+} from '~server/services/bot/platforms/types';
 
 import { platformCredentialBodyMap, platformCredentialExtrasMap } from '../platform/registry';
 import { extractSettingsDefaults } from './formState';

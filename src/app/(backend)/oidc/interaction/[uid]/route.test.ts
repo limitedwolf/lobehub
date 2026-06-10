@@ -24,7 +24,7 @@ vi.mock('@/libs/oidc-provider/config', () => ({
   defaultClients: [{ client_id: 'lobehub-desktop' }],
 }));
 
-vi.mock('@/server/services/oidc', () => ({
+vi.mock('~server/services/oidc', () => ({
   OIDCService: {
     initialize: vi.fn(async () => ({
       getClientMetadata: mocks.getClientMetadata,

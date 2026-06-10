@@ -6,13 +6,13 @@ import * as AgentModelModule from '@/database/models/agent';
 import * as ChatGroupModelModule from '@/database/models/chatGroup';
 import * as UserModelModule from '@/database/models/user';
 import * as AgentGroupRepoModule from '@/database/repositories/agentGroup';
-import * as ChatGroupServiceModule from '@/server/services/agentGroup';
-import { EditLockService } from '@/server/services/editLock';
-import { publishResourceEvent } from '@/server/services/resourceEvents';
+import * as ChatGroupServiceModule from '~server/services/agentGroup';
+import { EditLockService } from '~server/services/editLock';
+import { publishResourceEvent } from '~server/services/resourceEvents';
 
 import { agentGroupRouter } from '../agentGroup';
 
-vi.mock('@/server/services/resourceEvents', () => ({ publishResourceEvent: vi.fn() }));
+vi.mock('~server/services/resourceEvents', () => ({ publishResourceEvent: vi.fn() }));
 
 const publishResourceEventMock = vi.mocked(publishResourceEvent);
 

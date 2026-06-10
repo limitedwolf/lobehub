@@ -3,14 +3,14 @@ import { chunk } from 'es-toolkit/compat';
 
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { getServerDB } from '@/database/server';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { type MemoryExtractionPayloadInput } from '@/server/services/memory/userMemory/extract';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { type MemoryExtractionPayloadInput } from '~server/services/memory/userMemory/extract';
 import {
   buildWorkflowPayloadInput,
   MemoryExtractionExecutor,
   MemoryExtractionWorkflowService,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
+} from '~server/services/memory/userMemory/extract';
 
 const USER_PAGE_SIZE = 50;
 const USER_BATCH_SIZE = 10;

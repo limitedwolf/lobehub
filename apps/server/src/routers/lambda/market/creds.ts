@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { withRbacPermission } from '@/business/server/trpc-middlewares/rbacPermission';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { marketUserInfo, requireMarketAuth, serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 const log = debug('lambda-router:market:creds');
 

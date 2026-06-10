@@ -18,7 +18,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 // Mock AiAgentService - controls task execution behavior
 const mockExecGroupSubAgentTask = vi.fn();
 const mockInterruptTask = vi.fn();
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     execSubAgent: mockExecGroupSubAgentTask,
     interruptTask: mockInterruptTask,
@@ -27,14 +27,14 @@ vi.mock('@/server/services/aiAgent', () => ({
 
 // Mock AgentRuntimeService - controls operation status
 const mockGetOperationStatus = vi.fn();
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     getOperationStatus: mockGetOperationStatus,
   })),
 }));
 
 // Mock AiChatService
-vi.mock('@/server/services/aiChat', () => ({
+vi.mock('~server/services/aiChat', () => ({
   AiChatService: vi.fn().mockImplementation(() => ({})),
 }));
 

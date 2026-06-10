@@ -2,7 +2,7 @@ import debug from 'debug';
 
 import { FileModel } from '@/database/models/file';
 import { getServerDB } from '@/database/server';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 const log = debug('lobe-file:proxy');
 

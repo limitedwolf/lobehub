@@ -7,7 +7,7 @@ import { MessageModel } from '@/database/models/message';
 import type { LobeChatDatabase } from '@/database/type';
 // Direct file import (not the barrel) to avoid pulling in RuntimeExecutors and
 // its workspace-package transitive deps in the unit-test environment.
-import { AgentRuntimeCoordinator } from '@/server/modules/AgentRuntime/AgentRuntimeCoordinator';
+import { AgentRuntimeCoordinator } from '~server/modules/AgentRuntime/AgentRuntimeCoordinator';
 
 import { OperationTraceRecorder } from './OperationTraceRecorder';
 import { createDefaultSnapshotStore } from './snapshotStore';

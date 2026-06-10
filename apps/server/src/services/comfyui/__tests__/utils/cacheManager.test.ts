@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TTLCacheManager } from '@/server/services/comfyui/utils/cacheManager';
+import { TTLCacheManager } from '~server/services/comfyui/utils/cacheManager';
 
 // Mock debug module
 vi.mock('debug', () => ({

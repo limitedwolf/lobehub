@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 
 import { users } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 const log = debug('lobe-server:bot:feedback');
 

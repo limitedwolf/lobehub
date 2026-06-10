@@ -8,12 +8,12 @@ import {
 import { MessageModel } from '@/database/models/message';
 import { VerifyRunModel } from '@/database/models/verifyRun';
 import { type LobeChatDatabase } from '@/database/type';
-import { formatErrorForState } from '@/server/modules/AgentRuntime/formatErrorForState';
-import { buildFinalSnapshotKey } from '@/server/modules/AgentTracing';
-import { emitAgentSignalSourceEvent } from '@/server/services/agentSignal';
-import { toAgentSignalTraceEvents } from '@/server/services/agentSignal/observability/traceEvents';
-import { extractSelfIterationCompletionPayload } from '@/server/services/agentSignal/services/selfIteration/completion';
-import { instantiateVerifyPlanOnStart, runVerifyOnCompletion } from '@/server/services/verify';
+import { formatErrorForState } from '~server/modules/AgentRuntime/formatErrorForState';
+import { buildFinalSnapshotKey } from '~server/modules/AgentTracing';
+import { emitAgentSignalSourceEvent } from '~server/services/agentSignal';
+import { toAgentSignalTraceEvents } from '~server/services/agentSignal/observability/traceEvents';
+import { extractSelfIterationCompletionPayload } from '~server/services/agentSignal/services/selfIteration/completion';
+import { instantiateVerifyPlanOnStart, runVerifyOnCompletion } from '~server/services/verify';
 
 import { hookDispatcher } from './hooks';
 

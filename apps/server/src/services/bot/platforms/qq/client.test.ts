@@ -5,7 +5,7 @@ vi.mock('@lobechat/chat-adapter-qq', () => ({
   QQApiClient: vi.fn().mockImplementation(() => ({})),
 }));
 
-vi.mock('@/server/services/gateway/runtimeStatus', () => ({
+vi.mock('~server/services/gateway/runtimeStatus', () => ({
   BOT_RUNTIME_STATUSES: {
     connected: 'connected',
     disconnected: 'disconnected',

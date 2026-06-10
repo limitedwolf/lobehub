@@ -10,9 +10,9 @@ import { KnowledgeBaseModel } from '@/database/models/knowledgeBase';
 import { insertKnowledgeBasesSchema, workspaceMembers } from '@/database/schemas';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { FileService } from '@/server/services/file';
 import { type KnowledgeBaseItem } from '@/types/knowledgeBase';
 import { TransferErrorCode } from '@/types/transferError';
+import { FileService } from '~server/services/file';
 
 const knowledgeBaseProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

@@ -9,8 +9,8 @@ import {
 import debug from 'debug';
 
 import { appEnv } from '@/envs/app';
-import type { MarketService } from '@/server/services/market';
-import { createSandboxService } from '@/server/services/sandbox';
+import type { MarketService } from '~server/services/market';
+import { createSandboxService } from '~server/services/sandbox';
 
 const log = debug('lobe-server:hetero-sandbox-runner');
 

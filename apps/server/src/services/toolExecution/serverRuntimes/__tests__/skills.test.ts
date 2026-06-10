@@ -61,22 +61,22 @@ vi.mock('@/helpers/skillFilters', () => ({
   filterBuiltinSkills: vi.fn((skills: unknown) => skills),
 }));
 
-vi.mock('@/server/services/agentDocuments', () => ({
+vi.mock('~server/services/agentDocuments', () => ({
   AgentDocumentsService: vi.fn(() => ({
     getAgentSkills: mocks.getAgentSkills,
   })),
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn(() => mocks.fileService),
 }));
 
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn(() => mocks.marketService),
 }));
 
-vi.mock('@/server/services/sandbox', async () => {
-  const actual = await vi.importActual('@/server/services/sandbox');
+vi.mock('~server/services/sandbox', async () => {
+  const actual = await vi.importActual('~server/services/sandbox');
 
   return {
     ...(actual as Record<string, unknown>),
@@ -84,7 +84,7 @@ vi.mock('@/server/services/sandbox', async () => {
   };
 });
 
-vi.mock('@/server/services/skill/resource', () => ({
+vi.mock('~server/services/skill/resource', () => ({
   SkillResourceService: vi.fn(() => ({
     readResource: mocks.readResource,
   })),

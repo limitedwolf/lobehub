@@ -4,7 +4,7 @@ import {
   type ExecInSandboxInput,
   type ExportAndUploadFileInput,
   type ExportAndUploadFileResult,
-} from '@/server/routers/tools/market';
+} from '~server/routers/tools/market';
 
 class CloudSandboxService {
   /**

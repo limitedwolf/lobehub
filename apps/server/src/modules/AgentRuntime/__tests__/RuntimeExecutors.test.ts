@@ -2,8 +2,8 @@ import { type AgentState } from '@lobechat/agent-runtime';
 import { consumeStreamUntilDone } from '@lobechat/model-runtime';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import * as ContextEngineering from '@/server/modules/Mecha/ContextEngineering';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import * as ContextEngineering from '~server/modules/Mecha/ContextEngineering';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 import { ModelEmptyError } from '../ModelEmptyError';
 import { createRuntimeExecutors, type RuntimeExecutorContext } from '../RuntimeExecutors';
@@ -37,7 +37,7 @@ const mockBuiltinModels = vi.hoisted(() => [
 ]);
 
 // Mock dependencies
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn().mockResolvedValue({
     // Emit a minimal non-empty completion so the call_llm empty-completion
     // guard doesn't treat the default mock as a "gave up" turn and
@@ -49,7 +49,7 @@ vi.mock('@/server/modules/ModelRuntime', () => ({
   }),
 }));
 
-vi.mock('@/server/services/message', () => ({
+vi.mock('~server/services/message', () => ({
   MessageService: vi.fn().mockImplementation(() => ({
     createCompressionGroup: mockCreateCompressionGroup,
     finalizeCompression: mockFinalizeCompression,
@@ -99,7 +99,7 @@ vi.mock('@/envs/file', () => ({
 // FileService is constructed by the runtime to persist model-generated images.
 // `mockUploadBase64` is the spy multimodal-image tests assert against.
 const { mockUploadBase64 } = vi.hoisted(() => ({ mockUploadBase64: vi.fn() }));
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     getFileAccessUrl: vi.fn().mockResolvedValue('https://files.example/access'),
     uploadBase64: mockUploadBase64,

@@ -10,12 +10,12 @@ import { type PromptBuilder } from '@saintno/comfyui-sdk';
 import { CallWrapper, ComfyApi } from '@saintno/comfyui-sdk';
 import debug from 'debug';
 
-import { COMFYUI_DEFAULTS } from '@/server/services/comfyui/config/constants';
-import { ComfyUIAuthService } from '@/server/services/comfyui/core/comfyUIAuthService';
-import { ComfyUIConnectionService } from '@/server/services/comfyui/core/comfyUIConnectionService';
-import { ErrorHandlerService } from '@/server/services/comfyui/core/errorHandlerService';
-import { ServicesError } from '@/server/services/comfyui/errors';
-import { TTLCacheManager } from '@/server/services/comfyui/utils/cacheManager';
+import { COMFYUI_DEFAULTS } from '~server/services/comfyui/config/constants';
+import { ComfyUIAuthService } from '~server/services/comfyui/core/comfyUIAuthService';
+import { ComfyUIConnectionService } from '~server/services/comfyui/core/comfyUIConnectionService';
+import { ErrorHandlerService } from '~server/services/comfyui/core/errorHandlerService';
+import { ServicesError } from '~server/services/comfyui/errors';
+import { TTLCacheManager } from '~server/services/comfyui/utils/cacheManager';
 
 const log = debug('lobe-image:comfyui:client');
 

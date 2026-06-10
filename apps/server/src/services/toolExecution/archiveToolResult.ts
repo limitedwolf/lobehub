@@ -1,12 +1,12 @@
 import type { LobeChatDatabase } from '@lobechat/database';
 
 import { TopicDocumentModel } from '@/database/models/topicDocument';
-import { AgentDocumentVfsService } from '@/server/services/agentDocumentVfs';
+import { AgentDocumentVfsService } from '~server/services/agentDocumentVfs';
 import {
   ARCHIVE_BYPASS_IDENTIFIERS,
   DEFAULT_TOOL_RESULT_MAX_LENGTH,
   truncateToolResult,
-} from '@/server/utils/truncateToolResult';
+} from '~server/utils/truncateToolResult';
 
 import { TOOL_RESULTS_DIR_NAME } from './constants';
 

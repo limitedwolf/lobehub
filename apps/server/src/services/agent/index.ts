@@ -19,7 +19,7 @@ import {
   RedisKeyNamespace,
   RedisKeys,
 } from '@/libs/redis';
-import { getServerDefaultAgentConfig } from '@/server/globalConfig';
+import { getServerDefaultAgentConfig } from '~server/globalConfig';
 
 import { type UpdateAgentResult } from './type';
 

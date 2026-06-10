@@ -20,23 +20,23 @@ vi.mock('@/database/schemas', () => ({
   userSettings: { id: 'id' },
 }));
 
-vi.mock('@/server/globalConfig', () => ({
+vi.mock('~server/globalConfig', () => ({
   getServerDefaultFilesConfig: vi.fn(() => ({
     embeddingModel: { model: 'default-embedding-model', provider: 'default-provider' },
   })),
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: mocks.initModelRuntimeFromDB,
   initModelRuntimeWithUserPayload: mocks.initModelRuntimeWithUserPayload,
 }));
 
-vi.mock('@/server/services/agentSignal/procedure', () => ({
+vi.mock('~server/services/agentSignal/procedure', () => ({
   emitToolOutcomeSafely: vi.fn(),
   resolveToolOutcomeScope: vi.fn(() => ({ scope: 'user', scopeKey: 'user-1' })),
 }));
 
-vi.mock('@/server/services/agentSignal/store/adapters/redis/policyStateStore', () => ({
+vi.mock('~server/services/agentSignal/store/adapters/redis/policyStateStore', () => ({
   redisPolicyStateStore: {},
 }));
 

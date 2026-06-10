@@ -4,7 +4,7 @@
 import { type AgentState } from '@lobechat/agent-runtime';
 import { vi } from 'vitest';
 
-import { type IAgentStateManager } from '@/server/modules/AgentRuntime/types';
+import { type IAgentStateManager } from '~server/modules/AgentRuntime/types';
 
 /**
  * Wait for an operation to complete (or reach terminal state)

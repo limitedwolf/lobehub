@@ -18,16 +18,16 @@ import { UserMemoryModel } from '@/database/models/userMemory';
 import { UserPersonaModel } from '@/database/models/userMemory/persona';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import { type LobeChatDatabase } from '@/database/type';
-import { type MemoryAgentConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { LayersEnum } from '@/types/userMemory';
+import { trimBasedOnBatchProbe } from '@/utils/chunkers';
+import { type MemoryAgentConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 import {
   type ProviderKeyVaultMap,
   type RuntimeResolveOptions,
-} from '@/server/services/memory/userMemory/extract';
-import { resolveRuntimeAgentConfig } from '@/server/services/memory/userMemory/extract';
-import { LayersEnum } from '@/types/userMemory';
-import { trimBasedOnBatchProbe } from '@/utils/chunkers';
+} from '~server/services/memory/userMemory/extract';
+import { resolveRuntimeAgentConfig } from '~server/services/memory/userMemory/extract';
 
 interface UserPersonaAgentPayload {
   existingPersona?: string | null;

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import debug from 'debug';
 
 import { getMessengerLinkTokenTtl, type MessengerPlatform } from '@/config/messenger';
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
 
 const log = debug('lobe-server:messenger:link-token');
 

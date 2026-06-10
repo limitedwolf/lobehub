@@ -7,10 +7,10 @@ import { IMAGE_GENERATION_CONFIG } from 'model-bank';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 
-import { FileService } from '@/server/services/file';
 import { calculateThumbnailDimensions } from '@/utils/number';
 import { getYYYYmmddHHMMss } from '@/utils/time';
 import { inferFileExtensionFromImageUrl } from '@/utils/url';
+import { FileService } from '~server/services/file';
 
 const log = debug('lobe-image:generation-service');
 

@@ -7,7 +7,7 @@ import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
 import { UserModel } from '@/database/models/user';
 import type { LobeChatDatabase } from '@/database/type';
-import { BriefService } from '@/server/services/brief';
+import { BriefService } from '~server/services/brief';
 
 import { TaskService } from './index';
 
@@ -33,7 +33,7 @@ vi.mock('@/database/models/user', () => ({
 
 // AiAgentService pulls in ~14 sub-dependencies in its constructor; mock it so
 // the running-status branch in updateStatus doesn't drag them in.
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     interruptTask: vi.fn(),
   })),
@@ -41,7 +41,7 @@ vi.mock('@/server/services/aiAgent', () => ({
 
 // Attachment resolver hits FileModel + DocumentService + FileService — stub it
 // out so getTaskDetail tests don't need a real file pipeline.
-vi.mock('@/server/services/file/resolveAttachments', () => ({
+vi.mock('~server/services/file/resolveAttachments', () => ({
   resolveAttachmentMetadata: vi.fn().mockResolvedValue([]),
 }));
 

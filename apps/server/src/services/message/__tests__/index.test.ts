@@ -2,12 +2,12 @@ import { type LobeChatDatabase } from '@lobechat/database';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MessageModel } from '@/database/models/message';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 import { MessageService } from '../index';
 
 vi.mock('@/database/models/message');
-vi.mock('@/server/services/file');
+vi.mock('~server/services/file');
 
 describe('MessageService', () => {
   let messageService: MessageService;

@@ -4,7 +4,7 @@ import { deliverWebhook, HookDispatcher } from '../HookDispatcher';
 import type { AgentHook, AgentHookEvent } from '../types';
 
 // Mock isQueueAgentRuntimeEnabled to control local vs production mode
-vi.mock('@/server/services/queue/impls', () => ({
+vi.mock('~server/services/queue/impls', () => ({
   isQueueAgentRuntimeEnabled: vi.fn(() => false), // Default: local mode
 }));
 
@@ -18,7 +18,7 @@ vi.mock('@upstash/qstash', () => ({
   },
 }));
 
-const { isQueueAgentRuntimeEnabled } = await import('@/server/services/queue/impls');
+const { isQueueAgentRuntimeEnabled } = await import('~server/services/queue/impls');
 
 describe('HookDispatcher', () => {
   let dispatcher: HookDispatcher;

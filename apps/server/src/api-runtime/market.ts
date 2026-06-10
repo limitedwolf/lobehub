@@ -1,5 +1,5 @@
 import { getTrustedClientTokenForSession } from '@/libs/trusted-client';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 const MARKET_BASE_URL = process.env.MARKET_BASE_URL || 'https://market.lobehub.com';
 const ALLOWED_OIDC_ENDPOINTS = new Set(['handoff', 'token', 'userinfo']);

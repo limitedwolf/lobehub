@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { withScopedPermission } from '@/business/server/trpc-middlewares/rbacPermission';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 // Import Framework layer services
-import { ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { ImageService } from '@/server/services/comfyui/core/imageService';
-import { ModelResolverService } from '@/server/services/comfyui/core/modelResolverService';
-import { WorkflowBuilderService } from '@/server/services/comfyui/core/workflowBuilderService';
-import { type WorkflowContext } from '@/server/services/comfyui/types';
+import { ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { ImageService } from '~server/services/comfyui/core/imageService';
+import { ModelResolverService } from '~server/services/comfyui/core/modelResolverService';
+import { WorkflowBuilderService } from '~server/services/comfyui/core/workflowBuilderService';
+import { type WorkflowContext } from '~server/services/comfyui/types';
 
 // ComfyUI params validation - only validate required fields
 // Other RuntimeImageGenParams fields are passed through automatically

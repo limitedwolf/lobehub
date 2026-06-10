@@ -6,8 +6,8 @@ import { FileModel } from '@/database/models/file';
 import type { LobeChatDatabase } from '@/database/type';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { FileService } from '@/server/services/file';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { FileService } from '~server/services/file';
 
 const asrProcedure = wsCompatProcedure.use(serverDatabase);
 

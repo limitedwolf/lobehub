@@ -6,7 +6,7 @@ import { Form } from 'antd';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
+import type { SerializedPlatformDefinition } from '~server/services/bot/platforms/types';
 
 import Body from './Body';
 import Footer from './Footer';

@@ -2,9 +2,9 @@
  * Real configuration data helper for tests
  * Uses actual data from configuration files instead of mock data
  */
-import { MODEL_REGISTRY } from '@/server/services/comfyui/config/modelRegistry';
-import { SYSTEM_COMPONENTS } from '@/server/services/comfyui/config/systemComponents';
-import { getModelConfig } from '@/server/services/comfyui/utils/staticModelLookup';
+import { MODEL_REGISTRY } from '~server/services/comfyui/config/modelRegistry';
+import { SYSTEM_COMPONENTS } from '~server/services/comfyui/config/systemComponents';
+import { getModelConfig } from '~server/services/comfyui/utils/staticModelLookup';
 
 // Export real model entries for tests
 export const REAL_MODEL_ENTRIES = Object.entries(MODEL_REGISTRY);
@@ -77,4 +77,4 @@ export const TEST_COMPONENTS = {
 export {
   COMPONENT_NODE_MAPPINGS as REAL_COMPONENT_MAPPINGS,
   WORKFLOW_DEFAULTS as REAL_WORKFLOW_DEFAULTS,
-} from '@/server/services/comfyui/config/constants';
+} from '~server/services/comfyui/config/constants';

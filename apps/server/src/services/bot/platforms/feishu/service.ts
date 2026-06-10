@@ -38,8 +38,8 @@ import type {
 import type { LarkApiClient } from '@lobechat/chat-adapter-feishu';
 import { DEFAULT_BOT_HISTORY_LIMIT } from '@lobechat/const';
 
-import type { MessageRuntimeService } from '@/server/services/toolExecution/serverRuntimes/message/adapters/types';
-import { PlatformUnsupportedError } from '@/server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
+import type { MessageRuntimeService } from '~server/services/toolExecution/serverRuntimes/message/adapters/types';
+import { PlatformUnsupportedError } from '~server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
 
 import { MAX_FEISHU_HISTORY_LIMIT } from './const';
 import { sendFeishuAttachments } from './sendAttachments';

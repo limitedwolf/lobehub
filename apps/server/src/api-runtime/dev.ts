@@ -72,7 +72,7 @@ export const testPushAPIHandler = async (request: Request) => {
     return Response.json({ error: 'userId is required' }, { status: 400 });
   }
 
-  const { PushChannel } = await import('@/server/services/push/PushChannel');
+  const { PushChannel } = await import('~server/services/push/PushChannel');
   const channel = new PushChannel();
   try {
     const result = await channel.deliver({

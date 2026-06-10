@@ -2,19 +2,19 @@ import { type CreateImagePayload } from '@lobechat/model-runtime';
 import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { ErrorHandlerService } from '@/server/services/comfyui/core/errorHandlerService';
-import { ImageService } from '@/server/services/comfyui/core/imageService';
-import { ModelResolverService } from '@/server/services/comfyui/core/modelResolverService';
-import { WorkflowBuilderService } from '@/server/services/comfyui/core/workflowBuilderService';
-import { WorkflowDetector } from '@/server/services/comfyui/utils/workflowDetector';
+import { ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { ErrorHandlerService } from '~server/services/comfyui/core/errorHandlerService';
+import { ImageService } from '~server/services/comfyui/core/imageService';
+import { ModelResolverService } from '~server/services/comfyui/core/modelResolverService';
+import { WorkflowBuilderService } from '~server/services/comfyui/core/workflowBuilderService';
+import { WorkflowDetector } from '~server/services/comfyui/utils/workflowDetector';
 
 // Mock dependencies
-vi.mock('@/server/services/comfyui/core/comfyUIClientService');
-vi.mock('@/server/services/comfyui/core/modelResolverService');
-vi.mock('@/server/services/comfyui/core/workflowBuilderService');
-vi.mock('@/server/services/comfyui/core/errorHandlerService');
-vi.mock('@/server/services/comfyui/utils/workflowDetector');
+vi.mock('~server/services/comfyui/core/comfyUIClientService');
+vi.mock('~server/services/comfyui/core/modelResolverService');
+vi.mock('~server/services/comfyui/core/workflowBuilderService');
+vi.mock('~server/services/comfyui/core/errorHandlerService');
+vi.mock('~server/services/comfyui/utils/workflowDetector');
 
 // Mock sharp module for image processing
 vi.mock('sharp', () => ({

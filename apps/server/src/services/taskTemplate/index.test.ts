@@ -27,7 +27,7 @@ const { mockAppEnv, mockGetTaskTemplateRecommendations, mockMarket } = vi.hoiste
   };
 });
 
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn(() => ({ market: mockMarket })),
 }));
 

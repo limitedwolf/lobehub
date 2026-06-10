@@ -24,10 +24,10 @@ vi.mock('@/database/models/ragEval', () => ({
   EvalEvaluationModel: vi.fn(() => ({ update: vi.fn() })),
   EvaluationRecordModel: vi.fn(() => ({ findById: vi.fn().mockResolvedValue(null) })),
 }));
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
-vi.mock('@/server/services/chunk', () => ({
+vi.mock('~server/services/chunk', () => ({
   ChunkService: vi.fn(() => ({})),
 }));
 

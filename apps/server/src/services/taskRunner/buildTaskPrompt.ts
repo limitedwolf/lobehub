@@ -5,8 +5,8 @@ import type { BriefModel } from '@/database/models/brief';
 import type { TaskModel } from '@/database/models/task';
 import type { TaskTopicModel } from '@/database/models/taskTopic';
 import type { LobeChatDatabase } from '@/database/type';
-import { extractFileIdsFromEditorData } from '@/server/services/file/extractFileIdsFromEditorData';
-import { resolveAttachmentMetadata } from '@/server/services/file/resolveAttachments';
+import { extractFileIdsFromEditorData } from '~server/services/file/extractFileIdsFromEditorData';
+import { resolveAttachmentMetadata } from '~server/services/file/resolveAttachments';
 
 export interface BuildTaskPromptDeps {
   briefModel: BriefModel;

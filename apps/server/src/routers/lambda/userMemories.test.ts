@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getServerDB } from '@/database/core/db-adaptor';
 import type * as UserMemoryModule from '@/database/models/userMemory';
 import { UserMemoryModel } from '@/database/models/userMemory';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 import { userMemoriesRouter } from './userMemories';
 
@@ -13,13 +13,13 @@ vi.mock('@/database/core/db-adaptor', () => ({
   getServerDB: vi.fn(),
 }));
 
-vi.mock('@/server/globalConfig', () => ({
+vi.mock('~server/globalConfig', () => ({
   getServerDefaultFilesConfig: vi.fn().mockReturnValue({
     embeddingModel: { model: 'text-embedding-3-small' },
   }),
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 

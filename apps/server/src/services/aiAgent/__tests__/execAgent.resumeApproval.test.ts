@@ -44,7 +44,7 @@ vi.mock('@/database/models/agent', () => ({
   AgentModel: vi.fn().mockImplementation(() => ({ queryAgents: vi.fn().mockResolvedValue([]) })),
 }));
 
-vi.mock('@/server/services/agent', () => ({
+vi.mock('~server/services/agent', () => ({
   AgentService: vi.fn().mockImplementation(() => ({
     getAgentConfig: vi.fn().mockResolvedValue({
       chatConfig: {},
@@ -89,13 +89,13 @@ vi.mock('@/database/models/userMemory/persona', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     createOperation: mockCreateOperation,
   })),
 }));
 
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn().mockImplementation(() => ({
     getLobehubSkillManifests: vi.fn().mockResolvedValue([]),
   })),
@@ -107,22 +107,22 @@ vi.mock('@/server/services/composio', () => ({
   })),
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({ uploadFromUrl: vi.fn() })),
 }));
 
-vi.mock('@/server/modules/Mecha', () => ({
+vi.mock('~server/modules/Mecha', () => ({
   createServerAgentToolsEngine: vi.fn().mockReturnValue({
     generateToolsDetailed: vi.fn().mockReturnValue({ enabledToolIds: [], tools: [] }),
     getEnabledPluginManifests: vi.fn().mockReturnValue(new Map()),
   }),
 }));
 
-vi.mock('@/server/services/deviceGateway', () => ({
+vi.mock('~server/services/deviceGateway', () => ({
   deviceGateway: { isConfigured: false, queryDeviceList: vi.fn().mockResolvedValue([]) },
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 

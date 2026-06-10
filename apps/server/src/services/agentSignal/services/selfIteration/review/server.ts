@@ -8,11 +8,11 @@ import { AgentSignalReviewContextModel } from '@/database/models/agentSignal/rev
 import { BriefModel } from '@/database/models/brief';
 import type { BriefItem } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { AGENT_SIGNAL_DEFAULTS } from '@/server/services/agentSignal/constants';
-import { isAgentSignalEnabledForUser } from '@/server/services/agentSignal/featureGate';
-import { runMemoryActionAgent } from '@/server/services/agentSignal/policies/analyzeIntent/actions/userMemory';
-import { redisSourceEventStore } from '@/server/services/agentSignal/store/adapters/redis/sourceEventStore';
-import { SkillManagementDocumentService } from '@/server/services/skillManagement';
+import { AGENT_SIGNAL_DEFAULTS } from '~server/services/agentSignal/constants';
+import { isAgentSignalEnabledForUser } from '~server/services/agentSignal/featureGate';
+import { runMemoryActionAgent } from '~server/services/agentSignal/policies/analyzeIntent/actions/userMemory';
+import { redisSourceEventStore } from '~server/services/agentSignal/store/adapters/redis/sourceEventStore';
+import { SkillManagementDocumentService } from '~server/services/skillManagement';
 
 import { projectRun } from '../projection';
 import type { CreateServerSelfIterationPolicyOptions } from '../server';

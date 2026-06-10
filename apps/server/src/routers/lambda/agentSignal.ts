@@ -8,12 +8,12 @@ import { z } from 'zod';
 import { withScopedPermission } from '@/business/server/trpc-middlewares/rbacPermission';
 import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceAuth';
 import { router } from '@/libs/trpc/lambda';
-import { enqueueAgentSignalSourceEvent } from '@/server/services/agentSignal';
-import { listAgentSignalReceipts } from '@/server/services/agentSignal/services/receiptService';
+import { enqueueAgentSignalSourceEvent } from '~server/services/agentSignal';
+import { listAgentSignalReceipts } from '~server/services/agentSignal/services/receiptService';
 import {
   AGENT_SIGNAL_TRIGGER_SOURCE_TYPES,
   buildTriggerSourceEvent,
-} from '@/server/services/agentSignal/triggerSourceEvent';
+} from '~server/services/agentSignal/triggerSourceEvent';
 
 const log = debug('lobe-server:agent-signal:router');
 

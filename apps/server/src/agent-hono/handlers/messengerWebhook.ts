@@ -1,7 +1,7 @@
 import debug from 'debug';
 import type { Context } from 'hono';
 
-import { getMessengerRouter } from '@/server/services/messenger';
+import { getMessengerRouter } from '~server/services/messenger';
 
 const log = debug('lobe-server:messenger:webhook-route');
 

@@ -1,7 +1,7 @@
 import { NotebookIdentifier } from '@lobechat/builtin-tool-notebook';
 import { NotebookExecutionRuntime } from '@lobechat/builtin-tool-notebook/executionRuntime';
 
-import { NotebookRuntimeService } from '@/server/services/notebook';
+import { NotebookRuntimeService } from '~server/services/notebook';
 
 import { type ServerRuntimeRegistration } from './types';
 

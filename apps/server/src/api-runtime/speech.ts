@@ -8,7 +8,7 @@ import { EdgeSpeechTTS, MicrosoftSpeechTTS } from '@lobehub/tts';
 import { createOpenaiAudioSpeech, createOpenaiAudioTranscriptions } from '@lobehub/tts/server';
 
 import { createBizOpenAI } from '@/app/(backend)/_deprecated/createBizOpenAI';
-import { createSpeechResponse } from '@/server/utils/createSpeechResponse';
+import { createSpeechResponse } from '~server/utils/createSpeechResponse';
 
 type OpenAITTSClient = Parameters<typeof createOpenaiAudioSpeech>[0]['openai'];
 type OpenAISTTClient = Parameters<typeof createOpenaiAudioTranscriptions>[0]['openai'];

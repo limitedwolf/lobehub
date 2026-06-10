@@ -3,7 +3,7 @@ import debug from 'debug';
 import { type NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { createStreamEventManager } from '@/server/modules/AgentRuntime';
+import { createStreamEventManager } from '~server/modules/AgentRuntime';
 
 const log = debug('api-route:agent:stream');
 const timing = debug('lobe-server:agent-runtime:timing');

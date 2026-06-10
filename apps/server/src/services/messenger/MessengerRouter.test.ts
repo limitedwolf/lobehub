@@ -7,7 +7,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
   getServerDB: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   getAgentRuntimeRedisClient: vi.fn().mockReturnValue(null),
 }));
 
@@ -29,7 +29,7 @@ vi.mock('./oauth/slackOAuth', () => ({
 }));
 
 const mockGetServerFeatureFlagsStateFromRuntimeConfig = vi.fn();
-vi.mock('@/server/featureFlags', () => ({
+vi.mock('~server/featureFlags', () => ({
   getServerFeatureFlagsStateFromRuntimeConfig: (...args: any[]) =>
     mockGetServerFeatureFlagsStateFromRuntimeConfig(...args),
 }));
@@ -96,7 +96,7 @@ vi.mock('@chat-adapter/state-ioredis', () => ({
 const mockHandleMention = vi.fn();
 const mockHandleSubscribed = vi.fn();
 const mockAgentBridgeConstructor = vi.fn();
-vi.mock('@/server/services/bot/AgentBridgeService', () => ({
+vi.mock('~server/services/bot/AgentBridgeService', () => ({
   AgentBridgeService: class {
     static clearActiveThread = vi.fn();
     static getActiveOperationId = vi.fn();
@@ -128,10 +128,10 @@ vi.mock('@/database/models/workspace', () => ({
     listUserWorkspaces = (...args: any[]) => mockListUserWorkspaces(...args);
   },
 }));
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: class {},
 }));
-vi.mock('@/server/services/bot/replyTemplate', () => ({
+vi.mock('~server/services/bot/replyTemplate', () => ({
   renderInlineError: (msg: string) => msg,
 }));
 

@@ -39,23 +39,23 @@ import { AgentOperationModel } from '@/database/models/agentOperation';
 import { MessageModel } from '@/database/models/message';
 import { type LobeChatDatabase } from '@/database/type';
 import { appEnv } from '@/envs/app';
-import { type AgentRuntimeCoordinatorOptions } from '@/server/modules/AgentRuntime';
-import { AgentRuntimeCoordinator, createStreamEventManager } from '@/server/modules/AgentRuntime';
-import { formatErrorForState } from '@/server/modules/AgentRuntime/formatErrorForState';
+import { type AgentRuntimeCoordinatorOptions } from '~server/modules/AgentRuntime';
+import { AgentRuntimeCoordinator, createStreamEventManager } from '~server/modules/AgentRuntime';
+import { formatErrorForState } from '~server/modules/AgentRuntime/formatErrorForState';
 import {
   createRuntimeExecutors,
   type RuntimeExecutorContext,
-} from '@/server/modules/AgentRuntime/RuntimeExecutors';
-import { type IStreamEventManager } from '@/server/modules/AgentRuntime/types';
-import { emitAgentSignalSourceEvent } from '@/server/services/agentSignal';
-import { toAgentSignalTraceEvents } from '@/server/services/agentSignal/observability/traceEvents';
-import { FileService } from '@/server/services/file';
-import { mcpService } from '@/server/services/mcp';
-import { MessageService } from '@/server/services/message';
-import { QueueService } from '@/server/services/queue';
-import { LocalQueueServiceImpl } from '@/server/services/queue/impls';
-import { ToolExecutionService } from '@/server/services/toolExecution';
-import { BuiltinToolsExecutor } from '@/server/services/toolExecution/builtin';
+} from '~server/modules/AgentRuntime/RuntimeExecutors';
+import { type IStreamEventManager } from '~server/modules/AgentRuntime/types';
+import { emitAgentSignalSourceEvent } from '~server/services/agentSignal';
+import { toAgentSignalTraceEvents } from '~server/services/agentSignal/observability/traceEvents';
+import { FileService } from '~server/services/file';
+import { mcpService } from '~server/services/mcp';
+import { MessageService } from '~server/services/message';
+import { QueueService } from '~server/services/queue';
+import { LocalQueueServiceImpl } from '~server/services/queue/impls';
+import { ToolExecutionService } from '~server/services/toolExecution';
+import { BuiltinToolsExecutor } from '~server/services/toolExecution/builtin';
 
 import { isAbortError, throwIfAborted } from './abort';
 import { CompletionLifecycle } from './CompletionLifecycle';

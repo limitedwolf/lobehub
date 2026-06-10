@@ -9,12 +9,12 @@ import { WorkflowAbort } from '@upstash/workflow';
 
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { getServerDB } from '@/database/server';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { type MemoryExtractionPayloadInput } from '@/server/services/memory/userMemory/extract';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { type MemoryExtractionPayloadInput } from '~server/services/memory/userMemory/extract';
 import {
   MemoryExtractionWorkflowService,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
+} from '~server/services/memory/userMemory/extract';
 
 import { processTopicWorkflow } from './processTopic';
 

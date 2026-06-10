@@ -4,7 +4,7 @@ import type { FollowUpChip, FollowUpExtractInput, FollowUpExtractResult } from '
 import debug from 'debug';
 
 import type { LobeChatDatabase } from '@/database/type';
-import { AiGenerationService } from '@/server/services/aiGeneration';
+import { AiGenerationService } from '~server/services/aiGeneration';
 
 import { buildSuggestionPrompt, FOLLOW_UP_PROMPT_VERSION } from './prompts';
 import { RawResponseSchema, SUGGESTION_RESPONSE_JSON_SCHEMA } from './schema';

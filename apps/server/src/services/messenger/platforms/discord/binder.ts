@@ -3,9 +3,9 @@ import debug from 'debug';
 
 import { getMessengerDiscordConfig } from '@/config/messenger';
 import { appEnv } from '@/envs/app';
-import type { PlatformClient } from '@/server/services/bot/platforms';
-import { DiscordApi } from '@/server/services/bot/platforms/discord/api';
-import { DiscordClientFactory } from '@/server/services/bot/platforms/discord/client';
+import type { PlatformClient } from '~server/services/bot/platforms';
+import { DiscordApi } from '~server/services/bot/platforms/discord/api';
+import { DiscordClientFactory } from '~server/services/bot/platforms/discord/client';
 
 import { issueLinkToken } from '../../linkTokenStore';
 import type {

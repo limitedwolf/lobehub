@@ -44,13 +44,13 @@ vi.mock('@/database/models/file', () => ({
   })),
 }));
 
-vi.mock('@/server/modules/ContentChunk', () => ({
+vi.mock('~server/modules/ContentChunk', () => ({
   ContentChunk: vi.fn(() => ({
     chunkContent: mockChunkContent,
   })),
 }));
 
-vi.mock('@/server/routers/async', () => ({
+vi.mock('~server/routers/async', () => ({
   createAsyncCaller: mockCreateAsyncCaller,
 }));
 

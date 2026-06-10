@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import { selectOptimalWeightDtype } from '@/server/services/comfyui/utils/weightDType';
+import { selectOptimalWeightDtype } from '~server/services/comfyui/utils/weightDType';
 
 // Mock the modelRegistry module
-vi.mock('@/server/services/comfyui/config/modelRegistry', () => {
+vi.mock('~server/services/comfyui/config/modelRegistry', () => {
   const models = {
     'flux1-dev-fp8-e4m3fn.safetensors': {
       family: 'flux',

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { enqueueAgentSignalSourceEvent } from '@/server/services/agentSignal';
+import { enqueueAgentSignalSourceEvent } from '~server/services/agentSignal';
 
 import { selfFeedbackIntentRuntime } from '../selfFeedbackIntent';
 
-vi.mock('@/server/services/agentSignal', () => ({
+vi.mock('~server/services/agentSignal', () => ({
   enqueueAgentSignalSourceEvent: vi.fn(),
 }));
 

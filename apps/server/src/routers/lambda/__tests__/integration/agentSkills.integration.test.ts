@@ -10,7 +10,7 @@ import {
   SKILL_BUNDLE_FILE_TYPE,
   SKILL_INDEX_FILE_TYPE,
   SKILL_INDEX_FILENAME,
-} from '@/server/services/skillManagement';
+} from '~server/services/skillManagement';
 
 import { agentDocumentRouter } from '../../agentDocument';
 import { agentSkillsRouter } from '../../agentSkills';
@@ -23,7 +23,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 }));
 
 // Mock FileService to avoid S3 dependency
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     createGlobalFile: vi.fn().mockResolvedValue({ id: 'mock-global-file-id' }),
     createFileRecord: vi.fn().mockResolvedValue({ fileId: 'mock-file-id', url: '/f/mock-file-id' }),
@@ -35,7 +35,7 @@ vi.mock('@/server/services/file', () => ({
 }));
 
 // Mock SkillResourceService to avoid S3 dependency
-vi.mock('@/server/services/skill/resource', () => ({
+vi.mock('~server/services/skill/resource', () => ({
   SkillResourceService: vi.fn().mockImplementation(() => ({
     storeResources: vi.fn().mockResolvedValue({}),
     readResource: vi.fn().mockRejectedValue(new Error('Resource not found')),
@@ -64,7 +64,7 @@ const mockGitHubInstance = {
     }),
   parseRepoUrl: vi.fn(),
 };
-vi.mock('@/server/modules/GitHub', () => ({
+vi.mock('~server/modules/GitHub', () => ({
   GitHub: vi.fn().mockImplementation(() => mockGitHubInstance),
   GitHubNotFoundError: class extends Error {},
   GitHubParseError: class extends Error {},
@@ -75,14 +75,14 @@ const mockParserInstance = {
   parseSkillMd: vi.fn(),
   parseZipPackage: vi.fn(),
 };
-vi.mock('@/server/services/skill/parser', () => ({
+vi.mock('~server/services/skill/parser', () => ({
   SkillParser: vi.fn().mockImplementation(() => mockParserInstance),
 }));
 
 const mockMarketServiceInstance = {
   getSkillDownloadUrl: vi.fn(),
 };
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn().mockImplementation(() => mockMarketServiceInstance),
 }));
 

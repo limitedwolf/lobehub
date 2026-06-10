@@ -1,8 +1,8 @@
 import type { AgentSignalRuntimeService } from '@lobechat/builtin-tool-agent-signal';
 
 import type { LobeChatDatabase } from '@/database/type';
-import { runMemoryActionAgent } from '@/server/services/agentSignal/policies/analyzeIntent/actions/userMemory';
-import type { SkillManagementDocumentService } from '@/server/services/skillManagement';
+import { runMemoryActionAgent } from '~server/services/agentSignal/policies/analyzeIntent/actions/userMemory';
+import type { SkillManagementDocumentService } from '~server/services/skillManagement';
 
 import { createSelfReviewProposalPreflightService } from '../review/proposalPreflight';
 import { createSelfReviewProposalSnapshotService } from '../review/proposalSnapshot';

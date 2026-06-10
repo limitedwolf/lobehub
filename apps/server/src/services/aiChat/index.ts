@@ -3,7 +3,7 @@ import { createTimingHelpers } from '@lobechat/utils';
 
 import { MessageModel } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 const { createPrefixedTimingContext, runTimedStage, toTimingContext } = createTimingHelpers(
   'lobe-server:chat:lobehub:timing',

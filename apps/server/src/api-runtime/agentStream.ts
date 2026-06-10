@@ -1,7 +1,7 @@
 import { createSSEHeaders, createSSEWriter } from '@lobechat/utils/server';
 import debug from 'debug';
 
-import { createStreamEventManager } from '@/server/modules/AgentRuntime';
+import { createStreamEventManager } from '~server/modules/AgentRuntime';
 
 const log = debug('api-route:agent:stream');
 const timing = debug('lobe-server:agent-runtime:timing');

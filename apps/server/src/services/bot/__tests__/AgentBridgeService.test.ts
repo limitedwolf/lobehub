@@ -25,29 +25,29 @@ vi.mock('@/envs/app', () => ({
   },
 }));
 
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
   })),
 }));
 
-vi.mock('@/server/services/gateway/MessageGatewayClient', () => ({
+vi.mock('~server/services/gateway/MessageGatewayClient', () => ({
   getMessageGatewayClient: vi.fn().mockReturnValue({ isConfigured: false, isEnabled: false }),
 }));
 
-vi.mock('@/server/services/queue/impls', () => ({
+vi.mock('~server/services/queue/impls', () => ({
   isQueueAgentRuntimeEnabled: mockIsQueueAgentRuntimeEnabled,
 }));
 
-vi.mock('@/server/services/systemAgent', () => ({
+vi.mock('~server/services/systemAgent', () => ({
   SystemAgentService: vi.fn(),
 }));
 
-vi.mock('@/server/services/bot/formatPrompt', () => ({
+vi.mock('~server/services/bot/formatPrompt', () => ({
   formatPrompt: mockFormatPrompt,
 }));
 
-vi.mock('@/server/services/bot/platforms', async (importOriginal) => {
+vi.mock('~server/services/bot/platforms', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
@@ -58,7 +58,7 @@ vi.mock('@/server/services/bot/platforms', async (importOriginal) => {
 });
 
 const { AgentBridgeService } = await import('../AgentBridgeService');
-const { AiAgentService } = await import('@/server/services/aiAgent');
+const { AiAgentService } = await import('~server/services/aiAgent');
 
 const FAKE_DB = {} as any;
 const USER_ID = 'user-123';

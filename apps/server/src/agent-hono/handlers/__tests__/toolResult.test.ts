@@ -13,7 +13,7 @@ const mockPipeline = vi.fn(() => ({ lpush: mockLpush }));
 const mockRedisClient = { pipeline: mockPipeline } as any;
 
 let currentRedisClient: any = mockRedisClient;
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   getAgentRuntimeRedisClient: () => currentRedisClient,
 }));
 

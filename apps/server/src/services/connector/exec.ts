@@ -1,5 +1,5 @@
 import { ConnectorToolPermission } from '@/database/schemas';
-import { mcpService } from '@/server/services/mcp';
+import { mcpService } from '~server/services/mcp';
 
 import { buildConnectorMcpParams, type ConnectorToolSyncContext } from './sync';
 import { ensureFreshConnectorToken } from './tokens';

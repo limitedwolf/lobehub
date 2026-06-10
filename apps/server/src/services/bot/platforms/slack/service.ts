@@ -37,8 +37,8 @@ import type {
 } from '@lobechat/builtin-tool-message/executionRuntime';
 import { DEFAULT_BOT_HISTORY_LIMIT } from '@lobechat/const';
 
-import type { MessageRuntimeService } from '@/server/services/toolExecution/serverRuntimes/message/adapters/types';
-import { PlatformUnsupportedError } from '@/server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
+import type { MessageRuntimeService } from '~server/services/toolExecution/serverRuntimes/message/adapters/types';
+import { PlatformUnsupportedError } from '~server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
 
 import type { SlackApi } from './api';
 import { MAX_SLACK_HISTORY_LIMIT } from './const';

@@ -17,28 +17,28 @@ import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { MessengerAccountLinkModel } from '@/database/models/messengerAccountLink';
 import { MessengerInstallationModel } from '@/database/models/messengerInstallation';
 import { agents } from '@/database/schemas';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 import {
   assertBotAccessSettings,
   invalidateBotAfterUpdate,
   mergeBotSettingsForPersist,
-} from '@/server/services/bot/agentBotProviderSettings';
-import { platformRegistry } from '@/server/services/bot/platforms';
-import { DiscordApi } from '@/server/services/bot/platforms/discord/api';
-import { DiscordMessageService } from '@/server/services/bot/platforms/discord/service';
-import { FeishuMessageService } from '@/server/services/bot/platforms/feishu/service';
-import { ImessageDesktopBridgeApi } from '@/server/services/bot/platforms/imessage/desktopBridge';
-import { ImessageMessageService } from '@/server/services/bot/platforms/imessage/service';
-import { QQMessageService } from '@/server/services/bot/platforms/qq/service';
-import { SlackApi } from '@/server/services/bot/platforms/slack/api';
-import { SlackMessageService } from '@/server/services/bot/platforms/slack/service';
-import { TelegramApi } from '@/server/services/bot/platforms/telegram/api';
-import { TelegramMessageService } from '@/server/services/bot/platforms/telegram/service';
-import { WechatMessageService } from '@/server/services/bot/platforms/wechat/service';
-import { GatewayService } from '@/server/services/gateway';
-import { getBotRuntimeStatus } from '@/server/services/gateway/runtimeStatus';
-import { messengerPlatformRegistry } from '@/server/services/messenger';
-import { TELEGRAM_INSTALLATION_KEY } from '@/server/services/messenger/installations/telegram';
+} from '~server/services/bot/agentBotProviderSettings';
+import { platformRegistry } from '~server/services/bot/platforms';
+import { DiscordApi } from '~server/services/bot/platforms/discord/api';
+import { DiscordMessageService } from '~server/services/bot/platforms/discord/service';
+import { FeishuMessageService } from '~server/services/bot/platforms/feishu/service';
+import { ImessageDesktopBridgeApi } from '~server/services/bot/platforms/imessage/desktopBridge';
+import { ImessageMessageService } from '~server/services/bot/platforms/imessage/service';
+import { QQMessageService } from '~server/services/bot/platforms/qq/service';
+import { SlackApi } from '~server/services/bot/platforms/slack/api';
+import { SlackMessageService } from '~server/services/bot/platforms/slack/service';
+import { TelegramApi } from '~server/services/bot/platforms/telegram/api';
+import { TelegramMessageService } from '~server/services/bot/platforms/telegram/service';
+import { WechatMessageService } from '~server/services/bot/platforms/wechat/service';
+import { GatewayService } from '~server/services/gateway';
+import { getBotRuntimeStatus } from '~server/services/gateway/runtimeStatus';
+import { messengerPlatformRegistry } from '~server/services/messenger';
+import { TELEGRAM_INSTALLATION_KEY } from '~server/services/messenger/installations/telegram';
 
 import type { ServerRuntimeRegistration } from '../types';
 import { MessageDispatcherService } from './MessageDispatcherService';

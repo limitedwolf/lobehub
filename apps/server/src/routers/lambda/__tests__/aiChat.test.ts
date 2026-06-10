@@ -8,7 +8,7 @@ import { AgentModel } from '@/database/models/agent';
 import { MessageModel } from '@/database/models/message';
 import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
-import { AiChatService } from '@/server/services/aiChat';
+import { AiChatService } from '~server/services/aiChat';
 
 import { aiChatRouter } from '../aiChat';
 
@@ -18,11 +18,11 @@ vi.mock('@/database/models/agent');
 vi.mock('@/database/models/message');
 vi.mock('@/database/models/thread');
 vi.mock('@/database/models/topic');
-vi.mock('@/server/services/aiChat');
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/aiChat');
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn(),
 }));
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 
@@ -933,7 +933,7 @@ describe('aiChatRouter', () => {
 
   describe('outputJSON', () => {
     it('should successfully generate structured output', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
 
       const mockResult = { object: { name: 'John', age: 30 } };
       const mockGenerateObject = vi.fn().mockResolvedValue(mockResult);
@@ -977,7 +977,7 @@ describe('aiChatRouter', () => {
     });
 
     it('maps provider auth runtime errors to UNAUTHORIZED instead of leaking as internal errors', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
       const runtimeError = {
         error: undefined,
         errorType: AgentRuntimeErrorType.InvalidProviderAPIKey,
@@ -1005,7 +1005,7 @@ describe('aiChatRouter', () => {
     });
 
     it('maps known runtime errors with their configured transport status', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
       const runtimeError = {
         error: { message: 'rate limited' },
         errorType: AgentRuntimeErrorType.RateLimitExceeded,
@@ -1033,7 +1033,7 @@ describe('aiChatRouter', () => {
     });
 
     it('marks input completion runtime 4xx errors to skip tRPC handler logging', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
       const runtimeError = {
         error: { message: 'rate limited' },
         errorType: AgentRuntimeErrorType.RateLimitExceeded,
@@ -1058,7 +1058,7 @@ describe('aiChatRouter', () => {
     });
 
     it('does not mark non-input-completion runtime errors as silent', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
       const runtimeError = {
         error: { message: 'rate limited' },
         errorType: AgentRuntimeErrorType.RateLimitExceeded,
@@ -1083,7 +1083,7 @@ describe('aiChatRouter', () => {
     });
 
     it('maps raw provider 4xx errors to BAD_REQUEST instead of internal errors', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
 
       // Raw SDK APIError shape: carries an HTTP status but no errorType — the
       // generateObject path rethrows upstream errors verbatim (e.g. a BYOK
@@ -1120,7 +1120,7 @@ describe('aiChatRouter', () => {
     });
 
     it('should handle tools parameter when provided', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
 
       const mockTools = [
         {
@@ -1166,7 +1166,7 @@ describe('aiChatRouter', () => {
     });
 
     it('merges caller metadata over the default trigger and forwards tracing', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
       const mockGenerateObject = vi.fn().mockResolvedValue({ completion: 'hi there' });
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue({
         generateObject: mockGenerateObject,
@@ -1207,7 +1207,7 @@ describe('aiChatRouter', () => {
     });
 
     it('rejects a caller-supplied tracing.tracingId that is not a UUID', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
       const mockGenerateObject = vi.fn();
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue({
         generateObject: mockGenerateObject,
@@ -1228,7 +1228,7 @@ describe('aiChatRouter', () => {
     });
 
     it('honours caller-supplied tracing.tracingId instead of generating a new one', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('~server/modules/ModelRuntime');
       const mockGenerateObject = vi.fn().mockResolvedValue({ completion: 'ok' });
       vi.mocked(initModelRuntimeFromDB).mockResolvedValue({
         generateObject: mockGenerateObject,

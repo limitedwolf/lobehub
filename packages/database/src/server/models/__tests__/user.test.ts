@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { count, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 import { getTestDB } from '../../../core/getTestDB';
 import { SessionModel } from '../../../models/session';

@@ -1,7 +1,7 @@
 import { INBOX_SESSION_ID } from '@lobechat/const';
 
 import type { LobeChatDatabase } from '@/database/type';
-import { getServerFeatureFlagsStateFromRuntimeConfig } from '@/server/featureFlags';
+import { getServerFeatureFlagsStateFromRuntimeConfig } from '~server/featureFlags';
 
 /**
  * Input used to resolve Agent Signal self-iteration capability.

@@ -20,9 +20,9 @@ import { FileModel } from '@/database/models/file';
 import { GenerationModel } from '@/database/models/generation';
 import { GenerationBatchModel } from '@/database/models/generationBatch';
 import { asyncAuthedProcedure, asyncRouter as router } from '@/libs/trpc/async';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { GenerationService } from '@/server/services/generation';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { GenerationService } from '~server/services/generation';
 
 import { categorizeImageGenerationError } from './imageError';
 

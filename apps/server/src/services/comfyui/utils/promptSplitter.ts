@@ -3,7 +3,7 @@ import {
   getAllStyleKeywords,
   getCompoundStyles,
   normalizeStyleTerm,
-} from '@/server/services/comfyui/config/promptToolConst';
+} from '~server/services/comfyui/config/promptToolConst';
 
 /**
  * FLUX dual-CLIP prompt intelligent splitter

@@ -2,15 +2,15 @@
 import { TRPCError } from '@trpc/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import type * as TracingService from '@/server/services/llmGenerationTracing';
+import type * as TracingService from '~server/services/llmGenerationTracing';
 
 const recordFeedback = vi.fn<(...args: unknown[]) => Promise<void>>(async () => {});
 
 // Mock the service module but keep the real `LLMGenerationFeedbackError` class —
 // the router does an `instanceof` check, so the constructor reference must match.
-vi.mock('@/server/services/llmGenerationTracing', async () => {
+vi.mock('~server/services/llmGenerationTracing', async () => {
   const actual = await vi.importActual<typeof TracingService>(
-    '@/server/services/llmGenerationTracing',
+    '~server/services/llmGenerationTracing',
   );
   return {
     ...actual,
@@ -19,7 +19,7 @@ vi.mock('@/server/services/llmGenerationTracing', async () => {
 });
 
 const { llmGenerationTracingRouter } = await import('../llmGenerationTracing');
-const { LLMGenerationFeedbackError } = await import('@/server/services/llmGenerationTracing');
+const { LLMGenerationFeedbackError } = await import('~server/services/llmGenerationTracing');
 
 const mockCtx = { userId: 'u1' };
 

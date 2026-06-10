@@ -209,7 +209,7 @@ export class BriefService {
         // triggers them — defeating the point of the dependency edge.
         // Lazy-loaded to avoid pulling ModelRuntime into BriefService's
         // import graph (TaskRunner → TaskLifecycle → ModelRuntime).
-        const { TaskRunnerService } = await import('@/server/services/taskRunner');
+        const { TaskRunnerService } = await import('~server/services/taskRunner');
         const runner = new TaskRunnerService(this.db, this.userId, this.workspaceId);
         await runner.cascadeOnCompletion(brief.taskId);
       }

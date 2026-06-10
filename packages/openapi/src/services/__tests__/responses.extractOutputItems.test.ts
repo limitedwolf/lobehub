@@ -4,12 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { ResponsesService } from '../responses.service';
 
 // Stub external dependencies so ResponsesService can be imported in isolation
-vi.mock('@/server/modules/AgentRuntime/InMemoryStreamEventManager', () => ({
+vi.mock('~server/modules/AgentRuntime/InMemoryStreamEventManager', () => ({
   InMemoryStreamEventManager: class {},
 }));
-vi.mock('@/server/modules/AgentRuntime/StreamEventManager', () => ({}));
-vi.mock('@/server/services/agentRuntime', () => ({ AgentRuntimeService: class {} }));
-vi.mock('@/server/services/aiAgent', () => ({ AiAgentService: class {} }));
+vi.mock('~server/modules/AgentRuntime/StreamEventManager', () => ({}));
+vi.mock('~server/services/agentRuntime', () => ({ AgentRuntimeService: class {} }));
+vi.mock('~server/services/aiAgent', () => ({ AiAgentService: class {} }));
 vi.mock('../../common/base.service', () => ({
   BaseService: class {
     db: any;

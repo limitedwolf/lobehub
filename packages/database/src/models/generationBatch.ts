@@ -8,7 +8,7 @@ import type {
 import debug from 'debug';
 import { and, eq } from 'drizzle-orm';
 
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 import type {
   GenerationBatchItem,

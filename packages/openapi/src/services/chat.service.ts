@@ -8,9 +8,9 @@ import { DEFAULT_AGENT_CHAT_CONFIG, DEFAULT_SYSTEM_AGENT_CONFIG } from '@/const/
 import { UserModel } from '@/database/models/user';
 import { agents, agentsToSessions, aiModels, aiProviders } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { initModelRuntimeWithUserPayload } from '@/server/modules/ModelRuntime';
-import { resolveSystemAgentModelConfig } from '@/server/services/systemAgent/modelConfig';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { initModelRuntimeWithUserPayload } from '~server/modules/ModelRuntime';
+import { resolveSystemAgentModelConfig } from '~server/services/systemAgent/modelConfig';
 
 import { BaseService } from '../common/base.service';
 import type { ServiceResult } from '../types';

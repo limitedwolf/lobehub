@@ -1,10 +1,10 @@
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
-import { buildRuntimeKey } from '@/server/services/bot/platforms/utils';
 import {
   BOT_RUNTIME_STATUSES,
   type BotRuntimeStatus,
   type BotRuntimeStatusSnapshot,
 } from '@/types/botRuntimeStatus';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
+import { buildRuntimeKey } from '~server/services/bot/platforms/utils';
 
 const BOT_RUNTIME_STATUS_KEY_PREFIX = 'bot:runtime-status';
 const FALLBACK_STATUS_UPDATED_AT = 0;

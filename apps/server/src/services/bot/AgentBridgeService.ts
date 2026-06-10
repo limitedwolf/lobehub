@@ -8,12 +8,12 @@ import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { TopicModel } from '@/database/models/topic';
 import { UserModel } from '@/database/models/user';
 import type { LobeChatDatabase } from '@/database/type';
-import { createAbortError, isAbortError } from '@/server/services/agentRuntime/abort';
-import { AiAgentService } from '@/server/services/aiAgent';
-import { GatewayService } from '@/server/services/gateway';
-import { getMessageGatewayClient } from '@/server/services/gateway/MessageGatewayClient';
-import { isQueueAgentRuntimeEnabled } from '@/server/services/queue/impls';
-import { SystemAgentService } from '@/server/services/systemAgent';
+import { createAbortError, isAbortError } from '~server/services/agentRuntime/abort';
+import { AiAgentService } from '~server/services/aiAgent';
+import { GatewayService } from '~server/services/gateway';
+import { getMessageGatewayClient } from '~server/services/gateway/MessageGatewayClient';
+import { isQueueAgentRuntimeEnabled } from '~server/services/queue/impls';
+import { SystemAgentService } from '~server/services/systemAgent';
 
 import { formatPrompt as formatPromptUtil } from './formatPrompt';
 import type { BotReplyLocale, PlatformClient } from './platforms';

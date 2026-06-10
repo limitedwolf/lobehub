@@ -7,7 +7,7 @@ import {
   type DecryptedSystemBotProvider,
   SystemBotProviderModel,
 } from '@/database/models/systemBotProvider';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 const log = debug('lobe-server:messenger:config');
 

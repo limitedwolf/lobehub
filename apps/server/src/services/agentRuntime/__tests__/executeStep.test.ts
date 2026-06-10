@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import { createRuntimeExecutors } from '@/server/modules/AgentRuntime/RuntimeExecutors';
+import { createRuntimeExecutors } from '~server/modules/AgentRuntime/RuntimeExecutors';
 
 import { AgentRuntimeService } from '../AgentRuntimeService';
 import { hookDispatcher } from '../hooks';
@@ -11,7 +11,7 @@ vi.mock('@/envs/app', () => ({ appEnv: { APP_URL: 'http://localhost:3010' } }));
 vi.mock('@/database/models/message', () => ({
   MessageModel: vi.fn().mockImplementation(() => ({})),
 }));
-vi.mock('@/server/modules/AgentRuntime', () => ({
+vi.mock('~server/modules/AgentRuntime', () => ({
   AgentRuntimeCoordinator: vi.fn().mockImplementation(() => ({
     loadAgentState: vi.fn(),
     saveAgentState: vi.fn(),
@@ -28,23 +28,23 @@ vi.mock('@/server/modules/AgentRuntime', () => ({
     cleanupOperation: vi.fn(),
   })),
 }));
-vi.mock('@/server/modules/AgentRuntime/RuntimeExecutors', () => ({
+vi.mock('~server/modules/AgentRuntime/RuntimeExecutors', () => ({
   createRuntimeExecutors: vi.fn(() => ({})),
 }));
-vi.mock('@/server/services/mcp', () => ({ mcpService: {} }));
-vi.mock('@/server/services/queue', () => ({
+vi.mock('~server/services/mcp', () => ({ mcpService: {} }));
+vi.mock('~server/services/queue', () => ({
   QueueService: vi.fn().mockImplementation(() => ({
     getImpl: vi.fn(() => ({})),
     scheduleMessage: vi.fn(),
   })),
 }));
-vi.mock('@/server/services/queue/impls', () => ({
+vi.mock('~server/services/queue/impls', () => ({
   LocalQueueServiceImpl: class {},
 }));
-vi.mock('@/server/services/toolExecution', () => ({
+vi.mock('~server/services/toolExecution', () => ({
   ToolExecutionService: vi.fn().mockImplementation(() => ({})),
 }));
-vi.mock('@/server/services/toolExecution/builtin', () => ({
+vi.mock('~server/services/toolExecution/builtin', () => ({
   BuiltinToolsExecutor: vi.fn().mockImplementation(() => ({})),
 }));
 vi.mock('@lobechat/builtin-tools/dynamicInterventionAudits', () => ({

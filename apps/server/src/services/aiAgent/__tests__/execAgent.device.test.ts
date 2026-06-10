@@ -51,7 +51,7 @@ vi.mock('@/database/models/agent', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agent', () => ({
+vi.mock('~server/services/agent', () => ({
   AgentService: vi.fn().mockImplementation(() => ({
     getAgentConfig: vi.fn().mockResolvedValue({
       chatConfig: {},
@@ -89,36 +89,36 @@ vi.mock('@/database/models/thread', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     createOperation: mockCreateOperation,
   })),
 }));
 
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn().mockImplementation(() => ({
     getLobehubSkillManifests: vi.fn().mockResolvedValue([]),
   })),
 }));
 
-vi.mock('@/server/services/composio', () => ({
+vi.mock('~server/services/composio', () => ({
   ComposioService: vi.fn().mockImplementation(() => ({
     getComposioManifests: vi.fn().mockResolvedValue([]),
   })),
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     uploadFromUrl: vi.fn(),
   })),
 }));
 
-vi.mock('@/server/modules/Mecha', () => ({
+vi.mock('~server/modules/Mecha', () => ({
   createServerAgentToolsEngine: mockCreateServerAgentToolsEngine,
   serverMessagesEngine: vi.fn().mockResolvedValue([{ content: 'test', role: 'user' }]),
 }));
 
-vi.mock('@/server/services/deviceGateway', () => ({
+vi.mock('~server/services/deviceGateway', () => ({
   deviceGateway: mockDeviceProxy,
 }));
 
@@ -184,7 +184,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
   // is now exclusive to `executionTarget: 'auto'` — the default (`local`) never
   // grabs a device — so the auto-activation specs opt in explicitly.
   const useAgencyConfig = async (agencyConfig: Record<string, unknown>) => {
-    const { AgentService } = await import('@/server/services/agent');
+    const { AgentService } = await import('~server/services/agent');
     vi.mocked(AgentService).mockImplementation(
       () =>
         ({
@@ -378,7 +378,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
 
   describe('executionTarget gating (none / sandbox never route to a device)', () => {
     const overrideAgencyConfig = async (agencyConfig: Record<string, unknown>) => {
-      const { AgentService } = await import('@/server/services/agent');
+      const { AgentService } = await import('~server/services/agent');
       vi.mocked(AgentService).mockImplementation(
         () =>
           ({
@@ -439,7 +439,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
       mockDeviceProxy.queryDeviceList.mockResolvedValue([onlineDevice]);
 
       // Override the agent config mock to include boundDeviceId
-      const { AgentService } = await import('@/server/services/agent');
+      const { AgentService } = await import('~server/services/agent');
       vi.mocked(AgentService).mockImplementation(
         () =>
           ({
@@ -473,7 +473,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
       mockDeviceProxy.isConfigured = true;
       mockDeviceProxy.queryDeviceList.mockResolvedValue([]);
 
-      const { AgentService } = await import('@/server/services/agent');
+      const { AgentService } = await import('~server/services/agent');
       vi.mocked(AgentService).mockImplementation(
         () =>
           ({
@@ -510,7 +510,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
       mockDeviceProxy.queryDeviceList.mockResolvedValue([onlineDevice, onlineDevice2]);
       topicMock.findById.mockResolvedValue({ metadata: { boundDeviceId: 'device-002' } });
 
-      const { AgentService } = await import('@/server/services/agent');
+      const { AgentService } = await import('~server/services/agent');
       vi.mocked(AgentService).mockImplementation(
         () =>
           ({
@@ -712,7 +712,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
       mockDeviceProxy.isConfigured = true;
       mockDeviceProxy.queryDeviceList.mockResolvedValue([onlineDevice]);
 
-      const { AgentService } = await import('@/server/services/agent');
+      const { AgentService } = await import('~server/services/agent');
       vi.mocked(AgentService).mockImplementation(
         () =>
           ({
@@ -745,7 +745,7 @@ describe('AiAgentService.execAgent - device auto-activation', () => {
       mockDeviceProxy.queryDeviceList.mockResolvedValue([onlineDevice, onlineDevice2]);
 
       // Restore default AgentService mock (previous test overrides with boundDeviceId)
-      const { AgentService } = await import('@/server/services/agent');
+      const { AgentService } = await import('~server/services/agent');
       vi.mocked(AgentService).mockImplementation(
         () =>
           ({

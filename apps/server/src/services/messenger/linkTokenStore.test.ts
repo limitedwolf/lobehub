@@ -35,7 +35,7 @@ const fakeRedis = (): {
 
 let redisRef: ReturnType<typeof fakeRedis>;
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   getAgentRuntimeRedisClient: vi.fn(() => redisRef.client),
 }));
 

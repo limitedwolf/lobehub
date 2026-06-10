@@ -38,13 +38,13 @@ vi.mock('@/database/models/message', () => ({
   })),
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     getFullFileUrl: (path: string | null) => Promise.resolve(path || ''),
   })),
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: (...args: any[]) => mockInitModelRuntimeFromDB(...args),
 }));
 

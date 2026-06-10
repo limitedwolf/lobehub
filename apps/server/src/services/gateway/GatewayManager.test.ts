@@ -2,8 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getServerDB } from '@/database/core/db-adaptor';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import type { PlatformClient, PlatformDefinition } from '@/server/services/bot/platforms';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import type { PlatformClient, PlatformDefinition } from '~server/services/bot/platforms';
 
 import { createGatewayManager, GatewayManager, getGatewayManager } from './GatewayManager';
 
@@ -24,7 +24,7 @@ vi.mock('@/database/models/agentBotProvider', () => ({
   }),
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: vi.fn(),
   },

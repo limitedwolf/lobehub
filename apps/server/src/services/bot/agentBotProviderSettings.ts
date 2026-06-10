@@ -1,4 +1,4 @@
-import { GatewayService } from '@/server/services/gateway';
+import { GatewayService } from '~server/services/gateway';
 
 import { getBotMessageRouter } from './BotMessageRouter';
 import { mergeWithDefaults, platformRegistry, validateAccessSettings } from './platforms';

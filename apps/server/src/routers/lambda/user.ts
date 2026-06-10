@@ -33,12 +33,12 @@ import { SessionModel } from '@/database/models/session';
 import { UserModel } from '@/database/models/user';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { FileS3 } from '@/server/modules/S3';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
-import { FileService } from '@/server/services/file';
-import { OnboardingService } from '@/server/services/onboarding';
-import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { FileS3 } from '~server/modules/S3';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
+import { FileService } from '~server/services/file';
+import { OnboardingService } from '~server/services/onboarding';
+import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
 const usernameSchema = z
   .string()

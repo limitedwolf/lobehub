@@ -2,8 +2,8 @@ import { type ChatCompletionErrorPayload, type PullModelParams } from '@lobechat
 import { ChatErrorType } from '@lobechat/types';
 
 import { checkAuth } from '@/app/(backend)/middleware/auth';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { createErrorResponse } from '@/utils/errorResponse';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 import { resolveValidWorkspaceIdFromRequest } from '../../../_utils/workspace';
 

@@ -4,13 +4,13 @@ import { ImessageClientFactory } from './client';
 
 const mockExecuteMessageApi = vi.hoisted(() => vi.fn());
 
-vi.mock('@/server/services/deviceGateway', () => ({
+vi.mock('~server/services/deviceGateway', () => ({
   deviceGateway: {
     executeMessageApi: mockExecuteMessageApi,
   },
 }));
 
-vi.mock('@/server/services/gateway/runtimeStatus', () => ({
+vi.mock('~server/services/gateway/runtimeStatus', () => ({
   BOT_RUNTIME_STATUSES: {
     connected: 'connected',
     disconnected: 'disconnected',

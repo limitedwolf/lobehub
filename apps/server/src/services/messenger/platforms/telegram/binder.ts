@@ -2,9 +2,9 @@ import debug from 'debug';
 
 import { getMessengerTelegramConfig } from '@/config/messenger';
 import { appEnv } from '@/envs/app';
-import type { PlatformClient } from '@/server/services/bot/platforms';
-import { TelegramApi } from '@/server/services/bot/platforms/telegram/api';
-import { TelegramClientFactory } from '@/server/services/bot/platforms/telegram/client';
+import type { PlatformClient } from '~server/services/bot/platforms';
+import { TelegramApi } from '~server/services/bot/platforms/telegram/api';
+import { TelegramClientFactory } from '~server/services/bot/platforms/telegram/client';
 
 import { issueLinkToken } from '../../linkTokenStore';
 import type {

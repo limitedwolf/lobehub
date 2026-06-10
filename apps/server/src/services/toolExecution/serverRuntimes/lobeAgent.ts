@@ -23,8 +23,8 @@ import { RequestTrigger } from '@lobechat/types';
 
 import { MessageModel } from '@/database/models/message';
 import { toolsEnv } from '@/envs/tools';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { FileService } from '@/server/services/file';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { FileService } from '~server/services/file';
 
 import type { ToolExecutionContext } from '../types';
 import { createServerPlanRuntimeService } from './lobeAgentPlan';

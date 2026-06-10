@@ -17,7 +17,7 @@ vi.mock('@/database/repositories/dataImporter', () => ({
   })),
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     getFileContent: mockGetFileContent,
     deleteFile: mockDeleteFile,

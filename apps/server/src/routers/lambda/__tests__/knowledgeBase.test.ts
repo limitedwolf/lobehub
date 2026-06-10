@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { knowledgeBaseRouter } from '@/server/routers/lambda/knowledgeBase';
 import { TransferErrorCode } from '@/types/transferError';
+import { knowledgeBaseRouter } from '~server/routers/lambda/knowledgeBase';
 
 const routerMocks = vi.hoisted(() => ({
   businessFileTransferStorageCheck: vi.fn(),

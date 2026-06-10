@@ -14,9 +14,9 @@ import { DocumentModel } from '@/database/models/document';
 import { FileModel } from '@/database/models/file';
 import { type KnowledgeBaseDocumentHit, SearchRepo } from '@/database/repositories/search';
 import { knowledgeBaseFiles } from '@/database/schemas';
-import { getServerDefaultFilesConfig } from '@/server/globalConfig';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { DocumentService } from '@/server/services/document';
+import { getServerDefaultFilesConfig } from '~server/globalConfig';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { DocumentService } from '~server/services/document';
 
 export interface FileContentResult {
   content: string;

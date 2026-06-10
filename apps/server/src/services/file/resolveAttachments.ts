@@ -3,8 +3,8 @@ import type { ChatAudioItem, ChatFileItem, ChatImageItem, ChatVideoItem } from '
 import debug from 'debug';
 
 import { FileModel } from '@/database/models/file';
-import { DocumentService } from '@/server/services/document';
-import { FileService } from '@/server/services/file';
+import { DocumentService } from '~server/services/document';
+import { FileService } from '~server/services/file';
 
 const log = debug('lobe-server:resolveAttachments');
 

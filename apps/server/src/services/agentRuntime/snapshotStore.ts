@@ -1,6 +1,6 @@
 import { FileSnapshotStore, type ISnapshotStore } from '@lobechat/agent-tracing';
 
-import { S3SnapshotStore } from '@/server/modules/AgentTracing';
+import { S3SnapshotStore } from '~server/modules/AgentTracing';
 
 const ENABLE_AGENT_S3_TRACING_VALUE = '1';
 

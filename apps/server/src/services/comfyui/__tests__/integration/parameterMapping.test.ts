@@ -1,15 +1,15 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { parametersFixture } from '@/server/services/comfyui/__tests__/fixtures/parameters.fixture';
-import { mockContext } from '@/server/services/comfyui/__tests__/helpers/mockContext';
-import { setupAllMocks } from '@/server/services/comfyui/__tests__/setup/unifiedMocks';
+import { parametersFixture } from '~server/services/comfyui/__tests__/fixtures/parameters.fixture';
+import { mockContext } from '~server/services/comfyui/__tests__/helpers/mockContext';
+import { setupAllMocks } from '~server/services/comfyui/__tests__/setup/unifiedMocks';
 // Import workflow builders
-import { buildFluxDevWorkflow } from '@/server/services/comfyui/workflows/flux-dev';
-import { buildFluxKontextWorkflow } from '@/server/services/comfyui/workflows/flux-kontext';
-import { buildFluxSchnellWorkflow } from '@/server/services/comfyui/workflows/flux-schnell';
-import { buildSD35Workflow } from '@/server/services/comfyui/workflows/sd35';
-import { buildSimpleSDWorkflow } from '@/server/services/comfyui/workflows/simple-sd';
+import { buildFluxDevWorkflow } from '~server/services/comfyui/workflows/flux-dev';
+import { buildFluxKontextWorkflow } from '~server/services/comfyui/workflows/flux-kontext';
+import { buildFluxSchnellWorkflow } from '~server/services/comfyui/workflows/flux-schnell';
+import { buildSD35Workflow } from '~server/services/comfyui/workflows/sd35';
+import { buildSimpleSDWorkflow } from '~server/services/comfyui/workflows/simple-sd';
 
 describe('Parameter Mapping - Core Business Logic', () => {
   const { models } = parametersFixture;

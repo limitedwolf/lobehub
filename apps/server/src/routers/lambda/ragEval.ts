@@ -27,8 +27,8 @@ import {
 } from '@/database/models/ragEval';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { createAsyncCaller } from '@/server/routers/async';
-import { FileService } from '@/server/services/file';
+import { createAsyncCaller } from '~server/routers/async';
+import { FileService } from '~server/services/file';
 
 const ragEvalProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

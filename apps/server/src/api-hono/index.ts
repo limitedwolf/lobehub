@@ -1,46 +1,44 @@
 import { Hono } from 'hono';
 
-import { versionAPIHandler } from '@/server/api-runtime/version';
+import { versionAPIHandler } from '~server/api-runtime/version';
 
 const app = new Hono().basePath('/api');
 
 const fetchOpenAPI = async (request: Request) =>
-  (await import('@/server/api-runtime/openapi')).openAPIHandler(request);
+  (await import('~server/api-runtime/openapi')).openAPIHandler(request);
 const fetchCheckUser = async (request: Request) =>
-  (await import('@/server/api-runtime/auth')).checkUserAPIHandler(request);
+  (await import('~server/api-runtime/auth')).checkUserAPIHandler(request);
 const fetchResolveUsername = async (request: Request) =>
-  (await import('@/server/api-runtime/auth')).resolveUsernameAPIHandler(request);
+  (await import('~server/api-runtime/auth')).resolveUsernameAPIHandler(request);
 const fetchBetterAuth = async (request: Request) =>
-  (await import('@/server/api-runtime/betterAuth')).betterAuthAPIHandler(request);
+  (await import('~server/api-runtime/betterAuth')).betterAuthAPIHandler(request);
 const fetchCasdoorWebhook = async (request: Request) =>
-  (await import('@/server/api-runtime/webhooks')).casdoorWebhookAPIHandler(request);
+  (await import('~server/api-runtime/webhooks')).casdoorWebhookAPIHandler(request);
 const fetchLogtoWebhook = async (request: Request) =>
-  (await import('@/server/api-runtime/webhooks')).logtoWebhookAPIHandler(request);
+  (await import('~server/api-runtime/webhooks')).logtoWebhookAPIHandler(request);
 const fetchMemoryExtractChatTopicCancelWebhook = async (request: Request) =>
   (
-    await import('@/server/api-runtime/memoryExtraction')
+    await import('~server/api-runtime/memoryExtraction')
   ).memoryExtractChatTopicCancelWebhookAPIHandler(request);
 const fetchMemoryExtractionWebhook = async (request: Request) =>
-  (await import('@/server/api-runtime/memoryExtraction')).memoryExtractionWebhookAPIHandler(
-    request,
-  );
+  (await import('~server/api-runtime/memoryExtraction')).memoryExtractionWebhookAPIHandler(request);
 const fetchMemoryExtractionBenchmarkLoCoMoWebhook = async (request: Request) =>
   (
-    await import('@/server/api-runtime/memoryExtractionBenchmark')
+    await import('~server/api-runtime/memoryExtractionBenchmark')
   ).memoryExtractionBenchmarkLoCoMoWebhookAPIHandler(request);
 const fetchMemoryUserPersonaUpdateWritingWebhook = async (request: Request) =>
   (
-    await import('@/server/api-runtime/memoryExtraction')
+    await import('~server/api-runtime/memoryExtraction')
   ).memoryUserPersonaUpdateWritingWebhookAPIHandler(request);
 const fetchVideoWebhook = async (request: Request, provider: string) =>
-  (await import('@/server/api-runtime/videoWebhook')).videoWebhookAPIHandler(request, { provider });
+  (await import('~server/api-runtime/videoWebhook')).videoWebhookAPIHandler(request, { provider });
 const fetchAgentTracing = async (request: Request) =>
-  (await import('@/server/api-runtime/dev')).agentTracingAPIHandler(request);
+  (await import('~server/api-runtime/dev')).agentTracingAPIHandler(request);
 const fetchTestPush = async (request: Request) =>
-  (await import('@/server/api-runtime/dev')).testPushAPIHandler(request);
+  (await import('~server/api-runtime/dev')).testPushAPIHandler(request);
 const fetchMemoryUserMemoryBenchmarkLoCoMoDev = async (request: Request) =>
   (
-    await import('@/server/api-runtime/memoryBenchmarkDev')
+    await import('~server/api-runtime/memoryBenchmarkDev')
   ).memoryUserMemoryBenchmarkLoCoMoDevAPIHandler(request);
 
 app.post('/auth/check-user', (c) => fetchCheckUser(c.req.raw));

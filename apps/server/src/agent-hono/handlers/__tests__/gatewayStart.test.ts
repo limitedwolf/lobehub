@@ -8,7 +8,7 @@ const { mockEnsureRunning, mockStop } = vi.hoisted(() => ({
   mockStop: vi.fn(),
 }));
 
-vi.mock('@/server/services/gateway', () => ({
+vi.mock('~server/services/gateway', () => ({
   GatewayService: vi.fn().mockImplementation(() => ({
     ensureRunning: mockEnsureRunning,
     stop: mockStop,

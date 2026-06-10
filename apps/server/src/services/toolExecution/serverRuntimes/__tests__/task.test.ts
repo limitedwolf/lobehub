@@ -3,14 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createTaskRuntime } from '../task';
 
-vi.mock('@/server/routers/lambda/task', () => ({
+vi.mock('~server/routers/lambda/task', () => ({
   taskRouter: { createCaller: () => ({}) },
 }));
 
 // TaskService's transitive deps (taskReview → ModelRuntime) call getLLMConfig
 // at module load, which fails in unit-test env. The runtime is passed a
 // taskService instance per test, so a stubbed class is all we need here.
-vi.mock('@/server/services/task', () => ({
+vi.mock('~server/services/task', () => ({
   TaskService: vi.fn(),
 }));
 

@@ -1,1 +1,1 @@
-export { testPushAPIHandler as POST } from '@/server/api-runtime/dev';
+export { testPushAPIHandler as POST } from '~server/api-runtime/dev';

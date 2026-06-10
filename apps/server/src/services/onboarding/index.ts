@@ -34,9 +34,9 @@ import {
   userPersonaDocuments,
 } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { AgentService } from '@/server/services/agent';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { AgentService } from '~server/services/agent';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
 
 const STRUCTURED_FIELD_LABELS: Record<SaveUserQuestionField, string> = {
   agentEmoji: 'agent emoji',

@@ -26,16 +26,16 @@ import { DOCUMENT_HISTORY_QUERY_LIST_LIMIT } from '@/const/documentHistory';
 import { isDesktop } from '@/const/version';
 import { openDocumentCompareModal } from '@/features/PageEditor/History/CompareModal';
 import { formatHistoryAbsoluteTime } from '@/features/PageEditor/History/formatHistoryDate';
-import type {
-  DocumentHistoryListItem,
-  DocumentHistorySaveSource,
-} from '@/server/routers/lambda/_schema/documentHistory';
 import { documentService } from '@/services/document';
 import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
 import { useDocumentStore } from '@/store/document';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
+import type {
+  DocumentHistoryListItem,
+  DocumentHistorySaveSource,
+} from '~server/routers/lambda/_schema/documentHistory';
 
 interface TopicInfoHeaderProps {
   authorName: string;

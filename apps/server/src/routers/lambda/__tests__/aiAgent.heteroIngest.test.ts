@@ -18,7 +18,7 @@ const mockHeteroFinish = vi.fn();
 
 // Stub the service so we can assert on procedure → service wiring without
 // pulling in the real Redis-backed StreamEventManager.
-vi.mock('@/server/services/heterogeneousAgent', () => ({
+vi.mock('~server/services/heterogeneousAgent', () => ({
   HeterogeneousAgentService: vi.fn().mockImplementation(() => ({
     heteroFinish: mockHeteroFinish,
     heteroIngest: mockHeteroIngest,
@@ -27,10 +27,10 @@ vi.mock('@/server/services/heterogeneousAgent', () => ({
 
 // AgentRuntimeService and AiChatService are constructed by the procedure
 // middleware too — stub to keep the test isolated.
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({})),
 }));
-vi.mock('@/server/services/aiChat', () => ({
+vi.mock('~server/services/aiChat', () => ({
   AiChatService: vi.fn().mockImplementation(() => ({})),
 }));
 

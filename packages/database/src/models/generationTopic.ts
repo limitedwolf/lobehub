@@ -5,7 +5,7 @@ import type {
 } from '@lobechat/types';
 import { and, desc, eq } from 'drizzle-orm';
 
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 import type { GenerationTopicItem } from '../schemas/generation';
 import { generationTopics } from '../schemas/generation';

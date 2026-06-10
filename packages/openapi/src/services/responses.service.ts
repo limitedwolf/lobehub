@@ -1,12 +1,9 @@
 import type { AgentState } from '@lobechat/agent-runtime';
 
-import { InMemoryStreamEventManager } from '@/server/modules/AgentRuntime/InMemoryStreamEventManager';
-import type {
-  StreamChunkData,
-  StreamEvent,
-} from '@/server/modules/AgentRuntime/StreamEventManager';
-import { AgentRuntimeService } from '@/server/services/agentRuntime';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { InMemoryStreamEventManager } from '~server/modules/AgentRuntime/InMemoryStreamEventManager';
+import type { StreamChunkData, StreamEvent } from '~server/modules/AgentRuntime/StreamEventManager';
+import { AgentRuntimeService } from '~server/services/agentRuntime';
+import { AiAgentService } from '~server/services/aiAgent';
 
 import { BaseService } from '../common/base.service';
 import type {

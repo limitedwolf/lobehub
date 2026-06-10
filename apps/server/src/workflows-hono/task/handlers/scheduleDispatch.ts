@@ -6,7 +6,7 @@ import { TaskModel } from '@/database/models/task';
 import { getServerDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
 import { qstashClient } from '@/libs/qstash';
-import { runScheduleTick } from '@/server/services/taskRunner/scheduleTick';
+import { runScheduleTick } from '~server/services/taskRunner/scheduleTick';
 
 const log = debug('lobe-server:workflows:task:schedule-dispatch');
 

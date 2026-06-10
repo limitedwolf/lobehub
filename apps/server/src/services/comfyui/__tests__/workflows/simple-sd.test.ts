@@ -5,10 +5,10 @@ import {
   TEST_CUSTOM_SD,
   TEST_SD35_MODELS,
   TEST_SDXL_MODELS,
-} from '@/server/services/comfyui/__tests__/fixtures/testModels';
-import { mockContext } from '@/server/services/comfyui/__tests__/helpers/mockContext';
-import { setupAllMocks } from '@/server/services/comfyui/__tests__/setup/unifiedMocks';
-import { buildSimpleSDWorkflow } from '@/server/services/comfyui/workflows/simple-sd';
+} from '~server/services/comfyui/__tests__/fixtures/testModels';
+import { mockContext } from '~server/services/comfyui/__tests__/helpers/mockContext';
+import { setupAllMocks } from '~server/services/comfyui/__tests__/setup/unifiedMocks';
+import { buildSimpleSDWorkflow } from '~server/services/comfyui/workflows/simple-sd';
 
 // Setup basic mocks
 vi.mock('@lobechat/utils', () => ({

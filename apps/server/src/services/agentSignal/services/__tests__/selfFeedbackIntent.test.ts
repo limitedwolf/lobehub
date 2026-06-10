@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AgentSignalSourceEventInput } from '@/server/services/agentSignal/emitter';
+import type { AgentSignalSourceEventInput } from '~server/services/agentSignal/emitter';
 
 import type { SelfFeedbackIntentAction, SelfFeedbackIntentKind } from '../selfFeedbackIntent';
 import { createSelfFeedbackIntentService } from '../selfFeedbackIntent';

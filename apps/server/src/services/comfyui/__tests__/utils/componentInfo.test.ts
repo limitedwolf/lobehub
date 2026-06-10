@@ -5,10 +5,10 @@ import {
   getComponentFolderPath,
   getComponentInfo,
   isSystemComponent,
-} from '@/server/services/comfyui/utils/componentInfo';
+} from '~server/services/comfyui/utils/componentInfo';
 
 // Mock the config modules to have full control over test data
-vi.mock('@/server/services/comfyui/config/constants', () => ({
+vi.mock('~server/services/comfyui/config/constants', () => ({
   COMPONENT_NODE_MAPPINGS: {
     clip: { node: 'CLIPTextEncode' },
     controlnet: { node: 'ControlNetApply' },
@@ -18,7 +18,7 @@ vi.mock('@/server/services/comfyui/config/constants', () => ({
   },
 }));
 
-vi.mock('@/server/services/comfyui/config/systemComponents', () => ({
+vi.mock('~server/services/comfyui/config/systemComponents', () => ({
   SYSTEM_COMPONENTS: {
     'clip-l.safetensors': { type: 'clip', modelFamily: 'FLUX', priority: 1 },
     'flux-dev.safetensors': { type: 'unet', modelFamily: 'FLUX', priority: 1 },

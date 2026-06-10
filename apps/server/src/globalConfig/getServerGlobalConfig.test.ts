@@ -87,7 +87,7 @@ const mockGlobalConfigDependencies = (
     parseSSOProviders: vi.fn(() => []),
   }));
 
-  vi.doMock('@/server/globalConfig/parseSystemAgent', () => ({
+  vi.doMock('~server/globalConfig/parseSystemAgent', () => ({
     parseSystemAgent: vi.fn(() => undefined),
   }));
 

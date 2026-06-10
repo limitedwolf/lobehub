@@ -9,7 +9,7 @@ const fakeScheduler = {
   scheduleNextTopic: vi.fn().mockResolvedValue('msg-new'),
 };
 
-vi.mock('@/server/services/taskScheduler', () => ({
+vi.mock('~server/services/taskScheduler', () => ({
   createTaskSchedulerModule: () => fakeScheduler,
 }));
 

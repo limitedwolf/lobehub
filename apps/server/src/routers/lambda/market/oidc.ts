@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { marketUserInfo, serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 const log = debug('lambda-router:market:oidc');
 

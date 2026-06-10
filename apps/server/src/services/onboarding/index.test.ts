@@ -8,8 +8,8 @@ import { AgentModel } from '@/database/models/agent';
 import { MessageModel } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
 import { UserModel } from '@/database/models/user';
-import { AgentService } from '@/server/services/agent';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
+import { AgentService } from '~server/services/agent';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
 
 import { OnboardingService } from './index';
 
@@ -29,11 +29,11 @@ vi.mock('@/database/models/user', () => ({
   UserModel: vi.fn(),
 }));
 
-vi.mock('@/server/services/agent', () => ({
+vi.mock('~server/services/agent', () => ({
   AgentService: vi.fn(),
 }));
 
-vi.mock('@/server/services/agentDocuments', () => ({
+vi.mock('~server/services/agentDocuments', () => ({
   AgentDocumentsService: vi.fn(),
 }));
 

@@ -4,10 +4,10 @@ import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { FileService } from '@/server/services/file';
 import { calculateThumbnailDimensions } from '@/utils/number';
 import { getYYYYmmddHHMMss } from '@/utils/time';
 import { inferFileExtensionFromImageUrl } from '@/utils/url';
+import { FileService } from '~server/services/file';
 
 import { fetchImageFromUrl, GenerationService } from './index';
 
@@ -22,7 +22,7 @@ vi.mock('js-sha256');
 vi.mock('mime');
 vi.mock('nanoid');
 vi.mock('sharp');
-vi.mock('@/server/services/file');
+vi.mock('~server/services/file');
 vi.mock('@/utils/number');
 vi.mock('@/utils/time');
 vi.mock('@/utils/url');

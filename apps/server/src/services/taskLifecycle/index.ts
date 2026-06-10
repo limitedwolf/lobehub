@@ -29,10 +29,10 @@ import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
 import { TopicModel } from '@/database/models/topic';
 import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { SystemAgentService } from '@/server/services/systemAgent';
-import { TaskReviewService } from '@/server/services/taskReview';
-import { createTaskSchedulerModule } from '@/server/services/taskScheduler';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { SystemAgentService } from '~server/services/systemAgent';
+import { TaskReviewService } from '~server/services/taskReview';
+import { createTaskSchedulerModule } from '~server/services/taskScheduler';
 
 import {
   isTrivialAssistantContent,
@@ -706,7 +706,7 @@ export class TaskLifecycleService {
    */
   private async cascadeAfterAutoComplete(completedTaskId: string): Promise<void> {
     try {
-      const { TaskRunnerService } = await import('@/server/services/taskRunner');
+      const { TaskRunnerService } = await import('~server/services/taskRunner');
       const runner = new TaskRunnerService(this.db, this.userId, this.workspaceId);
       await runner.cascadeOnCompletion(completedTaskId);
     } catch (e) {

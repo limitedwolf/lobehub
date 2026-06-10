@@ -3,8 +3,8 @@ import type { AgentState } from '@lobechat/agent-runtime';
 import {
   type AgentSignalOperationMarker,
   readAgentSignalMarker,
-} from '@/server/services/agentSignal/operationMarker';
-import { resolveMemoryActionResultFromState } from '@/server/services/agentSignal/policies/analyzeIntent/actions/memoryActionResult';
+} from '~server/services/agentSignal/operationMarker';
+import { resolveMemoryActionResultFromState } from '~server/services/agentSignal/policies/analyzeIntent/actions/memoryActionResult';
 
 import {
   extractArtifacts,

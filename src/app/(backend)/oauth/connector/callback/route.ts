@@ -6,11 +6,11 @@ import { ConnectorModel } from '@/database/models/connector';
 import { ConnectorToolModel } from '@/database/models/connectorTool';
 import { serverDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { exchangeConnectorCode } from '@/server/services/connector/oauth';
-import { consumeConnectorOAuthState } from '@/server/services/connector/stateStore';
-import { syncConnectorToolsById } from '@/server/services/connector/sync';
-import { tokensToCredentials } from '@/server/services/connector/tokens';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { exchangeConnectorCode } from '~server/services/connector/oauth';
+import { consumeConnectorOAuthState } from '~server/services/connector/stateStore';
+import { syncConnectorToolsById } from '~server/services/connector/sync';
+import { tokensToCredentials } from '~server/services/connector/tokens';
 
 const log = debug('lobe-server:connector:oauth-callback');
 

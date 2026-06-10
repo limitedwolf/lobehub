@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 
 import { tasks } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
-import { TaskLifecycleService } from '@/server/services/taskLifecycle';
+import { TaskLifecycleService } from '~server/services/taskLifecycle';
 
 const log = debug('lobe-server:workflows:task:on-topic-complete');
 

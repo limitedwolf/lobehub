@@ -4,7 +4,7 @@ import type { ConnectorCredentials } from '@/database/schemas';
 import { ConnectorMcpConnectionType, ConnectorStatus } from '@/database/schemas';
 import type { AuthConfig } from '@/libs/mcp';
 import { inferCrudType } from '@/libs/mcp/utils';
-import { mcpService } from '@/server/services/mcp';
+import { mcpService } from '~server/services/mcp';
 
 import { ensureFreshConnectorToken } from './tokens';
 

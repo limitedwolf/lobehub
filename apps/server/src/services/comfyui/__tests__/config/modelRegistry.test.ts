@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { MODEL_REGISTRY } from '@/server/services/comfyui/config/modelRegistry';
+import { MODEL_REGISTRY } from '~server/services/comfyui/config/modelRegistry';
 import {
   getAllModelNames,
   getModelConfig,
   getModelsByVariant,
-} from '@/server/services/comfyui/utils/staticModelLookup';
+} from '~server/services/comfyui/utils/staticModelLookup';
 
 describe('ModelRegistry', () => {
   describe('MODEL_REGISTRY', () => {

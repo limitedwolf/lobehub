@@ -8,7 +8,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 }));
 
 const transcribeMock = vi.fn();
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(async () => ({ transcribe: transcribeMock })),
 }));
 
@@ -18,7 +18,7 @@ vi.mock('@/database/models/file', () => ({
 }));
 
 const getFileByteArrayMock = vi.fn();
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn(() => ({ getFileByteArray: getFileByteArrayMock })),
 }));
 

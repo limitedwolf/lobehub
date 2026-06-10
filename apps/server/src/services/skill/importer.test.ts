@@ -29,7 +29,7 @@ const mockGitHubInstance = {
     }),
   parseRepoUrl: vi.fn(),
 };
-vi.mock('@/server/modules/GitHub', () => ({
+vi.mock('~server/modules/GitHub', () => ({
   GitHub: vi.fn().mockImplementation(() => mockGitHubInstance),
   GitHubNotFoundError: class GitHubNotFoundError extends Error {
     constructor(message: string) {
@@ -58,7 +58,7 @@ const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
 // Mock S3 operations in FileService implementation
-vi.mock('@/server/services/file/impls', () => ({
+vi.mock('~server/services/file/impls', () => ({
   createFileServiceModule: vi.fn().mockImplementation(() => ({
     createPreSignedUrl: vi.fn().mockResolvedValue('mock-presigned-url'),
     createPreSignedUpload: vi.fn().mockResolvedValue({ url: 'mock-presigned-url' }),
@@ -466,7 +466,7 @@ describe('SkillImporter', () => {
     });
 
     it('should throw INVALID_URL error for invalid GitHub URL', async () => {
-      const { GitHubParseError } = await import('@/server/modules/GitHub');
+      const { GitHubParseError } = await import('~server/modules/GitHub');
       mockGitHubInstance.parseRepoUrl.mockImplementation(() => {
         throw new GitHubParseError('Invalid GitHub URL');
       });
@@ -483,7 +483,7 @@ describe('SkillImporter', () => {
     });
 
     it('should throw NOT_FOUND error when repository does not exist', async () => {
-      const { GitHubNotFoundError } = await import('@/server/modules/GitHub');
+      const { GitHubNotFoundError } = await import('~server/modules/GitHub');
       mockGitHubInstance.parseRepoUrl.mockReturnValue({
         branch: 'main',
         owner: 'lobehub',
@@ -570,7 +570,7 @@ describe('SkillImporter', () => {
 
     it('should store ZIP file at correct path', async () => {
       const zipHash = `path-test-${Date.now()}`;
-      const { createFileServiceModule } = await import('@/server/services/file/impls');
+      const { createFileServiceModule } = await import('~server/services/file/impls');
       const mockUploadBuffer = vi.fn().mockResolvedValue({ key: 'mock-key' });
       (createFileServiceModule as any).mockReturnValue({
         createPreSignedUrl: vi.fn(),
@@ -643,7 +643,7 @@ describe('SkillImporter', () => {
     });
 
     it('should upload skillZipBuffer instead of full repo ZIP', async () => {
-      const { createFileServiceModule } = await import('@/server/services/file/impls');
+      const { createFileServiceModule } = await import('~server/services/file/impls');
       const mockUploadBuffer = vi.fn().mockResolvedValue({ key: 'mock-key' });
       (createFileServiceModule as any).mockReturnValue({
         createPreSignedUrl: vi.fn(),
@@ -747,7 +747,7 @@ describe('SkillImporter', () => {
     });
 
     it('should update skill when content changes (different zipHash)', async () => {
-      const { createFileServiceModule } = await import('@/server/services/file/impls');
+      const { createFileServiceModule } = await import('~server/services/file/impls');
       const mockUploadBuffer = vi.fn().mockResolvedValue({ key: 'mock-key' });
       (createFileServiceModule as any).mockReturnValue({
         createPreSignedUrl: vi.fn(),
@@ -1014,7 +1014,7 @@ description: A nested skill
   describe('importFromZip without repacking', () => {
     it('should NOT pass repackSkillZip option for user uploaded ZIP', async () => {
       // Reset the mock to ensure it returns non-empty content (previous tests may have overwritten it)
-      const { createFileServiceModule } = await import('@/server/services/file/impls');
+      const { createFileServiceModule } = await import('~server/services/file/impls');
       (createFileServiceModule as any).mockReturnValue({
         createPreSignedUrl: vi.fn().mockResolvedValue('mock-presigned-url'),
         createPreSignedUpload: vi.fn().mockResolvedValue({ url: 'mock-presigned-url' }),

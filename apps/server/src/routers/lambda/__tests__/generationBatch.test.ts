@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GenerationBatchModel } from '@/database/models/generationBatch';
 import { type GenerationBatchItem } from '@/database/schemas/generation';
-import { FileService } from '@/server/services/file';
-import { getVideoAvgLatency } from '@/server/services/generation/latency';
+import { FileService } from '~server/services/file';
+import { getVideoAvgLatency } from '~server/services/generation/latency';
 
 import { generationBatchRouter } from '../generationBatch';
 
 vi.mock('@/database/models/generationBatch');
-vi.mock('@/server/services/file');
-vi.mock('@/server/services/generation/latency');
+vi.mock('~server/services/file');
+vi.mock('~server/services/generation/latency');
 
 describe('generationBatchRouter', () => {
   const mockCtx = {

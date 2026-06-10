@@ -10,7 +10,7 @@ import { GenerationTopicModel } from '../generationTopic';
 
 // Mock FileService
 const mockGetFullFileUrl = vi.fn();
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     getFullFileUrl: mockGetFullFileUrl,
   })),

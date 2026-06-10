@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { authedProcedure, router } from '@/libs/trpc/lambda';
-import { searchService } from '@/server/services/search';
+import { searchService } from '~server/services/search';
 
 const searchProcedure = authedProcedure;
 

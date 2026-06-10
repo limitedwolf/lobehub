@@ -10,7 +10,7 @@ const mockStreamEventManager = {
   subscribeStreamEvents: vi.fn(),
 };
 
-vi.mock('@/server/modules/AgentRuntime', () => ({
+vi.mock('~server/modules/AgentRuntime', () => ({
   createStreamEventManager: vi.fn(() => mockStreamEventManager),
 }));
 

@@ -27,12 +27,12 @@ import { UserPersonaModel } from '@/database/models/userMemory/persona';
 import { appEnv } from '@/envs/app';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
 import {
   buildWorkflowPayloadInput,
   MemoryExtractionWorkflowService,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
+} from '~server/services/memory/userMemory/extract';
 
 const userMemoryProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

@@ -14,9 +14,9 @@ import {
 } from '@/database/models/agentEval';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
-import { FileService } from '@/server/services/file';
-import { AgentEvalRunWorkflow } from '@/server/workflows/agentEvalRun';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
+import { FileService } from '~server/services/file';
+import { AgentEvalRunWorkflow } from '~server/workflows/agentEvalRun';
 
 const rubricTypeSchema = z.enum([
   'equals',

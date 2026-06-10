@@ -2,7 +2,7 @@ import { type NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { getTrustedClientTokenForSession } from '@/libs/trusted-client';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 const MARKET_BASE_URL = process.env.MARKET_BASE_URL || 'https://market.lobehub.com';
 

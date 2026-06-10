@@ -13,7 +13,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
   getServerDB: vi.fn(() => testDB),
 }));
 
-vi.mock('@/server/services/skill/resource', () => ({
+vi.mock('~server/services/skill/resource', () => ({
   SkillResourceService: vi.fn().mockImplementation(() => ({
     listResources: vi.fn().mockResolvedValue([]),
     readResource: vi.fn().mockRejectedValue(new Error('Resource not found')),

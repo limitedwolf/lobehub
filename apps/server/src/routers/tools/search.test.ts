@@ -3,7 +3,7 @@ import { SEARCH_SEARXNG_NOT_CONFIG } from '@lobechat/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { toolsEnv } from '@/envs/tools';
-import { SearXNGClient } from '@/server/services/search/impls/searxng/client';
+import { SearXNGClient } from '~server/services/search/impls/searxng/client';
 
 import { searchRouter } from './search';
 
@@ -15,7 +15,7 @@ vi.mock('@lobechat/web-crawler', () => ({
   })),
 }));
 
-vi.mock('@/server/services/search/impls/searxng/client');
+vi.mock('~server/services/search/impls/searxng/client');
 
 describe('searchRouter', () => {
   const mockContext = {

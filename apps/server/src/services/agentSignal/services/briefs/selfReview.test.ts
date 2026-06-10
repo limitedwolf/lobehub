@@ -7,9 +7,9 @@ import type { LobeChatDatabase } from '@/database/type';
 import {
   AgentSignalSelfReviewBriefService,
   type AgentSignalSelfReviewBriefServiceOptions,
-} from '@/server/services/agentSignal/services/briefs/selfReview';
-import { NIGHTLY_REVIEW_BRIEF_TRIGGER } from '@/server/services/agentSignal/services/selfIteration/review/brief';
-import { Risk } from '@/server/services/agentSignal/services/selfIteration/types';
+} from '~server/services/agentSignal/services/briefs/selfReview';
+import { NIGHTLY_REVIEW_BRIEF_TRIGGER } from '~server/services/agentSignal/services/selfIteration/review/brief';
+import { Risk } from '~server/services/agentSignal/services/selfIteration/types';
 
 const mockCanAgentRunSelfIteration = vi.hoisted(() => vi.fn());
 const mockIsAgentSignalEnabledForUser = vi.hoisted(() => vi.fn());
@@ -48,16 +48,16 @@ vi.mock('@/database/models/agentSignal/reviewContext', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agentSignal/featureGate', () => ({
+vi.mock('~server/services/agentSignal/featureGate', () => ({
   isAgentSignalEnabledForUser: mockIsAgentSignalEnabledForUser,
 }));
 
-vi.mock('@/server/services/agentSignal/services/receiptService', () => ({
+vi.mock('~server/services/agentSignal/services/receiptService', () => ({
   createSelfReviewReceipts: vi.fn(() => []),
   persistAgentSignalReceipts: mockPersistAgentSignalReceipts,
 }));
 
-vi.mock('@/server/services/agentSignal/store/adapters/redis/sourceEventStore', () => ({
+vi.mock('~server/services/agentSignal/store/adapters/redis/sourceEventStore', () => ({
   redisSourceEventStore: {
     readWindow: mockReadWindow,
     tryDedupe: mockTryDedupe,
@@ -65,11 +65,11 @@ vi.mock('@/server/services/agentSignal/store/adapters/redis/sourceEventStore', (
   },
 }));
 
-vi.mock('@/server/services/skillManagement/SkillManagementDocumentService', () => ({
+vi.mock('~server/services/skillManagement/SkillManagementDocumentService', () => ({
   SkillManagementDocumentService: vi.fn().mockImplementation(() => mockSkillDocumentService),
 }));
 
-vi.mock('@/server/services/taskRunner', () => ({
+vi.mock('~server/services/taskRunner', () => ({
   TaskRunnerService: vi.fn().mockImplementation(() => ({
     cascadeOnCompletion: vi.fn().mockResolvedValue({ failed: [], paused: [], started: [] }),
   })),

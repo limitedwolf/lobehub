@@ -262,7 +262,7 @@ const createDefaultStore = (): ITracingStore | null => {
     try {
       // Require at call time so test environments without S3 wiring don't break.
 
-      const { S3TracingStore } = require('@/server/modules/LLMGenerationTracing');
+      const { S3TracingStore } = require('~server/modules/LLMGenerationTracing');
       return new S3TracingStore();
     } catch {
       // S3 wiring not available — fall through to file store / null.

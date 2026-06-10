@@ -10,16 +10,16 @@ import {
   COMPONENT_NODE_MAPPINGS,
   CUSTOM_SD_CONFIG,
   SUPPORTED_MODEL_FORMATS,
-} from '@/server/services/comfyui/config/constants';
+} from '~server/services/comfyui/config/constants';
 import {
   MODEL_ID_VARIANT_MAP,
   MODEL_REGISTRY,
-} from '@/server/services/comfyui/config/modelRegistry';
-import { SYSTEM_COMPONENTS } from '@/server/services/comfyui/config/systemComponents';
-import { type ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { ModelResolverError } from '@/server/services/comfyui/errors/modelResolverError';
-import { TTLCacheManager } from '@/server/services/comfyui/utils/cacheManager';
-import { getModelsByVariant } from '@/server/services/comfyui/utils/staticModelLookup';
+} from '~server/services/comfyui/config/modelRegistry';
+import { SYSTEM_COMPONENTS } from '~server/services/comfyui/config/systemComponents';
+import { type ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { ModelResolverError } from '~server/services/comfyui/errors/modelResolverError';
+import { TTLCacheManager } from '~server/services/comfyui/utils/cacheManager';
+import { getModelsByVariant } from '~server/services/comfyui/utils/staticModelLookup';
 
 const log = debug('lobe-image:comfyui:model-resolver');
 

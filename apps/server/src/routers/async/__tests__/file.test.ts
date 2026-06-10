@@ -6,10 +6,10 @@ import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { ChunkModel } from '@/database/models/chunk';
 import { EmbeddingModel } from '@/database/models/embedding';
 import { FileModel } from '@/database/models/file';
-import { ChunkService } from '@/server/services/chunk';
-import { DocumentService } from '@/server/services/document';
-import { FileService } from '@/server/services/file';
 import { AsyncTaskStatus } from '@/types/asyncTask';
+import { ChunkService } from '~server/services/chunk';
+import { DocumentService } from '~server/services/document';
+import { FileService } from '~server/services/file';
 
 import { fileRouter } from '../file';
 
@@ -17,9 +17,9 @@ vi.mock('@/database/models/asyncTask', () => ({ AsyncTaskModel: vi.fn() }));
 vi.mock('@/database/models/chunk', () => ({ ChunkModel: vi.fn() }));
 vi.mock('@/database/models/embedding', () => ({ EmbeddingModel: vi.fn() }));
 vi.mock('@/database/models/file', () => ({ FileModel: vi.fn() }));
-vi.mock('@/server/services/chunk', () => ({ ChunkService: vi.fn() }));
-vi.mock('@/server/services/document', () => ({ DocumentService: vi.fn() }));
-vi.mock('@/server/services/file', () => ({ FileService: vi.fn() }));
+vi.mock('~server/services/chunk', () => ({ ChunkService: vi.fn() }));
+vi.mock('~server/services/document', () => ({ DocumentService: vi.fn() }));
+vi.mock('~server/services/file', () => ({ FileService: vi.fn() }));
 vi.mock('@/business/server/trpc-middlewares/async', () => ({
   checkEmbeddingUsage: async (opts: any) => opts.next({ ctx: opts.ctx }),
 }));

@@ -1,7 +1,7 @@
 import debug from 'debug';
 import urlJoin from 'url-join';
 
-import { isQueueAgentRuntimeEnabled } from '@/server/services/queue/impls';
+import { isQueueAgentRuntimeEnabled } from '~server/services/queue/impls';
 
 import type {
   AgentHook,

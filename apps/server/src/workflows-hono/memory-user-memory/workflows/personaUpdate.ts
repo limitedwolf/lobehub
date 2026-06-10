@@ -5,7 +5,7 @@ import { getServerDB } from '@/database/server';
 import {
   buildUserPersonaJobInput,
   UserPersonaService,
-} from '@/server/services/memory/userMemory/persona/service';
+} from '~server/services/memory/userMemory/persona/service';
 
 const workflowPayloadSchema = z.object({
   userIds: z.array(z.string()).optional(),

@@ -11,7 +11,7 @@ import { MessageModel } from '@/database/models/message';
 import { SessionModel } from '@/database/models/session';
 import { UserModel } from '@/database/models/user';
 import { serverDB } from '@/database/server';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 import { userRouter } from '../user';
 
@@ -29,9 +29,9 @@ vi.mock('@/database/server', () => ({
 vi.mock('@/database/models/message');
 vi.mock('@/database/models/session');
 vi.mock('@/database/models/user');
-vi.mock('@/server/modules/KeyVaultsEncrypt');
-vi.mock('@/server/modules/S3');
-vi.mock('@/server/services/user');
+vi.mock('~server/modules/KeyVaultsEncrypt');
+vi.mock('~server/modules/S3');
+vi.mock('~server/services/user');
 
 describe('userRouter', () => {
   const mockUserId = 'test-user-id';

@@ -1,11 +1,11 @@
 import { generateUniqueSeeds } from '@lobechat/utils';
 import { PromptBuilder } from '@saintno/comfyui-sdk';
 
-import { WORKFLOW_DEFAULTS } from '@/server/services/comfyui/config/constants';
-import { type WorkflowContext } from '@/server/services/comfyui/core/workflowBuilderService';
-import { splitPromptForDualCLIP } from '@/server/services/comfyui/utils/promptSplitter';
-import { selectOptimalWeightDtype } from '@/server/services/comfyui/utils/weightDType';
-import { getWorkflowFilenamePrefix } from '@/server/services/comfyui/utils/workflowUtils';
+import { WORKFLOW_DEFAULTS } from '~server/services/comfyui/config/constants';
+import { type WorkflowContext } from '~server/services/comfyui/core/workflowBuilderService';
+import { splitPromptForDualCLIP } from '~server/services/comfyui/utils/promptSplitter';
+import { selectOptimalWeightDtype } from '~server/services/comfyui/utils/weightDType';
+import { getWorkflowFilenamePrefix } from '~server/services/comfyui/utils/workflowUtils';
 
 /**
  * FLUX Kontext Workflow Builder

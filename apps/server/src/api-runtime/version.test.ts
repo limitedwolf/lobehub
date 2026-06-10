@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import honoApp from '@/server/hono';
+import honoApp from '~server/hono';
 
 import pkg from '../../../../package.json';
 import { versionAPIHandler } from './version';

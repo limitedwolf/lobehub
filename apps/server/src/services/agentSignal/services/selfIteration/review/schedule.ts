@@ -7,8 +7,8 @@ import utc from 'dayjs/plugin/utc';
 
 import { AgentSignalNightlyReviewModel } from '@/database/models/agentSignal/nightlyReview';
 import type { LobeChatDatabase } from '@/database/type';
-import type { AgentSignalSourceEventInput } from '@/server/services/agentSignal/emitter';
-import { enqueueAgentSignalSourceEvent } from '@/server/services/agentSignal/emitter';
+import type { AgentSignalSourceEventInput } from '~server/services/agentSignal/emitter';
+import { enqueueAgentSignalSourceEvent } from '~server/services/agentSignal/emitter';
 
 import { buildNightlyReviewSourceId } from '../types';
 

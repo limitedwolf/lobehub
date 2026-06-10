@@ -1,5 +1,5 @@
 import type { NewGeneration, NewGenerationBatch } from '@/database/schemas';
-import type { CreateVideoServicePayload } from '@/server/routers/lambda/video';
+import type { CreateVideoServicePayload } from '~server/routers/lambda/video';
 
 interface ChargeParams {
   generationTopicId: string;

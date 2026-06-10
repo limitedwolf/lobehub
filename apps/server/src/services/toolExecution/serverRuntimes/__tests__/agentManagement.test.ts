@@ -22,7 +22,7 @@ vi.mock('@/database/models/plugin', () => ({
   PluginModel: vi.fn(() => ({})),
 }));
 
-vi.mock('@/server/services/discover', () => ({
+vi.mock('~server/services/discover', () => ({
   DiscoverService: vi.fn(() => ({
     getAssistantList: mockGetAssistantList,
   })),

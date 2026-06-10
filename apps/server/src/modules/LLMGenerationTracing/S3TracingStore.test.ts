@@ -11,7 +11,7 @@ const decompressZstd = promisify(zstdDecompress);
 const uploadBuffer = vi.fn();
 const getFileByteArray = vi.fn();
 
-vi.mock('@/server/modules/S3', () => ({
+vi.mock('~server/modules/S3', () => ({
   FileS3: vi.fn(() => ({ getFileByteArray, uploadBuffer })),
 }));
 

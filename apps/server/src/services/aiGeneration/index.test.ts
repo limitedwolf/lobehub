@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import * as ModelRuntimeModule from '@/server/modules/ModelRuntime';
+import * as ModelRuntimeModule from '~server/modules/ModelRuntime';
 
 import { AiGenerationService } from './index';
 

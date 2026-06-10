@@ -1,11 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import { SkillManagementDocumentService } from '@/server/services/skillManagement';
+import { SkillManagementDocumentService } from '~server/services/skillManagement';
 
 import { agentSignalSkillManagementRuntime } from '../agentSignalSkillManagement';
 
-vi.mock('@/server/services/skillManagement');
+vi.mock('~server/services/skillManagement');
 
 describe('agentSignalSkillManagementRuntime', () => {
   it('throws if required server context is missing', () => {

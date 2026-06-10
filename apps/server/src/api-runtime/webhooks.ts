@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { serverDB } from '@/database/server';
 import { authEnv } from '@/envs/auth';
-import { WebhookUserService } from '@/server/services/webhookUser';
+import { WebhookUserService } from '~server/services/webhookUser';
 
 export interface CasdoorUserEntity {
   avatar?: string;

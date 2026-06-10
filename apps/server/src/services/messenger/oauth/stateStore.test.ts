@@ -26,11 +26,11 @@ const fakeRedis = (): {
 
 let redisRef: ReturnType<typeof fakeRedis>;
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   getAgentRuntimeRedisClient: vi.fn(() => redisRef.client),
 }));
 
-const { getAgentRuntimeRedisClient } = await import('@/server/modules/AgentRuntime/redis');
+const { getAgentRuntimeRedisClient } = await import('~server/modules/AgentRuntime/redis');
 
 beforeEach(() => {
   redisRef = fakeRedis();

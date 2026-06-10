@@ -43,8 +43,8 @@ import type {
 } from '@lobechat/chat-adapter-imessage';
 import { resolveAttachmentName } from '@lobechat/chat-adapter-imessage';
 
-import type { MessageRuntimeService } from '@/server/services/toolExecution/serverRuntimes/message/adapters/types';
-import { PlatformUnsupportedError } from '@/server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
+import type { MessageRuntimeService } from '~server/services/toolExecution/serverRuntimes/message/adapters/types';
+import { PlatformUnsupportedError } from '~server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
 
 function authorFromMessage(message: BlueBubblesMessage): MessageItem['author'] {
   if (message.isFromMe) return { id: 'me', name: 'me' };

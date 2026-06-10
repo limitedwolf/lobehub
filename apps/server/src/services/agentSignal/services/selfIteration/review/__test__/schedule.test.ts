@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
-import type { AgentSignalSourceEventInput } from '@/server/services/agentSignal/emitter';
+import type { AgentSignalSourceEventInput } from '~server/services/agentSignal/emitter';
 
 import type {
   ListNightlyReviewAgentTargetsInput,
@@ -29,7 +29,7 @@ vi.mock('@/database/models/agentSignal/nightlyReview', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agentSignal/emitter', () => ({
+vi.mock('~server/services/agentSignal/emitter', () => ({
   enqueueAgentSignalSourceEvent: mocks.enqueueAgentSignalSourceEvent,
 }));
 

@@ -5,7 +5,7 @@ import {
 } from '@lobechat/builtin-tool-creds';
 import debug from 'debug';
 
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 import { type ServerRuntimeRegistration } from './types';
 

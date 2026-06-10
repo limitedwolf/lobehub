@@ -5,7 +5,7 @@ import debug from 'debug';
 
 import { PluginModel } from '@/database/models/plugin';
 import { getComposioClient, isComposioClientAvailable } from '@/libs/composio';
-import { type ToolExecutionResult } from '@/server/services/toolExecution/types';
+import { type ToolExecutionResult } from '~server/services/toolExecution/types';
 
 const log = debug('lobe-server:composio-service');
 

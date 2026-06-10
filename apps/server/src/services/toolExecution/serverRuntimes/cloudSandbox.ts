@@ -3,9 +3,9 @@ import {
   CloudSandboxIdentifier,
 } from '@lobechat/builtin-tool-cloud-sandbox';
 
-import { FileService } from '@/server/services/file';
-import { MarketService } from '@/server/services/market';
-import { createSandboxService } from '@/server/services/sandbox';
+import { FileService } from '~server/services/file';
+import { MarketService } from '~server/services/market';
+import { createSandboxService } from '~server/services/sandbox';
 
 import { type ServerRuntimeRegistration } from './types';
 

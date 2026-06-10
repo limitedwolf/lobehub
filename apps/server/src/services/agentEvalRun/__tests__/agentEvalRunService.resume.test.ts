@@ -3,21 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentEvalRunModel, AgentEvalRunTopicModel } from '@/database/models/agentEval';
 import { ThreadModel } from '@/database/models/thread';
 import { messages, topics } from '@/database/schemas';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
-import type * as AgentEvalRunWorkflowModule from '@/server/workflows/agentEvalRun';
-import { AgentEvalRunWorkflow } from '@/server/workflows/agentEvalRun';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
+import type * as AgentEvalRunWorkflowModule from '~server/workflows/agentEvalRun';
+import { AgentEvalRunWorkflow } from '~server/workflows/agentEvalRun';
 
 import { cleanupDB, serverDB, setupEvalChain, userId } from './_setup';
 
 const mockExecAgent = vi.fn();
 
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
   })),
 }));
 
-vi.mock('@/server/workflows/agentEvalRun', async (importOriginal) => {
+vi.mock('~server/workflows/agentEvalRun', async (importOriginal) => {
   const actual = (await importOriginal()) as typeof AgentEvalRunWorkflowModule;
 
   return {
@@ -34,7 +34,7 @@ vi.mock('@/envs/app', () => ({
   appEnv: { APP_URL: 'https://test.example.com' },
 }));
 
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
+vi.mock('~server/services/agentRuntime/AgentRuntimeService', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),

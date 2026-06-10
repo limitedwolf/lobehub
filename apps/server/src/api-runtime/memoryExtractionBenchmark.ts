@@ -3,9 +3,9 @@ import { MemorySourceType } from '@lobechat/types';
 import { z } from 'zod';
 
 import { UserMemorySourceBenchmarkLoCoMoModel } from '@/database/models/userMemory/sources/benchmarkLoCoMo';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { MemoryExtractionExecutor } from '@/server/services/memory/userMemory/extract';
 import { LayersEnum } from '@/types/userMemory';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { MemoryExtractionExecutor } from '~server/services/memory/userMemory/extract';
 
 const turnSchema = z.object({
   createdAt: z.string(),

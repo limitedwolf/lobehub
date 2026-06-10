@@ -36,9 +36,9 @@ import type {
 } from '@lobechat/builtin-tool-message/executionRuntime';
 import type { WechatApiClient } from '@lobechat/chat-adapter-wechat';
 
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
-import type { MessageRuntimeService } from '@/server/services/toolExecution/serverRuntimes/message/adapters/types';
-import { PlatformUnsupportedError } from '@/server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
+import type { MessageRuntimeService } from '~server/services/toolExecution/serverRuntimes/message/adapters/types';
+import { PlatformUnsupportedError } from '~server/services/toolExecution/serverRuntimes/message/PlatformUnsupportedError';
 
 import { sendWechatAttachments } from './sendAttachments';
 

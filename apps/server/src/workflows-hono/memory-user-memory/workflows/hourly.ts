@@ -3,14 +3,14 @@ import { type WorkflowContext } from '@upstash/workflow';
 import { chunk } from 'es-toolkit/compat';
 
 import { appEnv } from '@/envs/app';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
 import {
   buildWorkflowPayloadInput,
   MemoryExtractionExecutor,
   type MemoryExtractionHourlyWorkflowPayload,
   MemoryExtractionWorkflowService,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
+} from '~server/services/memory/userMemory/extract';
 
 const USER_PAGE_SIZE = 200;
 const USER_BATCH_SIZE = 20;

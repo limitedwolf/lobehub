@@ -10,7 +10,7 @@ vi.mock('@/const/branding', () => ({
   BRANDING_LOGO_URL: 'https://example.com/logo.png',
 }));
 
-vi.mock('@/server/utils/url', () => ({
+vi.mock('~server/utils/url', () => ({
   getCanonicalUrl: vi.fn().mockReturnValue('https://example.com/manifest.webmanifest'),
 }));
 

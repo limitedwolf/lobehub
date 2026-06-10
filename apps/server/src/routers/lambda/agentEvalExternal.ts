@@ -16,7 +16,7 @@ import { messages } from '@/database/schemas';
 import { buildWorkspaceWhere } from '@/database/utils/workspace';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
 
 const runStatusSchema = z.enum([
   'idle',

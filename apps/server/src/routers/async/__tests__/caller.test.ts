@@ -3,7 +3,7 @@
 import { createTRPCClient, httpLink } from '@trpc/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 import { createAsyncServerClient } from '../caller';
 
@@ -25,7 +25,7 @@ vi.mock('@/envs/app', () => ({
   },
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: vi.fn(),
   },

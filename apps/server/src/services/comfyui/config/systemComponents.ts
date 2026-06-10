@@ -1,7 +1,7 @@
 /**
  * System Components Registry Configuration
  */
-import { ConfigError } from '@/server/services/comfyui/errors';
+import { ConfigError } from '~server/services/comfyui/errors';
 
 export interface ComponentConfig {
   /** Compatible model variants (for LoRA and ControlNet) */

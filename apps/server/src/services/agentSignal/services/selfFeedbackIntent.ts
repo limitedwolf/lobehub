@@ -12,7 +12,7 @@ import {
   SELF_FEEDBACK_INTENT_KINDS,
 } from '@lobechat/builtin-tool-self-iteration';
 
-import type { AgentSignalSourceEventInput } from '@/server/services/agentSignal/emitter';
+import type { AgentSignalSourceEventInput } from '~server/services/agentSignal/emitter';
 
 import { buildSelfFeedbackIntentSourceId } from './selfIteration/types';
 

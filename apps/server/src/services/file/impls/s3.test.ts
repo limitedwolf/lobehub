@@ -39,7 +39,7 @@ vi.mock('@/libs/redis', () => ({
 }));
 
 // 模拟 S3 类
-vi.mock('@/server/modules/S3', () => ({
+vi.mock('~server/modules/S3', () => ({
   FileS3: vi.fn().mockImplementation(() => ({
     createPreSignedUrlForPreview: vi
       .fn()

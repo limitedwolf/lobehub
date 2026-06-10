@@ -1,12 +1,12 @@
 import { type PromptBuilder } from '@saintno/comfyui-sdk';
 
-import { type WorkflowContext } from '@/server/services/comfyui/core/workflowBuilderService';
+import { type WorkflowContext } from '~server/services/comfyui/core/workflowBuilderService';
 // Import all workflow builders
-import { buildFluxDevWorkflow } from '@/server/services/comfyui/workflows/flux-dev';
-import { buildFluxKontextWorkflow } from '@/server/services/comfyui/workflows/flux-kontext';
-import { buildFluxSchnellWorkflow } from '@/server/services/comfyui/workflows/flux-schnell';
-import { buildSD35Workflow } from '@/server/services/comfyui/workflows/sd35';
-import { buildSimpleSDWorkflow } from '@/server/services/comfyui/workflows/simple-sd';
+import { buildFluxDevWorkflow } from '~server/services/comfyui/workflows/flux-dev';
+import { buildFluxKontextWorkflow } from '~server/services/comfyui/workflows/flux-kontext';
+import { buildFluxSchnellWorkflow } from '~server/services/comfyui/workflows/flux-schnell';
+import { buildSD35Workflow } from '~server/services/comfyui/workflows/sd35';
+import { buildSimpleSDWorkflow } from '~server/services/comfyui/workflows/simple-sd';
 
 // Workflow builder type
 type WorkflowBuilder = (

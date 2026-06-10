@@ -5,9 +5,9 @@ import { AgentModel } from '@/database/models/agent';
 import { FileModel } from '@/database/models/file';
 import { KnowledgeBaseModel } from '@/database/models/knowledgeBase';
 import { KnowledgeRepo } from '@/database/repositories/knowledge';
-import { DocumentService } from '@/server/services/document';
-import { FileService } from '@/server/services/file';
-import { KnowledgeBaseSearchService } from '@/server/services/knowledgeBase';
+import { DocumentService } from '~server/services/document';
+import { FileService } from '~server/services/file';
+import { KnowledgeBaseSearchService } from '~server/services/knowledgeBase';
 
 import { type ServerRuntimeRegistration } from './types';
 

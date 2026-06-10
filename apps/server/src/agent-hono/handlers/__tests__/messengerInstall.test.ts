@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { auth } from '@/auth';
-import { issueOAuthState } from '@/server/services/messenger/oauth/stateStore';
+import { issueOAuthState } from '~server/services/messenger/oauth/stateStore';
 
 import { messengerInstall } from '../messengerInstall';
 
@@ -15,7 +15,7 @@ vi.mock('@/auth', () => ({
   },
 }));
 
-vi.mock('@/server/services/messenger/oauth/stateStore', () => ({
+vi.mock('~server/services/messenger/oauth/stateStore', () => ({
   issueOAuthState: vi.fn(),
 }));
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ComfyUIConnectionService } from '@/server/services/comfyui/core/comfyUIConnectionService';
-import { ServicesError } from '@/server/services/comfyui/errors';
+import { ComfyUIConnectionService } from '~server/services/comfyui/core/comfyUIConnectionService';
+import { ServicesError } from '~server/services/comfyui/errors';
 
 // Mock global fetch
 global.fetch = vi.fn();

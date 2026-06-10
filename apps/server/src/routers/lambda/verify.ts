@@ -21,13 +21,13 @@ import {
 } from '@/database/schemas/verify';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 import {
   VerifyExecutorService,
   VerifyFeedbackService,
   VerifyPlanGeneratorService,
   VerifyReporterService,
-} from '@/server/services/verify';
+} from '~server/services/verify';
 
 /**
  * Skills that `verify.getSkillBundle` will materialize to a builder's disk via

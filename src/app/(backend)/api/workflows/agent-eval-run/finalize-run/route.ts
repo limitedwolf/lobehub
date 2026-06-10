@@ -4,9 +4,9 @@ import debug from 'debug';
 import { AgentEvalRunModel, AgentEvalRunTopicModel } from '@/database/models/agentEval';
 import { getServerDB } from '@/database/server';
 import { qstashClient } from '@/libs/qstash';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
-import { type FinalizeRunPayload } from '@/server/workflows/agentEvalRun';
-import { resolveAgentEvalRunWorkspace } from '@/server/workflows/agentEvalRun/utils';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
+import { type FinalizeRunPayload } from '~server/workflows/agentEvalRun';
+import { resolveAgentEvalRunWorkspace } from '~server/workflows/agentEvalRun/utils';
 
 const log = debug('lobe-server:workflows:finalize-run');
 

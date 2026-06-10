@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { pushTokenRouter } from '@/server/routers/lambda/pushToken';
+import { pushTokenRouter } from '~server/routers/lambda/pushToken';
 
 const mockUpsert = vi.fn();
 const mockUnregister = vi.fn();

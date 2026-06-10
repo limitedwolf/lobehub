@@ -1,7 +1,7 @@
 import debug from 'debug';
 import type { Redis } from 'ioredis';
 
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
 
 const log = debug('lobe-server:edit-lock');
 

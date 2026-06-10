@@ -2,8 +2,8 @@ import { SELF_FEEDBACK_INTENT_IDENTIFIER } from '@lobechat/builtin-tool-self-ite
 import { SelfFeedbackIntentExecutionRuntime } from '@lobechat/builtin-tool-self-iteration/executionRuntime';
 import { nanoid } from '@lobechat/utils';
 
-import { enqueueAgentSignalSourceEvent } from '@/server/services/agentSignal';
-import { createSelfFeedbackIntentService } from '@/server/services/agentSignal/services/selfFeedbackIntent';
+import { enqueueAgentSignalSourceEvent } from '~server/services/agentSignal';
+import { createSelfFeedbackIntentService } from '~server/services/agentSignal/services/selfFeedbackIntent';
 
 import type { ServerRuntimeRegistration } from './types';
 

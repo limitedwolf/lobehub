@@ -2,8 +2,8 @@ import { createSSEHeaders, createSSEWriter } from '@lobechat/utils/server';
 import debug from 'debug';
 
 import { checkAuth } from '@/app/(backend)/middleware/auth';
-import { DocumentService } from '@/server/services/document';
-import { subscribeResourceEvents } from '@/server/services/resourceEvents';
+import { DocumentService } from '~server/services/document';
+import { subscribeResourceEvents } from '~server/services/resourceEvents';
 
 import { resolveValidWorkspaceIdFromRequest } from '../../_utils/workspace';
 

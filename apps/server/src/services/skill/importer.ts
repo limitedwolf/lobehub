@@ -13,8 +13,8 @@ import { nanoid } from '@lobechat/utils';
 import debug from 'debug';
 
 import { AgentSkillModel } from '@/database/models/agentSkill';
-import { GitHub, GitHubNotFoundError, GitHubParseError } from '@/server/modules/GitHub';
-import { FileService } from '@/server/services/file';
+import { GitHub, GitHubNotFoundError, GitHubParseError } from '~server/modules/GitHub';
+import { FileService } from '~server/services/file';
 
 import { SkillImportError, SkillManifestError } from './errors';
 import { SkillParser } from './parser';

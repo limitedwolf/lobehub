@@ -5,7 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { BriefModel } from '@/database/models/brief';
 import { tasks } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
-import { setTaskSchedulerExecutionCallback } from '@/server/services/taskScheduler';
+import { setTaskSchedulerExecutionCallback } from '~server/services/taskScheduler';
 
 import { TaskRunnerService } from './index';
 

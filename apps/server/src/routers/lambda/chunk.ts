@@ -14,11 +14,11 @@ import { MessageModel } from '@/database/models/message';
 import { SearchRepo } from '@/database/repositories/search';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { getServerDefaultFilesConfig } from '@/server/globalConfig';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { ChunkService } from '@/server/services/chunk';
-import { DocumentService } from '@/server/services/document';
-import { KnowledgeBaseSearchService } from '@/server/services/knowledgeBase';
+import { getServerDefaultFilesConfig } from '~server/globalConfig';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { ChunkService } from '~server/services/chunk';
+import { DocumentService } from '~server/services/document';
+import { KnowledgeBaseSearchService } from '~server/services/knowledgeBase';
 
 const chunkProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

@@ -67,11 +67,6 @@ import { UserMemorySourceBenchmarkLoCoMoModel } from '@/database/models/userMemo
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
 import { getServerDB } from '@/database/server';
 import { buildWorkspaceWhere } from '@/database/utils/workspace';
-import { getServerGlobalConfig } from '@/server/globalConfig';
-import { type MemoryAgentConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { S3 } from '@/server/modules/S3';
 import {
   AsyncTaskError,
   type AsyncTaskErrorBody,
@@ -85,6 +80,11 @@ import { type MergeStrategyEnum } from '@/types/userMemory';
 import { LayersEnum, MemorySourceType, TypesEnum } from '@/types/userMemory';
 import { trimBasedOnBatchProbe } from '@/utils/chunkers';
 import { encodeAsync } from '@/utils/tokenizer';
+import { getServerGlobalConfig } from '~server/globalConfig';
+import { type MemoryAgentConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { S3 } from '~server/modules/S3';
 
 const SOURCE_ALIAS_MAP: Record<string, MemorySourceType> = {
   benchmark_locomo: MemorySourceType.BenchmarkLocomo,

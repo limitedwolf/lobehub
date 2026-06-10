@@ -17,7 +17,7 @@ vi.mock('@/envs/gateway', () => ({
   }),
 }));
 
-vi.mock('@/server/services/gateway/runtimeStatus', () => ({
+vi.mock('~server/services/gateway/runtimeStatus', () => ({
   BOT_RUNTIME_STATUSES: {
     connected: 'connected',
     disconnected: 'disconnected',

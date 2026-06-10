@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   ),
 }));
 
-vi.mock('@/server/globalConfig/parseMemoryExtractionConfig', () => ({
+vi.mock('~server/globalConfig/parseMemoryExtractionConfig', () => ({
   parseMemoryExtractionConfig: () => ({
     embedding: {
       contextLimit: mocks.contextLimit,

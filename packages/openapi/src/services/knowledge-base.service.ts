@@ -4,7 +4,7 @@ import { KnowledgeBaseModel } from '@/database/models/knowledgeBase';
 import type { KnowledgeBaseItem } from '@/database/schemas';
 import { knowledgeBases } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { FileService as CoreFileService } from '@/server/services/file';
+import { FileService as CoreFileService } from '~server/services/file';
 
 import { BaseService } from '../common/base.service';
 import { processPaginationConditions } from '../helpers/pagination';

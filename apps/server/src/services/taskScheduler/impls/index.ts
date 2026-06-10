@@ -39,7 +39,7 @@ export const createTaskSchedulerModule = (): TaskSchedulerImpl => {
   // createTaskSchedulerModule). Heartbeat ticks always fire after `delay`
   // seconds, so the dynamic import resolves long before the first tick.
   if (!cachedExecutionCallback) {
-    void import('@/server/services/taskRunner/heartbeatTick').catch((e) => {
+    void import('~server/services/taskRunner/heartbeatTick').catch((e) => {
       console.warn('[taskScheduler] failed to load heartbeat tick runner:', e);
     });
   }

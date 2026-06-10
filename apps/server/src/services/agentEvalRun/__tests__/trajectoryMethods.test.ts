@@ -12,11 +12,11 @@ import {
   topics,
   users,
 } from '@/database/schemas';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
 
 // Mock AiAgentService — created inside executeTrajectory
 const mockExecAgent = vi.fn();
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
   })),
@@ -28,7 +28,7 @@ vi.mock('@/envs/app', () => ({
 }));
 
 // Mock AgentRuntimeService (required by service constructor path for checkAndHandleRunTimeout)
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
+vi.mock('~server/services/agentRuntime/AgentRuntimeService', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),

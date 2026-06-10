@@ -74,17 +74,17 @@ vi.mock('@/database/models/messengerAccountLink', () => ({
   },
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: mockInitWithEnvKey,
   },
 }));
 
-vi.mock('@/server/featureFlags', () => ({
+vi.mock('~server/featureFlags', () => ({
   getServerFeatureFlagsStateFromRuntimeConfig: mockGetServerFeatureFlagsStateFromRuntimeConfig,
 }));
 
-vi.mock('@/server/services/messenger', () => ({
+vi.mock('~server/services/messenger', () => ({
   consumeLinkToken: mockConsumeLinkToken,
   MessengerDiscordBinder: vi.fn(),
   messengerPlatformRegistry: {
@@ -98,7 +98,7 @@ vi.mock('@/server/services/messenger', () => ({
   peekLinkToken: mockPeekLinkToken,
 }));
 
-vi.mock('@/server/services/bot/platforms/slack/api', () => ({
+vi.mock('~server/services/bot/platforms/slack/api', () => ({
   SLACK_API_BASE: 'https://slack.com/api',
   SlackApi: vi.fn().mockImplementation(() => ({
     authTest: mockSlackAuthTest,

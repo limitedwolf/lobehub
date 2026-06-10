@@ -5,10 +5,10 @@ import debug from 'debug';
 import { MessageModel } from '@/database/models/message';
 import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
-import { createStreamEventManager } from '@/server/modules/AgentRuntime/factory';
-import { type IStreamEventManager } from '@/server/modules/AgentRuntime/types';
-import { deliverWebhook } from '@/server/services/agentRuntime/hooks/HookDispatcher';
-import type { AgentHookWebhook } from '@/server/services/agentRuntime/hooks/types';
+import { createStreamEventManager } from '~server/modules/AgentRuntime/factory';
+import { type IStreamEventManager } from '~server/modules/AgentRuntime/types';
+import { deliverWebhook } from '~server/services/agentRuntime/hooks/HookDispatcher';
+import type { AgentHookWebhook } from '~server/services/agentRuntime/hooks/types';
 
 import {
   HeterogeneousPersistenceHandler,

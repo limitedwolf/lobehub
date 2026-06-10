@@ -7,7 +7,7 @@ import { type ModelProvider } from 'model-bank';
 import superjson from 'superjson';
 
 import { isDesktop } from '@/const/version';
-import { type LambdaRouter } from '@/server/routers/lambda';
+import { type LambdaRouter } from '~server/routers/lambda';
 
 const log = debug('lobe-image:lambda-client');
 

@@ -44,11 +44,11 @@ import {
 } from '@/database/schemas';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { getServerDefaultFilesConfig } from '@/server/globalConfig';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import type { UserMemoryEmbeddingRuntime } from '@/server/services/memory/userMemory/embedding';
-import { embedUserMemoryTexts } from '@/server/services/memory/userMemory/embedding';
-import { normalizeSearchMemoryParams } from '@/server/services/memory/userMemory/searchParams';
+import { getServerDefaultFilesConfig } from '~server/globalConfig';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import type { UserMemoryEmbeddingRuntime } from '~server/services/memory/userMemory/embedding';
+import { embedUserMemoryTexts } from '~server/services/memory/userMemory/embedding';
+import { normalizeSearchMemoryParams } from '~server/services/memory/userMemory/searchParams';
 
 const EMPTY_SEARCH_RESULT: SearchMemoryResult = {
   activities: [],

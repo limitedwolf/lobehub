@@ -21,8 +21,8 @@ import { TopicImporterRepo } from '@/database/repositories/topicImporter';
 import { chatGroups } from '@/database/schemas';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
 import { type BatchTaskResult } from '@/types/service';
+import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
 import {
   batchResolveAgentIdFromSessions,

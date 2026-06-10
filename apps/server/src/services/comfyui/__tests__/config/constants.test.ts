@@ -7,8 +7,8 @@ import {
   FLUX_MODEL_CONFIG,
   SD_MODEL_CONFIG,
   WORKFLOW_DEFAULTS,
-} from '@/server/services/comfyui/config/constants';
-import { STYLE_KEYWORDS } from '@/server/services/comfyui/config/promptToolConst';
+} from '~server/services/comfyui/config/constants';
+import { STYLE_KEYWORDS } from '~server/services/comfyui/config/promptToolConst';
 
 describe('ComfyUI Constants', () => {
   describe('COMFYUI_DEFAULTS', () => {

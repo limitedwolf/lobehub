@@ -17,7 +17,7 @@ vi.mock('@/database/models/user', () => ({
   UserModel: mocks.UserModel,
 }));
 
-vi.mock('@/server/featureFlags', () => ({
+vi.mock('~server/featureFlags', () => ({
   getServerFeatureFlagsStateFromRuntimeConfig: mocks.getServerFeatureFlagsStateFromRuntimeConfig,
 }));
 

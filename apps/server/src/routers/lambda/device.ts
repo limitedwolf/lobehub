@@ -10,7 +10,7 @@ import { DeviceModel } from '@/database/models/device';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { signWorkspaceDeviceToken } from '@/libs/trpc/utils/internalJwt';
-import { type DeviceAttachment, deviceGateway } from '@/server/services/deviceGateway';
+import { type DeviceAttachment, deviceGateway } from '~server/services/deviceGateway';
 
 import { preserveWorkspaceCache } from './deviceWorkingDirs';
 import { assertWorkspaceRootApproved } from './deviceWorkspaceGuard';

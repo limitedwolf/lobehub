@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TaskModel } from '@/database/models/task';
 import { WorkspaceModel } from '@/database/models/workspace';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
 
 import { agentDocumentsRuntime } from '../agentDocuments';
 
@@ -11,10 +11,10 @@ const agentDocumentToolOutcomeMocks = vi.hoisted(() => ({
   emitAgentDocumentToolOutcomeSafely: vi.fn(),
 }));
 
-vi.mock('@/server/services/agentDocuments');
+vi.mock('~server/services/agentDocuments');
 vi.mock('@/database/models/task');
 vi.mock('@/database/models/workspace');
-vi.mock('@/server/services/agentDocuments/toolOutcome', () => agentDocumentToolOutcomeMocks);
+vi.mock('~server/services/agentDocuments/toolOutcome', () => agentDocumentToolOutcomeMocks);
 vi.mock('@/envs/app', () => ({
   appEnv: { APP_URL: 'https://app.example.com' },
 }));

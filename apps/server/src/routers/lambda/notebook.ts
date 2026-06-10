@@ -7,7 +7,7 @@ import { DocumentModel } from '@/database/models/document';
 import { TopicDocumentModel } from '@/database/models/topicDocument';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { NotebookRuntimeService } from '@/server/services/notebook';
+import { NotebookRuntimeService } from '~server/services/notebook';
 
 const notebookProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

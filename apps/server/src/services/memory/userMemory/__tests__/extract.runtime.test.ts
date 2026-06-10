@@ -2,7 +2,7 @@ import { type AiProviderRuntimeState } from '@lobechat/types';
 import { type EnabledAiModel } from 'model-bank';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type MemoryExtractionPrivateConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
+import { type MemoryExtractionPrivateConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
 
 import { makeTaskErrorItem, MemoryExtractionExecutor } from '../extract';
 

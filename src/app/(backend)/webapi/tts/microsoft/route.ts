@@ -1,1 +1,1 @@
-export { microsoftTTSAPIHandler as POST } from '@/server/api-runtime/speech';
+export { microsoftTTSAPIHandler as POST } from '~server/api-runtime/speech';

@@ -3,15 +3,15 @@ import debug from 'debug';
 import { getServerDB } from '@/database/core/db-adaptor';
 import type { DecryptedBotProvider } from '@/database/models/agentBotProvider';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 import {
   type BotPlatformRuntimeContext,
   buildRuntimeKey,
   type PlatformClient,
   type PlatformDefinition,
   resolveBotProviderConfig,
-} from '@/server/services/bot/platforms';
+} from '~server/services/bot/platforms';
 
 const log = debug('lobe-server:bot-gateway');
 

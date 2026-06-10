@@ -7,7 +7,7 @@ import { SessionModel } from '@/database/models/session';
 import { UserModel } from '@/database/models/user';
 import type * as RedisModule from '@/libs/redis';
 import { initializeRedisWithPrefix, isRedisEnabled, RedisKeys } from '@/libs/redis';
-import { parseAgentConfig } from '@/server/globalConfig/parseDefaultAgent';
+import { parseAgentConfig } from '~server/globalConfig/parseDefaultAgent';
 
 import { AgentService } from './index';
 
@@ -20,7 +20,7 @@ vi.mock('@/envs/app', () => ({
   }),
 }));
 
-vi.mock('@/server/globalConfig/parseDefaultAgent', () => ({
+vi.mock('~server/globalConfig/parseDefaultAgent', () => ({
   parseAgentConfig: vi.fn(),
 }));
 

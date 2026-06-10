@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import { createProcedureStateService } from '@/server/services/agentSignal/services/procedureStateService';
-import type { AgentSignalPolicyStateStore } from '@/server/services/agentSignal/store/types';
+import { createProcedureStateService } from '~server/services/agentSignal/services/procedureStateService';
+import type { AgentSignalPolicyStateStore } from '~server/services/agentSignal/store/types';
 
 import { readRecordedSkillIntent, recordSkillIntent } from '../skillIntentRecord';
 

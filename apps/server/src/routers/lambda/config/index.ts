@@ -3,13 +3,13 @@ import debug from 'debug';
 
 import { businessConfigEndpoints } from '@/business/server/lambda-routers/config';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
-import { getServerFeatureFlagsStateFromRuntimeConfig } from '@/server/featureFlags';
-import { getServerDefaultAgentConfig, getServerGlobalConfig } from '@/server/globalConfig';
 import {
   type GlobalBillboard,
   type GlobalBillboardItem,
   type GlobalRuntimeConfig,
 } from '@/types/serverConfig';
+import { getServerFeatureFlagsStateFromRuntimeConfig } from '~server/featureFlags';
+import { getServerDefaultAgentConfig, getServerGlobalConfig } from '~server/globalConfig';
 
 const log = debug('config-router');
 

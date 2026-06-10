@@ -1,4 +1,4 @@
-import type { PreSignedUpload } from '@/server/modules/S3';
+import type { PreSignedUpload } from '~server/modules/S3';
 
 export type { PreSignedUpload };
 

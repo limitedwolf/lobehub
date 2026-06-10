@@ -8,14 +8,14 @@ import { FileModel } from '@/database/models/file';
 import { KnowledgeBaseModel } from '@/database/models/knowledgeBase';
 import { SessionModel } from '@/database/models/session';
 import { UserModel } from '@/database/models/user';
-import { AgentService } from '@/server/services/agent';
-import { EditLockService } from '@/server/services/editLock';
-import { publishResourceEvent } from '@/server/services/resourceEvents';
 import { KnowledgeType } from '@/types/knowledgeBase';
+import { AgentService } from '~server/services/agent';
+import { EditLockService } from '~server/services/editLock';
+import { publishResourceEvent } from '~server/services/resourceEvents';
 
 import { agentRouter } from '../agent';
 
-vi.mock('@/server/services/resourceEvents', () => ({ publishResourceEvent: vi.fn() }));
+vi.mock('~server/services/resourceEvents', () => ({ publishResourceEvent: vi.fn() }));
 
 const publishResourceEventMock = vi.mocked(publishResourceEvent);
 
@@ -41,7 +41,7 @@ vi.mock('@/database/models/knowledgeBase', () => ({
   KnowledgeBaseModel: vi.fn(),
 }));
 
-vi.mock('@/server/services/agent', () => ({
+vi.mock('~server/services/agent', () => ({
   AgentService: vi.fn(),
 }));
 

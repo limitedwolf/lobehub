@@ -1,6 +1,6 @@
 import { createLambdaContext } from '@/libs/trpc/lambda/context';
 import { createResponseMeta } from '@/libs/trpc/utils/responseMeta';
-import { mobileRouter } from '@/server/routers/mobile';
+import { mobileRouter } from '~server/routers/mobile';
 
 import { createTRPCRouteHandler } from './createTRPCRouteHandler';
 

@@ -1,5 +1,5 @@
-import { TempFileManager } from '@/server/utils/tempFileManager';
 import { nanoid } from '@/utils/uuid';
+import { TempFileManager } from '~server/utils/tempFileManager';
 
 import { splitText } from '../../splitter';
 import { type DocumentChunk } from '../../types';

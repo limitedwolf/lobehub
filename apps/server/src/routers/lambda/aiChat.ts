@@ -19,11 +19,11 @@ import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { resolveContext } from '@/server/routers/lambda/_helpers/resolveContext';
-import { AiChatService } from '@/server/services/aiChat';
-import { AiGenerationService } from '@/server/services/aiGeneration';
-import { FileService } from '@/server/services/file';
-import { archiveToolResultIfNeeded } from '@/server/services/toolExecution/archiveToolResult';
+import { resolveContext } from '~server/routers/lambda/_helpers/resolveContext';
+import { AiChatService } from '~server/services/aiChat';
+import { AiGenerationService } from '~server/services/aiGeneration';
+import { FileService } from '~server/services/file';
+import { archiveToolResultIfNeeded } from '~server/services/toolExecution/archiveToolResult';
 
 const log = debug('lobe-lambda-router:ai-chat');
 const { createPrefixedTimingContext, logTiming, runTimedStage } = createTimingHelpers(

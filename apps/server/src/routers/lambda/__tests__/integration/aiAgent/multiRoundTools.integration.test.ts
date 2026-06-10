@@ -13,9 +13,9 @@ import { eq } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { inMemoryAgentStateManager } from '@/server/modules/AgentRuntime/InMemoryAgentStateManager';
-import { inMemoryStreamEventManager } from '@/server/modules/AgentRuntime/InMemoryStreamEventManager';
-import { ToolExecutionService } from '@/server/services/toolExecution';
+import { inMemoryAgentStateManager } from '~server/modules/AgentRuntime/InMemoryAgentStateManager';
+import { inMemoryStreamEventManager } from '~server/modules/AgentRuntime/InMemoryStreamEventManager';
+import { ToolExecutionService } from '~server/services/toolExecution';
 
 import { aiAgentRouter } from '../../../aiAgent';
 import { cleanupTestUser, createTestUser } from '../setup';
@@ -31,7 +31,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 }));
 
 // Mock FileService to avoid S3 environment variable requirements
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     getFullFileUrl: vi.fn().mockImplementation((path: string) => (path ? `/files${path}` : null)),
   })),

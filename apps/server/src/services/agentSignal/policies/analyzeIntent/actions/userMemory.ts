@@ -20,14 +20,14 @@ import type { LobeChatDatabase } from '@/database/type';
 import {
   InMemoryAgentStateManager,
   InMemoryStreamEventManager,
-} from '@/server/modules/AgentRuntime';
+} from '~server/modules/AgentRuntime';
 import {
   createServerAgentToolsEngine,
   type InstalledPlugin,
   type ServerAgentToolsContext,
-} from '@/server/modules/Mecha';
-import { AgentService } from '@/server/services/agent';
-import type { AgentSignalOperationMarker } from '@/server/services/agentSignal/operationMarker';
+} from '~server/modules/Mecha';
+import { AgentService } from '~server/services/agent';
+import type { AgentSignalOperationMarker } from '~server/services/agentSignal/operationMarker';
 
 import type { RuntimeProcessorContext } from '../../../runtime/context';
 import { defineActionHandler } from '../../../runtime/middleware';
@@ -234,8 +234,7 @@ export const runMemoryActionAgent = async (
   const manifestMap = toolsEngine.getEnabledPluginManifests([MemoryIdentifier]);
   const operationId = `agent-signal-memory-${nanoid()}`;
   const initialContext = createInitialContext(operationId);
-  const { AgentRuntimeService } =
-    await import('@/server/services/agentRuntime/AgentRuntimeService');
+  const { AgentRuntimeService } = await import('~server/services/agentRuntime/AgentRuntimeService');
 
   // Create a child thread under the triggering assistant message so that
   // memory-agent messages are isolated from the main topic conversation

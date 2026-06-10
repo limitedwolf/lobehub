@@ -3,7 +3,7 @@ import type { ClientSecretPayload } from '@lobechat/types';
 import { checkAuth } from '@/app/(backend)/middleware/auth';
 import { getServerDBConfig } from '@/config/db';
 import { createCallerFactory } from '@/libs/trpc/lambda';
-import { lambdaRouter } from '@/server/routers/lambda';
+import { lambdaRouter } from '~server/routers/lambda';
 
 const serverDBEnv = getServerDBConfig();
 

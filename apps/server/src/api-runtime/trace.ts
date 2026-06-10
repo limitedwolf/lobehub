@@ -1,8 +1,8 @@
 import { TraceEventType } from '@lobechat/types';
 
 import { TraceClient } from '@/libs/traces';
-import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
 import { type TraceEventBasePayload, type TraceEventPayloads } from '@/types/trace';
+import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
 export interface TraceAPIHandlerOptions {
   scheduleAfterResponse?: (task: () => Promise<void> | void) => void;

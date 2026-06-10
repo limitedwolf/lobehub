@@ -14,7 +14,7 @@ vi.mock('../serverRuntimes', () => ({
 vi.mock('@/server/services/composio', () => ({
   ComposioService: vi.fn().mockImplementation(() => ({})),
 }));
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn().mockImplementation(() => ({})),
 }));
 

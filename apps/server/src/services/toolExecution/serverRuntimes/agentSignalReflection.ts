@@ -4,8 +4,8 @@ import {
   AgentSignalToolExecutionRuntime,
 } from '@lobechat/builtin-tool-agent-signal';
 
-import { createResourceRuntimePrimitives } from '@/server/services/agentSignal/services/selfIteration/tools/runtimePrimitives';
-import { SkillManagementDocumentService } from '@/server/services/skillManagement';
+import { createResourceRuntimePrimitives } from '~server/services/agentSignal/services/selfIteration/tools/runtimePrimitives';
+import { SkillManagementDocumentService } from '~server/services/skillManagement';
 
 import type { ServerRuntimeRegistration } from './types';
 

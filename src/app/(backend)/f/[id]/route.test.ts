@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FileModel } from '@/database/models/file';
 import type { FileItem } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 
 import { GET } from './route';
 
@@ -31,7 +31,7 @@ vi.mock('@/database/server', () => ({
   getServerDB: vi.fn(),
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: fileServiceMocks.FileService,
 }));
 

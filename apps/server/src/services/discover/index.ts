@@ -69,9 +69,9 @@ import urlJoin from 'url-join';
 
 import { type TrustedClientUserInfo } from '@/libs/trusted-client';
 import { normalizeLocale } from '@/locales/resources';
-import { AssistantStore } from '@/server/modules/AssistantStore';
-import { PluginStore } from '@/server/modules/PluginStore';
-import { MarketService } from '@/server/services/market';
+import { AssistantStore } from '~server/modules/AssistantStore';
+import { PluginStore } from '~server/modules/PluginStore';
+import { MarketService } from '~server/services/market';
 
 const log = debug('lobe-server:discover');
 

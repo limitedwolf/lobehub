@@ -11,7 +11,7 @@ import type { SerializedEditorState, SerializedLexicalNode } from 'lexical';
 import { DocumentModel } from '@/database/models/document';
 import { type LobeChatDatabase } from '@/database/type';
 import { isValidEditorData } from '@/libs/editor/isValidEditorData';
-import { DocumentService } from '@/server/services/document';
+import { DocumentService } from '~server/services/document';
 
 import type { ServerRuntimeRegistration } from './types';
 

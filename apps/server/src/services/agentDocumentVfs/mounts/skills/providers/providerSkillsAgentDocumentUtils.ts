@@ -1,8 +1,8 @@
 import type { AgentDocument } from '@/database/models/agentDocuments';
 import { PolicyLoad } from '@/database/models/agentDocuments';
 import type { AgentDocumentSourceType } from '@/database/models/agentDocuments/types';
-import { exportEditorDataSnapshot } from '@/server/services/agentDocuments/headlessEditor';
-import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import { exportEditorDataSnapshot } from '~server/services/agentDocuments/headlessEditor';
+import { AgentDocumentVfsError } from '~server/services/agentDocumentVfs/errors';
 import {
   AGENT_SKILL_TEMPLATE_ID,
   SKILL_BUNDLE_FILE_TYPE,
@@ -10,7 +10,7 @@ import {
   SKILL_INDEX_FILENAME,
   SKILL_MANAGEMENT_SOURCE,
   SKILL_MANAGEMENT_SOURCE_TYPE,
-} from '@/server/services/skillManagement';
+} from '~server/services/skillManagement';
 
 import { getUnifiedSkillNamespaceRootPath } from '../path';
 import type { SkillMountNode } from '../types';

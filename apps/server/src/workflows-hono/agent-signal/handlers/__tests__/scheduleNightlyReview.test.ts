@@ -12,7 +12,7 @@ vi.mock('@/database/server', () => ({
   getServerDB: mocks.getServerDB,
 }));
 
-vi.mock('@/server/services/agentSignal/services', () => ({
+vi.mock('~server/services/agentSignal/services', () => ({
   createServerNightlyReviewScheduleService: () => ({
     dispatchNightlyReviewRequests: mocks.dispatchNightlyReviewRequests,
   }),

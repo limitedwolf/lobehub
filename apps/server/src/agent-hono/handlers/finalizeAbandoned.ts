@@ -2,7 +2,7 @@ import debug from 'debug';
 import type { Context } from 'hono';
 
 import { getServerDB } from '@/database/core/db-adaptor';
-import { AbandonOperationService } from '@/server/services/agentRuntime';
+import { AbandonOperationService } from '~server/services/agentRuntime';
 
 const log = debug('lobe-server:agent:finalize-abandoned');
 

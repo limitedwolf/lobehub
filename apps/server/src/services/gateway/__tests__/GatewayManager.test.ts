@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PlatformDefinition } from '@/server/services/bot/platforms';
+import type { PlatformDefinition } from '~server/services/bot/platforms';
 
 import { GatewayManager } from '../GatewayManager';
 
@@ -20,7 +20,7 @@ vi.mock('@/database/models/agentBotProvider', () => {
   return { AgentBotProviderModel: MockModel };
 });
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: mockInitWithEnvKey,
   },

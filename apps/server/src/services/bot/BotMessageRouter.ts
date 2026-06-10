@@ -8,10 +8,10 @@ import type { DecryptedBotProvider } from '@/database/models/agentBotProvider';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import type { LobeChatDatabase } from '@/database/type';
 import { appEnv } from '@/envs/app';
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { emitAgentSignalSourceEvent } from '@/server/services/agentSignal';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { emitAgentSignalSourceEvent } from '~server/services/agentSignal';
+import { AiAgentService } from '~server/services/aiAgent';
 
 import { AgentBridgeService } from './AgentBridgeService';
 import { buildBotContext } from './buildBotContext';

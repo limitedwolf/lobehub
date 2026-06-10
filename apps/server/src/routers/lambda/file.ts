@@ -24,12 +24,12 @@ import { workspaceMembers } from '@/database/schemas';
 import { appEnv } from '@/envs/app';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { DocumentService } from '@/server/services/document';
-import { FileService } from '@/server/services/file';
 import { AsyncTaskStatus, AsyncTaskType, type IAsyncTaskError } from '@/types/asyncTask';
 import type { FileListItem, KnowledgeItemStatus } from '@/types/files';
 import { QueryFileListSchema, UploadFileSchema } from '@/types/files';
 import { TransferErrorCode } from '@/types/transferError';
+import { DocumentService } from '~server/services/document';
+import { FileService } from '~server/services/file';
 
 /**
  * Generate file proxy URL

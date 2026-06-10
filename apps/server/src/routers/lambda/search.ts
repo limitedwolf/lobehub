@@ -4,7 +4,7 @@ import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceA
 import { SearchRepo } from '@/database/repositories/search';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { DiscoverService } from '@/server/services/discover';
+import { DiscoverService } from '~server/services/discover';
 
 /**
  * Calculate relevance score for marketplace items

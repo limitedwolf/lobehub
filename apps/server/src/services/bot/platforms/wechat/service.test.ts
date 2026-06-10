@@ -21,7 +21,7 @@ vi.mock('@lobechat/chat-adapter-wechat', () => ({
 }));
 
 const mockRedisGet = vi.hoisted(() => vi.fn().mockResolvedValue(null));
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   getAgentRuntimeRedisClient: () => ({ get: mockRedisGet }),
 }));
 

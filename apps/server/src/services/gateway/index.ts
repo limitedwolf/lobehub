@@ -3,13 +3,13 @@ import debug from 'debug';
 import type { MessengerPlatform } from '@/config/messenger';
 import { getServerDB } from '@/database/core/db-adaptor';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import { type BotRuntimeStatus, type BotRuntimeStatusSnapshot } from '@/types/botRuntimeStatus';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 import {
   getInstallationStore,
   messengerConnectionIdForUser,
-} from '@/server/services/messenger/installations';
-import { messengerPlatformRegistry } from '@/server/services/messenger/platforms';
-import { type BotRuntimeStatus, type BotRuntimeStatusSnapshot } from '@/types/botRuntimeStatus';
+} from '~server/services/messenger/installations';
+import { messengerPlatformRegistry } from '~server/services/messenger/platforms';
 
 import type { ConnectionMode } from '../bot/platforms';
 import { platformRegistry, resolveConnectionMode } from '../bot/platforms';
@@ -111,7 +111,7 @@ export class GatewayService {
   private async syncGatewayConnections(): Promise<void> {
     const { getServerDB } = await import('@/database/core/db-adaptor');
     const { AgentBotProviderModel } = await import('@/database/models/agentBotProvider');
-    const { KeyVaultsGateKeeper } = await import('@/server/modules/KeyVaultsEncrypt');
+    const { KeyVaultsGateKeeper } = await import('~server/modules/KeyVaultsEncrypt');
 
     const client = getMessageGatewayClient();
     const serverDB = await getServerDB();
@@ -552,7 +552,7 @@ export class GatewayService {
 
     const { getServerDB } = await import('@/database/core/db-adaptor');
     const { AgentBotProviderModel } = await import('@/database/models/agentBotProvider');
-    const { KeyVaultsGateKeeper } = await import('@/server/modules/KeyVaultsEncrypt');
+    const { KeyVaultsGateKeeper } = await import('~server/modules/KeyVaultsEncrypt');
 
     const serverDB = await getServerDB();
     const gateKeeper = await KeyVaultsGateKeeper.initWithEnvKey();

@@ -1,11 +1,11 @@
 import { AgentSignalReviewContextModel } from '@/database/models/agentSignal/reviewContext';
-import { AGENT_SIGNAL_DEFAULTS } from '@/server/services/agentSignal/constants';
+import { AGENT_SIGNAL_DEFAULTS } from '~server/services/agentSignal/constants';
 import {
   createDurableSelfReflectionAccumulator,
   createProcedurePolicyOptions,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
-import { redisSourceEventStore } from '@/server/services/agentSignal/store/adapters/redis/sourceEventStore';
+} from '~server/services/agentSignal/procedure';
+import { redisPolicyStateStore } from '~server/services/agentSignal/store/adapters/redis/policyStateStore';
+import { redisSourceEventStore } from '~server/services/agentSignal/store/adapters/redis/sourceEventStore';
 
 import { createSelfReflectionService } from '../../selfReflection';
 import type { CreateServerSelfIterationPolicyOptions } from '../server';
@@ -160,7 +160,7 @@ export const createServerProcedurePolicyOptions = ({
         },
         enqueueSource: async (event) => {
           const { enqueueAgentSignalSourceEvent } =
-            await import('@/server/services/agentSignal/emitter');
+            await import('~server/services/agentSignal/emitter');
 
           return enqueueAgentSignalSourceEvent(event, {
             agentId,

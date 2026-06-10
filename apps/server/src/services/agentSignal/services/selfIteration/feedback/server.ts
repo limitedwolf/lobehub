@@ -1,6 +1,6 @@
 import { AgentSignalReviewContextModel } from '@/database/models/agentSignal/reviewContext';
-import { AGENT_SIGNAL_DEFAULTS } from '@/server/services/agentSignal/constants';
-import { redisSourceEventStore } from '@/server/services/agentSignal/store/adapters/redis/sourceEventStore';
+import { AGENT_SIGNAL_DEFAULTS } from '~server/services/agentSignal/constants';
+import { redisSourceEventStore } from '~server/services/agentSignal/store/adapters/redis/sourceEventStore';
 
 import type { CreateServerSelfIterationPolicyOptions } from '../server';
 import { canRunSelfIterationSource } from '../server';

@@ -7,9 +7,9 @@ import { UserMemoryModel } from '@/database/models/userMemory/model';
 import { userMemories } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
 import { selectNonVectorColumns } from '@/database/utils/columns';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { embedUserMemoryTexts } from '@/server/services/memory/userMemory/embedding';
 import { LayersEnum } from '@/types/userMemory';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { embedUserMemoryTexts } from '~server/services/memory/userMemory/embedding';
 
 const bodySchema = z.object({
   layer: z.nativeEnum(LayersEnum).optional(),

@@ -13,8 +13,8 @@ import { MessageModel } from '@/database/models/message';
 import { workspaceMembers } from '@/database/schemas';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { DocumentService } from '@/server/services/document';
 import { TransferErrorCode } from '@/types/transferError';
+import { DocumentService } from '~server/services/document';
 
 import {
   compareDocumentHistoryItemsInputSchema,

@@ -42,7 +42,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 }));
 
 // Mock FileService
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn(() => ({
     getKeyFromFullUrl: mockGetKeyFromFullUrl,
     getFullFileUrl: mockGetFullFileUrl,
@@ -84,7 +84,7 @@ vi.mock('@lobechat/business-model-bank/model-config', () => ({
 }));
 
 // Mock async caller
-vi.mock('@/server/routers/async/caller', () => ({
+vi.mock('~server/routers/async/caller', () => ({
   createAsyncCaller: mockCreateAsyncCaller,
 }));
 

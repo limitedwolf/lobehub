@@ -2,7 +2,7 @@
  * Workflow utility functions
  * Extracted from workflowRegistry to avoid circular dependencies
  */
-import { FLUX_MODEL_CONFIG, SD_MODEL_CONFIG } from '@/server/services/comfyui/config/constants';
+import { FLUX_MODEL_CONFIG, SD_MODEL_CONFIG } from '~server/services/comfyui/config/constants';
 
 /**
  * Workflow function to default filename type mapping

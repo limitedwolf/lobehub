@@ -81,7 +81,7 @@ export const enqueueSelfIterationRun = async (
     }
   }
 
-  const { AiAgentService } = await import('@/server/services/aiAgent');
+  const { AiAgentService } = await import('~server/services/aiAgent');
   const result = await new AiAgentService(input.db, input.userId, {
     workspaceId: input.workspaceId,
   }).execAgent({

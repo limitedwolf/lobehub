@@ -3,7 +3,7 @@ import { type LobeChatDatabase } from '@lobechat/database';
 import type { AgentDocumentSourceType } from '@/database/models/agentDocuments/types';
 import { DocumentModel } from '@/database/models/document';
 import { TopicDocumentModel } from '@/database/models/topicDocument';
-import { DocumentService } from '@/server/services/document';
+import { DocumentService } from '~server/services/document';
 
 interface DocumentServiceResult {
   content: string | null;

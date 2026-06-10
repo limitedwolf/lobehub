@@ -1,9 +1,9 @@
 import debug from 'debug';
 
 import { appEnv } from '@/envs/app';
-import type { PlatformClient } from '@/server/services/bot/platforms';
-import { SlackApi } from '@/server/services/bot/platforms/slack/api';
-import { SlackClientFactory } from '@/server/services/bot/platforms/slack/client';
+import type { PlatformClient } from '~server/services/bot/platforms';
+import { SlackApi } from '~server/services/bot/platforms/slack/api';
+import { SlackClientFactory } from '~server/services/bot/platforms/slack/client';
 
 import { getInstallationStore } from '../../installations';
 import type { InstallationCredentials } from '../../installations/types';

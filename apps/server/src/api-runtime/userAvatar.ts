@@ -1,5 +1,5 @@
 import { serverDB } from '@/database/server';
-import { UserService } from '@/server/services/user';
+import { UserService } from '~server/services/user';
 
 const CONTENT_TYPE_MAP: Record<string, string> = {
   avif: 'image/avif',

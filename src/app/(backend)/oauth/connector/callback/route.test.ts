@@ -11,7 +11,7 @@ const { mockConsume, mockFindById, mockSync, mockUpdate } = vi.hoisted(() => ({
 
 vi.mock('@/database/server', () => ({ serverDB: {} }));
 vi.mock('@/envs/app', () => ({ appEnv: { APP_URL: 'https://app.example.com' } }));
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: { initWithEnvKey: vi.fn().mockResolvedValue({}) },
 }));
 vi.mock('@modelcontextprotocol/sdk/client/auth.js', () => ({
@@ -19,15 +19,15 @@ vi.mock('@modelcontextprotocol/sdk/client/auth.js', () => ({
     .fn()
     .mockResolvedValue({ token_endpoint: 'https://as/token' }),
 }));
-vi.mock('@/server/services/connector/oauth', () => ({
+vi.mock('~server/services/connector/oauth', () => ({
   exchangeConnectorCode: vi.fn().mockResolvedValue({ access_token: 'tok' }),
 }));
-vi.mock('@/server/services/connector/tokens', () => ({
+vi.mock('~server/services/connector/tokens', () => ({
   tokensToCredentials: vi
     .fn()
     .mockReturnValue({ credentials: { accessToken: 'tok', type: 'oauth2' }, tokenExpiresAt: null }),
 }));
-vi.mock('@/server/services/connector/stateStore', () => ({
+vi.mock('~server/services/connector/stateStore', () => ({
   consumeConnectorOAuthState: mockConsume,
 }));
 vi.mock('@/database/models/connector', () => ({
@@ -38,7 +38,7 @@ vi.mock('@/database/models/connector', () => ({
 vi.mock('@/database/models/connectorTool', () => ({
   ConnectorToolModel: vi.fn().mockImplementation(() => ({})),
 }));
-vi.mock('@/server/services/connector/sync', () => ({ syncConnectorToolsById: mockSync }));
+vi.mock('~server/services/connector/sync', () => ({ syncConnectorToolsById: mockSync }));
 
 const makeReq = () =>
   ({ nextUrl: { searchParams: new URLSearchParams('code=abc&state=xyz') } }) as any;

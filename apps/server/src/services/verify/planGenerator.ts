@@ -11,7 +11,7 @@ import { VerifyRubricModel } from '@/database/models/verifyRubric';
 import { VerifyRunModel } from '@/database/models/verifyRun';
 import type { VerifyCriterionItem } from '@/database/schemas/verify';
 import type { LobeChatDatabase } from '@/database/type';
-import { AiGenerationService } from '@/server/services/aiGeneration';
+import { AiGenerationService } from '~server/services/aiGeneration';
 
 import { buildPlanPrompt, VERIFY_PLAN_PROMPT_VERSION } from './prompts';
 import { GENERATED_CRITERIA_JSON_SCHEMA, RawGeneratedCriteriaSchema } from './schema';

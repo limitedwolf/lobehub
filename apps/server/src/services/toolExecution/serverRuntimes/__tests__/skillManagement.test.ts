@@ -1,11 +1,11 @@
 import { SkillMaintainerExecutionRuntime } from '@lobechat/builtin-tool-skill-maintainer';
 import { describe, expect, it, vi } from 'vitest';
 
-import { SkillManagementDocumentService } from '@/server/services/skillManagement';
+import { SkillManagementDocumentService } from '~server/services/skillManagement';
 
 import { skillManagementRuntime } from '../skillManagement';
 
-vi.mock('@/server/services/skillManagement');
+vi.mock('~server/services/skillManagement');
 
 describe('skillManagementRuntime', () => {
   /**

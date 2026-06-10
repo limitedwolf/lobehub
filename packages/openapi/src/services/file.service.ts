@@ -20,12 +20,12 @@ import {
   users,
 } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import type { S3 } from '@/server/modules/S3';
-import { FileS3 } from '@/server/modules/S3';
-import { DocumentService } from '@/server/services/document';
-import { FileService as CoreFileService } from '@/server/services/file';
 import { isChunkingUnsupported } from '@/utils/isChunkingUnsupported';
 import { nanoid } from '@/utils/uuid';
+import type { S3 } from '~server/modules/S3';
+import { FileS3 } from '~server/modules/S3';
+import { DocumentService } from '~server/services/document';
+import { FileService as CoreFileService } from '~server/services/file';
 
 import { BaseService } from '../common/base.service';
 import { processPaginationConditions } from '../helpers/pagination';
@@ -916,7 +916,7 @@ export class FileUploadService extends BaseService {
       }
 
       // Trigger async chunking task
-      const { ChunkService } = await import('@/server/services/chunk');
+      const { ChunkService } = await import('~server/services/chunk');
       const chunkService = new ChunkService(this.db, this.userId, this.workspaceId);
 
       const chunkTaskId = await chunkService.asyncParseFileToChunks(fileId, req.skipExist);

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   InMemoryAgentStateManager,
   InMemoryStreamEventManager,
-} from '@/server/modules/AgentRuntime';
+} from '~server/modules/AgentRuntime';
 
 import { AgentRuntimeService } from '../AgentRuntimeService';
 
@@ -18,7 +18,7 @@ vi.mock('@/database/models/message', () => ({
 }));
 
 // Mock ModelRuntime
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initializeRuntimeOptions: vi.fn(),
   initModelRuntimeFromDB: vi.fn().mockResolvedValue({
     chat: vi.fn(),
@@ -30,27 +30,27 @@ vi.mock('@/server/modules/ModelRuntime', () => ({
 }));
 
 // Mock search service
-vi.mock('@/server/services/search', () => ({
+vi.mock('~server/services/search', () => ({
   searchService: {
     search: vi.fn(),
   },
 }));
 
 // Mock MCP service
-vi.mock('@/server/services/mcp', () => ({
+vi.mock('~server/services/mcp', () => ({
   mcpService: {
     executeCommand: vi.fn(),
   },
 }));
 
 // Mock tool execution service
-vi.mock('@/server/services/toolExecution', () => ({
+vi.mock('~server/services/toolExecution', () => ({
   ToolExecutionService: vi.fn().mockImplementation(() => ({
     executeToolCall: vi.fn().mockResolvedValue({ result: 'success' }),
   })),
 }));
 
-vi.mock('@/server/services/toolExecution/builtin', () => ({
+vi.mock('~server/services/toolExecution/builtin', () => ({
   BuiltinToolsExecutor: vi.fn().mockImplementation(() => ({
     execute: vi.fn(),
   })),

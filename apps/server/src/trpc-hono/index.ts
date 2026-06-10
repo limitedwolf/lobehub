@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 
-import { asyncTRPCHandler } from '@/server/trpc-runtime/async';
-import { lambdaTRPCHandler } from '@/server/trpc-runtime/lambda';
-import { mobileTRPCHandler } from '@/server/trpc-runtime/mobile';
-import { toolsTRPCHandler } from '@/server/trpc-runtime/tools';
+import { asyncTRPCHandler } from '~server/trpc-runtime/async';
+import { lambdaTRPCHandler } from '~server/trpc-runtime/lambda';
+import { mobileTRPCHandler } from '~server/trpc-runtime/mobile';
+import { toolsTRPCHandler } from '~server/trpc-runtime/tools';
 
 /**
  * Hono app for `/trpc/*` endpoints. Mounts the four tRPC route groups so the

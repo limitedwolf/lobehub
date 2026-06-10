@@ -41,8 +41,8 @@ const loadIndexIntegrationModule = async (options: LoadIndexIntegrationModuleOpt
   vi.doUnmock('../policies');
   vi.doUnmock('../runtime/AgentSignalRuntime');
   vi.doUnmock('../sources');
-  vi.doUnmock('@/server/services/agentDocuments');
-  vi.doUnmock('@/server/modules/ModelRuntime');
+  vi.doUnmock('~server/services/agentDocuments');
+  vi.doUnmock('~server/modules/ModelRuntime');
 
   const persistAgentSignalObservability = vi.fn().mockResolvedValue(undefined);
   const isAgentSignalEnabledForUser = vi.fn().mockResolvedValue(options.featureGateEnabled ?? true);
@@ -55,7 +55,7 @@ const loadIndexIntegrationModule = async (options: LoadIndexIntegrationModuleOpt
   }));
 
   if (options.mockInitModelRuntimeFromDB) {
-    vi.doMock('@/server/modules/ModelRuntime', () => ({
+    vi.doMock('~server/modules/ModelRuntime', () => ({
       initModelRuntimeFromDB: options.mockInitModelRuntimeFromDB,
     }));
   }

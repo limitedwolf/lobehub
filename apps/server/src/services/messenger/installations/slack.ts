@@ -6,8 +6,8 @@ import {
   type DecryptedMessengerInstallation,
   MessengerInstallationModel,
 } from '@/database/models/messengerInstallation';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { refreshToken as refreshSlackToken } from '@/server/services/messenger/oauth/slackOAuth';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { refreshToken as refreshSlackToken } from '~server/services/messenger/oauth/slackOAuth';
 
 import type { InstallationCredentials, MessengerInstallationStore } from './types';
 

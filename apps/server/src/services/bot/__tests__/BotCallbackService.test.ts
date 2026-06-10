@@ -86,13 +86,13 @@ vi.mock('@/database/models/topic', () => ({
   })),
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: mockInitWithEnvKey,
   },
 }));
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   getAgentRuntimeRedisClient: vi.fn().mockReturnValue(null),
 }));
 
@@ -102,7 +102,7 @@ vi.mock('../AgentBridgeService', () => ({
   },
 }));
 
-vi.mock('@/server/services/gateway/MessageGatewayClient', () => ({
+vi.mock('~server/services/gateway/MessageGatewayClient', () => ({
   getMessageGatewayClient: vi.fn().mockReturnValue({
     isConfigured: false,
     isEnabled: false,
@@ -111,13 +111,13 @@ vi.mock('@/server/services/gateway/MessageGatewayClient', () => ({
   }),
 }));
 
-vi.mock('@/server/services/systemAgent', () => ({
+vi.mock('~server/services/systemAgent', () => ({
   SystemAgentService: vi.fn().mockImplementation(() => ({
     generateTopicTitle: mockGenerateTopicTitle,
   })),
 }));
 
-vi.mock('@/server/services/messenger/installations', () => ({
+vi.mock('~server/services/messenger/installations', () => ({
   getInstallationStore: mockMessengerGetInstallationStore,
   messengerConnectionIdForUser: ({
     installationKey,
@@ -133,7 +133,7 @@ vi.mock('@/server/services/messenger/installations', () => ({
   },
 }));
 
-vi.mock('@/server/services/messenger/platforms', () => ({
+vi.mock('~server/services/messenger/platforms', () => ({
   messengerPlatformRegistry: {
     createBinder: mockMessengerCreateBinder,
     getPlatform: vi.fn().mockImplementation((platform: string) => ({

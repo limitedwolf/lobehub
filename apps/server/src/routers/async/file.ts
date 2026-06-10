@@ -15,15 +15,15 @@ import { type NewChunkItem, type NewEmbeddingsItem } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 import { fileEnv } from '@/envs/file';
 import { asyncAuthedProcedure, asyncRouter as router } from '@/libs/trpc/async';
-import { getServerDefaultFilesConfig } from '@/server/globalConfig';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { ChunkService } from '@/server/services/chunk';
-import { DocumentService } from '@/server/services/document';
-import { FileService } from '@/server/services/file';
 import { type IAsyncTaskError } from '@/types/asyncTask';
 import { AsyncTaskError, AsyncTaskErrorType, AsyncTaskStatus } from '@/types/asyncTask';
 import { safeParseJSON } from '@/utils/safeParseJSON';
 import { sanitizeUTF8 } from '@/utils/sanitizeUTF8';
+import { getServerDefaultFilesConfig } from '~server/globalConfig';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { ChunkService } from '~server/services/chunk';
+import { DocumentService } from '~server/services/document';
+import { FileService } from '~server/services/file';
 
 const fileProcedure = asyncAuthedProcedure.use(async (opts) => {
   const { ctx } = opts;

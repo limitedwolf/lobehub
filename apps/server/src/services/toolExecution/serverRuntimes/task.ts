@@ -16,8 +16,8 @@ import { eq } from 'drizzle-orm';
 import { AgentModel } from '@/database/models/agent';
 import { TaskModel } from '@/database/models/task';
 import { tasks } from '@/database/schemas';
-import { taskRouter } from '@/server/routers/lambda/task';
-import { TaskService } from '@/server/services/task';
+import { taskRouter } from '~server/routers/lambda/task';
+import { TaskService } from '~server/services/task';
 
 import { type ServerRuntimeRegistration } from './types';
 

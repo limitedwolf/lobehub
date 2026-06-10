@@ -66,13 +66,13 @@ vi.mock('@/config/messenger', () => ({
 
 const mockListSerializedPlatforms = vi.fn();
 
-vi.mock('@/server/services/messenger', () => ({
+vi.mock('~server/services/messenger', () => ({
   messengerPlatformRegistry: {
     listSerializedPlatforms: mockListSerializedPlatforms,
   },
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: vi.fn().mockResolvedValue({}),
   },
@@ -84,7 +84,7 @@ vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
 // runtime rejects ("Attempted to access a server-side environment variable
 // on the client"). The runtime under test doesn't exercise these helpers in
 // any covered path; pass-through / no-op behaviour is enough to load.
-vi.mock('@/server/services/bot/agentBotProviderSettings', () => ({
+vi.mock('~server/services/bot/agentBotProviderSettings', () => ({
   assertBotAccessSettings: vi.fn(),
   invalidateBotAfterUpdate: vi.fn().mockResolvedValue(undefined),
   mergeBotSettingsForPersist: vi.fn((_platform, settings) => settings),
@@ -96,7 +96,7 @@ const mockDiscordGetMessages = vi.fn();
 const mockDiscordEditMessage = vi.fn();
 const mockDiscordDeleteMessage = vi.fn();
 
-vi.mock('@/server/services/bot/platforms/discord/api', () => ({
+vi.mock('~server/services/bot/platforms/discord/api', () => ({
   DiscordApi: vi.fn().mockImplementation(() => ({
     createMessage: mockDiscordCreateMessage,
     createPoll: vi.fn(),
@@ -119,7 +119,7 @@ vi.mock('@/server/services/bot/platforms/discord/api', () => ({
 }));
 
 const mockTelegramSendMessage = vi.fn();
-vi.mock('@/server/services/bot/platforms/telegram/api', () => ({
+vi.mock('~server/services/bot/platforms/telegram/api', () => ({
   TelegramApi: vi.fn().mockImplementation(() => ({
     deleteMessage: vi.fn(),
     editMessageText: vi.fn(),
@@ -136,7 +136,7 @@ vi.mock('@/server/services/bot/platforms/telegram/api', () => ({
 }));
 
 const mockSlackPostMessage = vi.fn();
-vi.mock('@/server/services/bot/platforms/slack/api', () => ({
+vi.mock('~server/services/bot/platforms/slack/api', () => ({
   SLACK_API_BASE: 'https://slack.com/api',
   SlackApi: vi.fn().mockImplementation(() => ({
     addReaction: vi.fn(),

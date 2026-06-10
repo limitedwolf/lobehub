@@ -15,7 +15,7 @@ import debug from 'debug';
 
 import { getServerDB } from '@/database/server';
 import type { LobeChatDatabase } from '@/database/type';
-import { AgentSignalWorkflow } from '@/server/workflows/agentSignal';
+import { AgentSignalWorkflow } from '~server/workflows/agentSignal';
 
 import { isAgentSignalEnabledForUser } from './featureGate';
 import type { GeneratedAgentSignalEmissionResult } from './orchestrator';

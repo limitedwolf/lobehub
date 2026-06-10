@@ -9,7 +9,7 @@ vi.mock('@chat-adapter/slack', () => ({
   createSlackAdapter: mockCreateSlackAdapter,
 }));
 
-vi.mock('@/server/services/gateway/runtimeStatus', () => ({
+vi.mock('~server/services/gateway/runtimeStatus', () => ({
   BOT_RUNTIME_STATUSES: {
     connected: 'connected',
     disconnected: 'disconnected',

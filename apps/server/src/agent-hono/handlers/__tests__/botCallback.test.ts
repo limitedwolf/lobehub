@@ -5,7 +5,7 @@ import { botCallback } from '../botCallback';
 
 const mockHandleCallback = vi.fn();
 
-vi.mock('@/server/services/bot/BotCallbackService', () => ({
+vi.mock('~server/services/bot/BotCallbackService', () => ({
   BotCallbackService: vi.fn().mockImplementation(() => ({
     handleCallback: mockHandleCallback,
   })),

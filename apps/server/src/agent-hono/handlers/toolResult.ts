@@ -2,7 +2,7 @@ import debug from 'debug';
 import type { Context } from 'hono';
 import { z } from 'zod';
 
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
 
 const log = debug('lobe-server:agent:tool-result');
 

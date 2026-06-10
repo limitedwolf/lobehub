@@ -1,6 +1,6 @@
 import type { ActionEvent, Message, SlashCommandEvent } from 'chat';
 
-import type { PlatformClient } from '@/server/services/bot/platforms';
+import type { PlatformClient } from '~server/services/bot/platforms';
 
 export interface UnlinkedMessageContext {
   authorUserId: string;

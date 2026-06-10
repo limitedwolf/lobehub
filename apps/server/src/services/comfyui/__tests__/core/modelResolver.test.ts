@@ -5,18 +5,18 @@ import {
   TEST_FLUX_MODELS,
   TEST_MODEL_SETS,
   TEST_SD35_MODELS,
-} from '@/server/services/comfyui/__tests__/fixtures/testModels';
-import { type ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { ModelResolverService } from '@/server/services/comfyui/core/modelResolverService';
-import { ModelResolverError } from '@/server/services/comfyui/errors/modelResolverError';
+} from '~server/services/comfyui/__tests__/fixtures/testModels';
+import { type ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { ModelResolverService } from '~server/services/comfyui/core/modelResolverService';
+import { ModelResolverError } from '~server/services/comfyui/errors/modelResolverError';
 
 // Mock ComfyUI Client Service
-vi.mock('@/server/services/comfyui/core/comfyUIClientService', () => ({
+vi.mock('~server/services/comfyui/core/comfyUIClientService', () => ({
   ComfyUIClientService: vi.fn(),
 }));
 
 // Mock the config module
-vi.mock('@/server/services/comfyui/config/modelRegistry', () => {
+vi.mock('~server/services/comfyui/config/modelRegistry', () => {
   const configs: Record<string, any> = {
     'flux1-dev.safetensors': {
       family: 'flux',
@@ -103,7 +103,7 @@ vi.mock('../utils/staticModelLookup', () => {
   };
 });
 
-vi.mock('@/server/services/comfyui/config/systemComponents', () => ({
+vi.mock('~server/services/comfyui/config/systemComponents', () => ({
   SYSTEM_COMPONENTS: {
     'clip_g.safetensors': {
       modelFamily: 'SD3',

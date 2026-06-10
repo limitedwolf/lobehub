@@ -28,7 +28,7 @@ const emptyResolvedAttachments = {
   warnings: [],
 };
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({})),
 }));
 
@@ -81,7 +81,7 @@ vi.mock('@/database/models/device', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agent', () => ({
+vi.mock('~server/services/agent', () => ({
   AgentService: vi.fn().mockImplementation(() => ({
     getAgentConfig: vi.fn().mockResolvedValue(heteroAgentConfig),
   })),
@@ -110,7 +110,7 @@ vi.mock('@/database/models/thread', () => ({
   })),
 }));
 
-vi.mock('@/server/services/market', () => ({
+vi.mock('~server/services/market', () => ({
   MarketService: vi.fn().mockImplementation(() => ({
     getLobehubSkillManifests: vi.fn().mockResolvedValue([]),
     market: {
@@ -122,27 +122,27 @@ vi.mock('@/server/services/market', () => ({
   })),
 }));
 
-vi.mock('@/server/services/heterogeneousAgent', () => ({
+vi.mock('~server/services/heterogeneousAgent', () => ({
   HeterogeneousAgentService: vi.fn().mockImplementation(() => ({
     getHeterogeneousResumeSessionId: vi.fn().mockResolvedValue(undefined),
   })),
 }));
 
-vi.mock('@/server/services/heterogeneousAgent/sandboxRunner', () => ({
+vi.mock('~server/services/heterogeneousAgent/sandboxRunner', () => ({
   spawnHeteroSandbox: mockSpawnHeteroSandbox,
 }));
 
-vi.mock('@/server/services/file/resolveAttachments', () => ({
+vi.mock('~server/services/file/resolveAttachments', () => ({
   resolveAttachmentsByFileIds: mockResolveAttachmentsByFileIds,
 }));
 
-vi.mock('@/server/services/document', () => ({
+vi.mock('~server/services/document', () => ({
   DocumentService: vi.fn().mockImplementation(() => ({
     parseFile: vi.fn().mockResolvedValue({ content: '' }),
   })),
 }));
 
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     createOperation: vi.fn().mockResolvedValue({
       autoStarted: true,
@@ -153,7 +153,7 @@ vi.mock('@/server/services/agentRuntime', () => ({
   })),
 }));
 
-vi.mock('@/server/modules/Mecha', () => ({
+vi.mock('~server/modules/Mecha', () => ({
   createServerAgentToolsEngine: vi.fn().mockReturnValue({
     generateToolsDetailed: vi.fn().mockReturnValue({ enabledToolIds: [], tools: [] }),
     getEnabledPluginManifests: vi.fn().mockReturnValue(new Map()),
@@ -161,7 +161,7 @@ vi.mock('@/server/modules/Mecha', () => ({
   serverMessagesEngine: vi.fn().mockResolvedValue([{ content: 'test', role: 'user' }]),
 }));
 
-vi.mock('@/server/services/deviceGateway', () => ({
+vi.mock('~server/services/deviceGateway', () => ({
   deviceGateway: {
     dispatchAgentRun: mockDispatchAgentRun,
     isConfigured: false,
@@ -170,7 +170,7 @@ vi.mock('@/server/services/deviceGateway', () => ({
   },
 }));
 
-vi.mock('@/server/services/heterogeneousAgent/remoteDeviceHeteroContext', () => ({
+vi.mock('~server/services/heterogeneousAgent/remoteDeviceHeteroContext', () => ({
   buildRemoteDeviceHeteroContext: vi.fn().mockReturnValue('device context'),
 }));
 

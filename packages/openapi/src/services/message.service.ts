@@ -3,7 +3,7 @@ import { and, asc, count, desc, eq, ilike, inArray, isNull } from 'drizzle-orm';
 import { messages, messagesFiles } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
 import { idGenerator } from '@/database/utils/idGenerator';
-import { FileService as CoreFileService } from '@/server/services/file';
+import { FileService as CoreFileService } from '~server/services/file';
 
 import { BaseService } from '../common/base.service';
 import { processPaginationConditions } from '../helpers/pagination';

@@ -25,7 +25,7 @@ const mockExecAgent = vi.fn().mockResolvedValue({
   topicId: 'tpc_test',
 });
 const mockInterruptTask = vi.fn().mockResolvedValue({ success: true });
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
     interruptTask: mockInterruptTask,
@@ -33,21 +33,21 @@ vi.mock('@/server/services/aiAgent', () => ({
 }));
 
 // Mock TaskLifecycleService
-vi.mock('@/server/services/taskLifecycle', () => ({
+vi.mock('~server/services/taskLifecycle', () => ({
   TaskLifecycleService: vi.fn().mockImplementation(() => ({
     onTopicComplete: vi.fn(),
   })),
 }));
 
 // Mock TaskReviewService
-vi.mock('@/server/services/taskReview', () => ({
+vi.mock('~server/services/taskReview', () => ({
   TaskReviewService: vi.fn().mockImplementation(() => ({
     review: vi.fn(),
   })),
 }));
 
 // Mock initModelRuntimeFromDB
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 

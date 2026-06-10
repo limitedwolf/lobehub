@@ -6,15 +6,15 @@ import { agents, messages, threads, topics, users } from '@lobechat/database/sch
 import { getTestDB } from '@lobechat/database/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createProcedurePolicyOptions as createProcedurePolicyOptionsFixture } from '@/server/services/agentSignal/procedure';
-import type { SelfReflectionReviewContext } from '@/server/services/agentSignal/services/selfIteration/reflection/handler';
-import type { NightlyReviewContext } from '@/server/services/agentSignal/services/selfIteration/review/collect';
-import type { AgentSignalPolicyStateStore } from '@/server/services/agentSignal/store/types';
-import type { RunAgentSignalWorkflowDeps } from '@/server/workflows/agentSignal/run';
-import { runAgentSignalWorkflow } from '@/server/workflows/agentSignal/run';
 import { uuid } from '@/utils/uuid';
+import { createProcedurePolicyOptions as createProcedurePolicyOptionsFixture } from '~server/services/agentSignal/procedure';
+import type { SelfReflectionReviewContext } from '~server/services/agentSignal/services/selfIteration/reflection/handler';
+import type { NightlyReviewContext } from '~server/services/agentSignal/services/selfIteration/review/collect';
+import type { AgentSignalPolicyStateStore } from '~server/services/agentSignal/store/types';
+import type { RunAgentSignalWorkflowDeps } from '~server/workflows/agentSignal/run';
+import { runAgentSignalWorkflow } from '~server/workflows/agentSignal/run';
 
-vi.mock('@/server/services/agentSignal/featureGate', () => ({
+vi.mock('~server/services/agentSignal/featureGate', () => ({
   isAgentSignalEnabledForUser: vi.fn().mockResolvedValue(true),
 }));
 

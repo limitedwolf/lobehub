@@ -1,13 +1,13 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { parametersFixture } from '@/server/services/comfyui/__tests__/fixtures/parameters.fixture';
-import { setupAllMocks } from '@/server/services/comfyui/__tests__/setup/unifiedMocks';
-import { ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
+import { parametersFixture } from '~server/services/comfyui/__tests__/fixtures/parameters.fixture';
+import { setupAllMocks } from '~server/services/comfyui/__tests__/setup/unifiedMocks';
+import { ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
 // Import services for testing
-import { ImageService } from '@/server/services/comfyui/core/imageService';
-import { ModelResolverService } from '@/server/services/comfyui/core/modelResolverService';
-import { WorkflowBuilderService } from '@/server/services/comfyui/core/workflowBuilderService';
+import { ImageService } from '~server/services/comfyui/core/imageService';
+import { ModelResolverService } from '~server/services/comfyui/core/modelResolverService';
+import { WorkflowBuilderService } from '~server/services/comfyui/core/workflowBuilderService';
 
 describe('Service Integration - Module Level', () => {
   let imageService: ImageService;

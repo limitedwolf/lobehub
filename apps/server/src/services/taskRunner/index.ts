@@ -11,8 +11,8 @@ import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
 import type { LobeChatDatabase } from '@/database/type';
-import { AiAgentService } from '@/server/services/aiAgent';
-import { TaskLifecycleService } from '@/server/services/taskLifecycle';
+import { AiAgentService } from '~server/services/aiAgent';
+import { TaskLifecycleService } from '~server/services/taskLifecycle';
 
 import { buildTaskPrompt } from './buildTaskPrompt';
 

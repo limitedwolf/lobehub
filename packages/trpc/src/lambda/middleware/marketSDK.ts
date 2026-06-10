@@ -1,5 +1,5 @@
 import { isTrustedClientEnabled, type TrustedClientUserInfo } from '@/libs/trusted-client';
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 import { trpc } from '../init';
 

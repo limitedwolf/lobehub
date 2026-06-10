@@ -5,7 +5,7 @@ import { PluginModel } from '@/database/models/plugin';
 import { getComposioClient } from '@/libs/composio';
 import { authedProcedure, publicProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { MCPService } from '@/server/services/mcp';
+import { MCPService } from '~server/services/mcp';
 
 const composioProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const composioClient = getComposioClient();

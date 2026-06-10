@@ -1,8 +1,8 @@
 import { CURRENT_VERSION } from '@lobechat/const';
 import { type CallReportRequest } from '@lobehub/market-types';
 
-import { DiscoverService } from '@/server/services/discover';
-import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
+import { DiscoverService } from '~server/services/discover';
+import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
 /**
  * Calculate byte size of object

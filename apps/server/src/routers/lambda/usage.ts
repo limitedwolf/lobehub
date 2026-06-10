@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceAuth';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { UsageRecordService } from '@/server/services/usage';
+import { UsageRecordService } from '~server/services/usage';
 
 const usageProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

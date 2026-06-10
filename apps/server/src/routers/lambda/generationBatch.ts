@@ -5,8 +5,8 @@ import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceA
 import { GenerationBatchModel } from '@/database/models/generationBatch';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { FileService } from '@/server/services/file';
-import { getVideoAvgLatency } from '@/server/services/generation/latency';
+import { FileService } from '~server/services/file';
+import { getVideoAvgLatency } from '~server/services/generation/latency';
 
 const generationBatchProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

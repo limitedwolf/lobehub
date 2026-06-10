@@ -6,9 +6,9 @@ import { wsCompatProcedure } from '@/business/server/trpc-middlewares/workspaceA
 import { DataImporterRepos } from '@/database/repositories/dataImporter';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { FileService } from '@/server/services/file';
 import { type ImportPgDataStructure } from '@/types/export';
 import { type ImporterEntryData, type ImportResultData } from '@/types/importer';
+import { FileService } from '~server/services/file';
 
 const importProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

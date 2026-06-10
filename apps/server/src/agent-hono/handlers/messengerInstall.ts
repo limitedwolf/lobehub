@@ -3,8 +3,8 @@ import type { Context } from 'hono';
 
 import { auth } from '@/auth';
 import { appEnv } from '@/envs/app';
-import { issueOAuthState } from '@/server/services/messenger/oauth/stateStore';
-import { messengerPlatformRegistry } from '@/server/services/messenger/platforms';
+import { issueOAuthState } from '~server/services/messenger/oauth/stateStore';
+import { messengerPlatformRegistry } from '~server/services/messenger/platforms';
 
 const log = debug('lobe-server:messenger:install');
 

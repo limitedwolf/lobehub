@@ -3,8 +3,8 @@ import { AgentDocumentsIdentifier } from '@lobechat/builtin-tool-agent-documents
 import {
   emitToolOutcomeSafely,
   resolveToolOutcomeScope,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
+} from '~server/services/agentSignal/procedure';
+import { redisPolicyStateStore } from '~server/services/agentSignal/store/adapters/redis/policyStateStore';
 
 /** Tool outcome retention window for agent document procedure state. */
 const AGENT_DOCUMENT_TOOL_OUTCOME_TTL_SECONDS = 7 * 24 * 60 * 60;

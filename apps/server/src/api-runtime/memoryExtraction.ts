@@ -12,18 +12,18 @@ import { z } from 'zod';
 import { AsyncTaskModel, initUserMemoryExtractionMetadata } from '@/database/models/asyncTask';
 import { asyncTasks } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
 import {
   buildWorkflowPayloadInput,
   MemoryExtractionExecutor,
   memoryExtractionPayloadSchema,
   MemoryExtractionWorkflowService,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
+} from '~server/services/memory/userMemory/extract';
 import {
   buildUserPersonaJobInput,
   UserPersonaService,
-} from '@/server/services/memory/userMemory/persona/service';
+} from '~server/services/memory/userMemory/persona/service';
 
 const userPersonaWebhookSchema = z.object({
   baseUrl: z.string().url().optional(),

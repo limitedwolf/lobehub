@@ -13,9 +13,9 @@ import { ConnectorToolPermission } from '@/database/schemas';
 import { type ToolCallContent } from '@/libs/mcp';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase, telemetry } from '@/libs/trpc/lambda/middleware';
-import { FileService } from '@/server/services/file';
-import { mcpService } from '@/server/services/mcp';
-import { processContentBlocks } from '@/server/services/mcp/contentProcessor';
+import { FileService } from '~server/services/file';
+import { mcpService } from '~server/services/mcp';
+import { processContentBlocks } from '~server/services/mcp/contentProcessor';
 
 import { scheduleToolCallReport } from './_helpers';
 

@@ -7,8 +7,8 @@ import { serverDBEnv } from '@/config/db';
 import { FileModel } from '@/database/models/file';
 import { type FileItem } from '@/database/schemas';
 import { appEnv } from '@/envs/app';
-import { TempFileManager } from '@/server/utils/tempFileManager';
 import { isDev } from '@/utils/env';
+import { TempFileManager } from '~server/utils/tempFileManager';
 
 import { createFileServiceModule } from './impls';
 import type { FileServiceImpl, PreSignedUpload } from './impls/type';

@@ -22,7 +22,7 @@ import { getBusinessModelRuntimeHooks } from '@/business/server/model-runtime';
 import { AiProviderModel } from '@/database/models/aiProvider';
 import { type LobeChatDatabase } from '@/database/type';
 import { getLLMConfig } from '@/envs/llm';
-import { createLLMGenerationTracingHook } from '@/server/services/llmGenerationTracing/hook';
+import { createLLMGenerationTracingHook } from '~server/services/llmGenerationTracing/hook';
 
 import { KeyVaultsGateKeeper } from '../KeyVaultsEncrypt';
 import apiKeyManager from './apiKeyManager';

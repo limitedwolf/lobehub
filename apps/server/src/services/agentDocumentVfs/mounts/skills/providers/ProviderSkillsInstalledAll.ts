@@ -1,7 +1,7 @@
 import type { SkillItem, SkillListItem, SkillResourceMeta } from '@lobechat/types';
 
-import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
-import type { SkillResourceService } from '@/server/services/skill/resource';
+import { AgentDocumentVfsError } from '~server/services/agentDocumentVfs/errors';
+import type { SkillResourceService } from '~server/services/skill/resource';
 
 import type { SkillMountProvider, SkillMountProviderRequest } from '../SkillMount';
 import type { SkillMountNode } from '../types';

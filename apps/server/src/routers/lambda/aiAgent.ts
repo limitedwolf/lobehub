@@ -22,12 +22,12 @@ import { TopicModel } from '@/database/models/topic';
 import { taskTopics, topics } from '@/database/schemas';
 import { heteroAuthedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { AgentRuntimeService } from '@/server/services/agentRuntime';
-import { AiAgentService } from '@/server/services/aiAgent';
-import { AiChatService } from '@/server/services/aiChat';
-import { getFileProxyUrl } from '@/server/services/file';
-import { HeterogeneousAgentService } from '@/server/services/heterogeneousAgent';
-import { TaskLifecycleService } from '@/server/services/taskLifecycle';
+import { AgentRuntimeService } from '~server/services/agentRuntime';
+import { AiAgentService } from '~server/services/aiAgent';
+import { AiChatService } from '~server/services/aiChat';
+import { getFileProxyUrl } from '~server/services/file';
+import { HeterogeneousAgentService } from '~server/services/heterogeneousAgent';
+import { TaskLifecycleService } from '~server/services/taskLifecycle';
 
 const log = debug('lobe-server:ai-agent-router');
 

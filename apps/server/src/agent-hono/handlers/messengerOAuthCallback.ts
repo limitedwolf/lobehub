@@ -4,9 +4,9 @@ import type { Context } from 'hono';
 import { getServerDB } from '@/database/core/db-adaptor';
 import { MessengerInstallationModel } from '@/database/models/messengerInstallation';
 import { appEnv } from '@/envs/app';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { consumeOAuthState } from '@/server/services/messenger/oauth/stateStore';
-import { messengerPlatformRegistry } from '@/server/services/messenger/platforms';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import { consumeOAuthState } from '~server/services/messenger/oauth/stateStore';
+import { messengerPlatformRegistry } from '~server/services/messenger/platforms';
 
 const log = debug('lobe-server:messenger:oauth-callback');
 

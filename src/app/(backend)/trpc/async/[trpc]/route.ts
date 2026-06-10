@@ -4,7 +4,7 @@ import { type NextRequest } from 'next/server';
 import { createAsyncRouteContext } from '@/libs/trpc/async/context';
 import { prepareRequestForTRPC } from '@/libs/trpc/utils/request-adapter';
 import { createResponseMeta } from '@/libs/trpc/utils/responseMeta';
-import { asyncRouter } from '@/server/routers/async';
+import { asyncRouter } from '~server/routers/async';
 
 const handler = (req: NextRequest) => {
   // Clone the request to avoid "Response body object should not be disturbed or locked" error

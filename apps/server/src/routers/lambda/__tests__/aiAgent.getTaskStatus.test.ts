@@ -24,19 +24,19 @@ vi.mock('@/database/core/db-adaptor', () => ({
 
 // Mock AgentRuntimeService
 const mockGetOperationStatus = vi.fn();
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     getOperationStatus: mockGetOperationStatus,
   })),
 }));
 
 // Mock AiAgentService
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn().mockImplementation(() => ({})),
 }));
 
 // Mock AiChatService
-vi.mock('@/server/services/aiChat', () => ({
+vi.mock('~server/services/aiChat', () => ({
   AiChatService: vi.fn().mockImplementation(() => ({})),
 }));
 

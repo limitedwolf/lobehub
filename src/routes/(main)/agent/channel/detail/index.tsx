@@ -7,9 +7,9 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { usePermission } from '@/hooks/usePermission';
-import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
 import { agentBotProviderService } from '@/services/agentBotProvider';
 import { useAgentStore } from '@/store/agent';
+import type { SerializedPlatformDefinition } from '~server/services/bot/platforms/types';
 
 import {
   BOT_RUNTIME_STATUSES,

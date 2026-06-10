@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
 import {
   buildWorkflowPayloadInput,
   MemoryExtractionExecutor,
   memoryExtractionPayloadSchema,
   MemoryExtractionWorkflowService,
   normalizeMemoryExtractionPayload,
-} from '@/server/services/memory/userMemory/extract';
+} from '~server/services/memory/userMemory/extract';
 
 export const POST = async (req: Request) => {
   const { webhook, upstashWorkflowExtraHeaders } = parseMemoryExtractionConfig();

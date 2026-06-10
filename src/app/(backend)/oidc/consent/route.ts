@@ -4,7 +4,7 @@ import { type NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { appEnv } from '@/envs/app';
-import { OIDCService } from '@/server/services/oidc';
+import { OIDCService } from '~server/services/oidc';
 
 const log = debug('lobe-oidc:consent');
 

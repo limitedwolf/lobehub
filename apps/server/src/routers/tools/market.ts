@@ -11,14 +11,11 @@ import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { marketUserInfo, serverDatabase, telemetry } from '@/libs/trpc/lambda/middleware';
 import { marketSDK, requireMarketAuth } from '@/libs/trpc/lambda/middleware/marketSDK';
 import { isTrustedClientEnabled } from '@/libs/trusted-client';
-import { DiscoverService } from '@/server/services/discover';
-import { FileService } from '@/server/services/file';
-import { MarketService } from '@/server/services/market';
-import {
-  contentBlocksToString,
-  processContentBlocks,
-} from '@/server/services/mcp/contentProcessor';
-import { createSandboxService } from '@/server/services/sandbox';
+import { DiscoverService } from '~server/services/discover';
+import { FileService } from '~server/services/file';
+import { MarketService } from '~server/services/market';
+import { contentBlocksToString, processContentBlocks } from '~server/services/mcp/contentProcessor';
+import { createSandboxService } from '~server/services/sandbox';
 
 import { scheduleToolCallReport } from './_helpers';
 import {
@@ -191,7 +188,7 @@ const execInSandboxHandler = async ({
     // Preprocess lh commands: rewrite to npx @lobehub/cli + inject auth env vars
     if ((toolName === 'execScript' || toolName === 'runCommand') && params.command) {
       const { preprocessLhCommand } =
-        await import('@/server/services/toolExecution/preprocessLhCommand');
+        await import('~server/services/toolExecution/preprocessLhCommand');
       const lhResult = await preprocessLhCommand(params.command, userId);
 
       if (lhResult.error) {

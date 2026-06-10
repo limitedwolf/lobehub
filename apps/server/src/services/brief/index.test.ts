@@ -23,7 +23,7 @@ vi.mock('@/database/models/task', () => ({
 // Avoid pulling the real TaskRunnerService (which drags ModelRuntime) into the
 // dynamic import the brief service performs after auto-completing a task.
 const cascadeOnCompletion = vi.fn().mockResolvedValue({ failed: [], paused: [], started: [] });
-vi.mock('@/server/services/taskRunner', () => ({
+vi.mock('~server/services/taskRunner', () => ({
   TaskRunnerService: vi.fn().mockImplementation(() => ({ cascadeOnCompletion })),
 }));
 

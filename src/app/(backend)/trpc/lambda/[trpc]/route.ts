@@ -4,7 +4,7 @@ import { type NextRequest } from 'next/server';
 import { createLambdaContext } from '@/libs/trpc/lambda/context';
 import { prepareRequestForTRPC } from '@/libs/trpc/utils/request-adapter';
 import { createResponseMeta } from '@/libs/trpc/utils/responseMeta';
-import { lambdaRouter } from '@/server/routers/lambda';
+import { lambdaRouter } from '~server/routers/lambda';
 
 const SILENT_TRPC_ERROR_LOG_KEY = '__lobeSilentTRPCErrorLog';
 

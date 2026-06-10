@@ -1,4 +1,4 @@
-import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import { AgentDocumentVfsError } from '~server/services/agentDocumentVfs/errors';
 
 import { getUnifiedSkillNamespaceRootPath, SKILL_NAMESPACES, type SkillNamespace } from './path';
 import type { ResolvedSkillMountPath } from './types';

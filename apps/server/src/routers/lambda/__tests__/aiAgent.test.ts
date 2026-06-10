@@ -23,7 +23,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 }));
 
 // Mock AgentRuntimeService since we only want to test the router's business logic
-vi.mock('@/server/services/agentRuntime', () => ({
+vi.mock('~server/services/agentRuntime', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     createOperation: vi.fn().mockResolvedValue({
       success: true,
@@ -35,7 +35,7 @@ vi.mock('@/server/services/agentRuntime', () => ({
 }));
 
 // Mock serverMessagesEngine
-vi.mock('@/server/modules/Mecha', () => ({
+vi.mock('~server/modules/Mecha', () => ({
   createServerAgentToolsEngine: vi.fn(() => ({
     generateToolsDetailed: vi.fn(() => ({ tools: [] })),
     getEnabledPluginManifests: vi.fn(() => new Map()),
@@ -47,14 +47,14 @@ vi.mock('@/server/modules/Mecha', () => ({
 }));
 
 // Mock AiChatService to avoid S3 dependency
-vi.mock('@/server/services/aiChat', () => ({
+vi.mock('~server/services/aiChat', () => ({
   AiChatService: vi.fn().mockImplementation(() => ({
     getMessagesAndTopics: vi.fn().mockResolvedValue({ messages: [], topics: [] }),
   })),
 }));
 
 // Mock FileService to avoid S3 dependency
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn().mockImplementation(() => ({
     getFullFileUrl: vi.fn((path: string | null) => path),
   })),
@@ -273,7 +273,7 @@ describe('AI Agent Router Integration Tests', () => {
     });
 
     it('should pass correct parameters to createOperation', async () => {
-      const { AgentRuntimeService } = await import('@/server/services/agentRuntime');
+      const { AgentRuntimeService } = await import('~server/services/agentRuntime');
       const mockCreateOperation = vi.fn().mockResolvedValue({
         success: true,
         operationId: 'test-op-id',
@@ -324,7 +324,7 @@ describe('AI Agent Router Integration Tests', () => {
     });
 
     it('should include threadId in appContext when provided', async () => {
-      const { AgentRuntimeService } = await import('@/server/services/agentRuntime');
+      const { AgentRuntimeService } = await import('~server/services/agentRuntime');
       const mockCreateOperation = vi.fn().mockResolvedValue({
         success: true,
         operationId: 'test-op-id',

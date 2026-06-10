@@ -1,15 +1,15 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AssistantStore } from '@/server/modules/AssistantStore';
-import { PluginStore } from '@/server/modules/PluginStore';
 import { ModelSorts, PluginSorts, ProviderSorts } from '@/types/discover';
+import { AssistantStore } from '~server/modules/AssistantStore';
+import { PluginStore } from '~server/modules/PluginStore';
 
 import { DiscoverService } from './index';
 
 // Mock external dependencies
-vi.mock('@/server/modules/AssistantStore');
-vi.mock('@/server/modules/PluginStore');
+vi.mock('~server/modules/AssistantStore');
+vi.mock('~server/modules/PluginStore');
 vi.mock('@lobehub/market-sdk');
 vi.mock('@/locales/resources', () => ({
   normalizeLocale: vi.fn((locale) => {

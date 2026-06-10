@@ -8,16 +8,16 @@ import { type ILobeAgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { AgentRuntimeError, AgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { TRPCError } from '@trpc/server';
 
-import { SYSTEM_COMPONENTS } from '@/server/services/comfyui/config/systemComponents';
+import { SYSTEM_COMPONENTS } from '~server/services/comfyui/config/systemComponents';
 import {
   ConfigError,
   isComfyUIInternalError,
   ServicesError,
   UtilsError,
   WorkflowError,
-} from '@/server/services/comfyui/errors';
-import { ModelResolverError } from '@/server/services/comfyui/errors/modelResolverError';
-import { getComponentInfo } from '@/server/services/comfyui/utils/componentInfo';
+} from '~server/services/comfyui/errors';
+import { ModelResolverError } from '~server/services/comfyui/errors/modelResolverError';
+import { getComponentInfo } from '~server/services/comfyui/utils/componentInfo';
 
 interface ComfyUIError {
   code?: number | string;

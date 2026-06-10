@@ -2,7 +2,7 @@ import debug from 'debug';
 import mime from 'mime';
 import sharp from 'sharp';
 
-import type { FileService } from '@/server/services/file';
+import type { FileService } from '~server/services/file';
 
 const log = debug('lobe-server:file-ingestion');
 

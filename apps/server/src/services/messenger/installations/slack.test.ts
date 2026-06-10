@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MessengerInstallationModel } from '@/database/models/messengerInstallation';
-import { refreshToken } from '@/server/services/messenger/oauth/slackOAuth';
+import { refreshToken } from '~server/services/messenger/oauth/slackOAuth';
 
 import { SlackInstallationStore } from './slack';
 
@@ -18,13 +18,13 @@ vi.mock('@/database/models/messengerInstallation', () => ({
   },
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: vi.fn().mockResolvedValue({}),
   },
 }));
 
-vi.mock('@/server/services/messenger/oauth/slackOAuth', () => ({
+vi.mock('~server/services/messenger/oauth/slackOAuth', () => ({
   refreshToken: vi.fn(),
 }));
 

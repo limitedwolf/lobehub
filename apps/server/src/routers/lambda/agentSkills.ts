@@ -9,14 +9,14 @@ import { AgentSkillModel } from '@/database/models/agentSkill';
 import { FileModel } from '@/database/models/file';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { FileService } from '@/server/services/file';
-import { MarketService } from '@/server/services/market';
+import { FileService } from '~server/services/file';
+import { MarketService } from '~server/services/market';
 import {
   SkillImporter,
   SkillImportError,
   SkillResourceError,
   SkillResourceService,
-} from '@/server/services/skill';
+} from '~server/services/skill';
 
 // ===== Error Handling =====
 

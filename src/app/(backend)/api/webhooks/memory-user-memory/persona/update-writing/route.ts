@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getServerDB } from '@/database/server';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
-import { MemoryExtractionWorkflowService } from '@/server/services/memory/userMemory/extract';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
+import { MemoryExtractionWorkflowService } from '~server/services/memory/userMemory/extract';
 import {
   buildUserPersonaJobInput,
   UserPersonaService,
-} from '@/server/services/memory/userMemory/persona/service';
+} from '~server/services/memory/userMemory/persona/service';
 
 const userPersonaWebhookSchema = z.object({
   baseUrl: z.string().url().optional(),

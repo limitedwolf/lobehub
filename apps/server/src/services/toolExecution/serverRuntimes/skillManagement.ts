@@ -9,7 +9,7 @@ import {
   type SkillMaintainerRuntimeService,
 } from '@lobechat/builtin-tool-skill-maintainer';
 
-import { SkillManagementDocumentService } from '@/server/services/skillManagement';
+import { SkillManagementDocumentService } from '~server/services/skillManagement';
 
 import { type ServerRuntimeRegistration } from './types';
 

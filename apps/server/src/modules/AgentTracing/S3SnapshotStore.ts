@@ -4,7 +4,7 @@ import { zstdCompress, zstdDecompress } from 'node:zlib';
 import type { ExecutionSnapshot, ISnapshotStore, SnapshotSummary } from '@lobechat/agent-tracing';
 import debug from 'debug';
 
-import { FileS3 } from '@/server/modules/S3';
+import { FileS3 } from '~server/modules/S3';
 
 const compressZstd = promisify(zstdCompress);
 const decompressZstd = promisify(zstdDecompress);

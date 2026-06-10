@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { LobeChatDatabase } from '@/database/type';
-import type { FileService } from '@/server/services/file';
-import type { MarketService } from '@/server/services/market';
+import type { FileService } from '~server/services/file';
+import type { MarketService } from '~server/services/market';
 
 import { SandboxMiddlewareService } from '../service';
 import type { SandboxProvider } from '../types';

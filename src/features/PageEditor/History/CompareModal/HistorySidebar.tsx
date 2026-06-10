@@ -10,7 +10,7 @@ import { useAuthorInfo } from '@/business/client/hooks/useAuthorInfo';
 import type {
   DocumentHistoryListItem,
   DocumentHistorySaveSource,
-} from '@/server/routers/lambda/_schema/documentHistory';
+} from '~server/routers/lambda/_schema/documentHistory';
 
 import { formatHistoryRowTime } from '../formatHistoryDate';
 

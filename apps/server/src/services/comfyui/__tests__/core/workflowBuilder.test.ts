@@ -4,16 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TEST_COMPONENTS,
   TEST_MODELS,
-} from '@/server/services/comfyui/__tests__/helpers/realConfigData';
-import { type ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { type ModelResolverService } from '@/server/services/comfyui/core/modelResolverService';
-import { type WorkflowContext } from '@/server/services/comfyui/core/workflowBuilderService';
-import { WorkflowBuilderService } from '@/server/services/comfyui/core/workflowBuilderService';
-import { WorkflowError } from '@/server/services/comfyui/errors';
+} from '~server/services/comfyui/__tests__/helpers/realConfigData';
+import { type ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { type ModelResolverService } from '~server/services/comfyui/core/modelResolverService';
+import { type WorkflowContext } from '~server/services/comfyui/core/workflowBuilderService';
+import { WorkflowBuilderService } from '~server/services/comfyui/core/workflowBuilderService';
+import { WorkflowError } from '~server/services/comfyui/errors';
 
 // Mock dependencies (must be before other imports)
-vi.mock('@/server/services/comfyui/core/comfyUIClientService');
-vi.mock('@/server/services/comfyui/core/modelResolverService');
+vi.mock('~server/services/comfyui/core/comfyUIClientService');
+vi.mock('~server/services/comfyui/core/modelResolverService');
 
 // No need to mock modelRegistry - we want to use the real implementation
 

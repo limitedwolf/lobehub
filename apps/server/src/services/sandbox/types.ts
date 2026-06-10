@@ -4,8 +4,8 @@ import type {
 } from '@lobechat/builtin-tool-cloud-sandbox';
 import type { LobeChatDatabase } from '@lobechat/database';
 
-import type { FileService } from '@/server/services/file';
-import type { MarketService } from '@/server/services/market';
+import type { FileService } from '~server/services/file';
+import type { MarketService } from '~server/services/market';
 
 export type SandboxProviderKind = 'market' | 'onlyboxes';
 

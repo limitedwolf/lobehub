@@ -5,14 +5,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AiProviderModel } from '@/database/models/aiProvider';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
-import { getServerGlobalConfig } from '@/server/globalConfig';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { type AiProviderDetailItem, type AiProviderRuntimeState } from '@/types/aiProvider';
+import { getServerGlobalConfig } from '~server/globalConfig';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 import { aiProviderRouter } from '../aiProvider';
 
-vi.mock('@/server/globalConfig');
-vi.mock('@/server/modules/KeyVaultsEncrypt');
+vi.mock('~server/globalConfig');
+vi.mock('~server/modules/KeyVaultsEncrypt');
 vi.mock('@/database/repositories/aiInfra');
 vi.mock('@/database/models/aiProvider');
 vi.mock('@/database/models/user');

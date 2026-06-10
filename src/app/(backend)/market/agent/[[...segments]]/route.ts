@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { MarketService } from '@/server/services/market';
+import { MarketService } from '~server/services/market';
 
 type RouteContext = {
   params: Promise<{

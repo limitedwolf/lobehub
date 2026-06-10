@@ -26,7 +26,7 @@ vi.mock('@/database/schemas', () => ({
   topics: {},
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     initWithEnvKey: vi.fn(),
   },

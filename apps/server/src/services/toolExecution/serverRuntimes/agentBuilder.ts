@@ -13,7 +13,7 @@ import { modelsResultsPrompt } from '@lobechat/prompts';
 import { AgentModel } from '@/database/models/agent';
 import { PluginModel } from '@/database/models/plugin';
 import { AiInfraRepos } from '@/database/repositories/aiInfra';
-import { DiscoverService } from '@/server/services/discover';
+import { DiscoverService } from '~server/services/discover';
 
 import { type ToolExecutionContext, type ToolExecutionResult } from '../types';
 import { type ServerRuntimeRegistration } from './types';

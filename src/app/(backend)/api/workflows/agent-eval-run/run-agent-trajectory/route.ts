@@ -3,12 +3,12 @@ import debug from 'debug';
 
 import { getServerDB } from '@/database/server';
 import { qstashClient } from '@/libs/qstash';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
 import {
   AgentEvalRunWorkflow,
   type RunAgentTrajectoryPayload,
-} from '@/server/workflows/agentEvalRun';
-import { resolveAgentEvalRunWorkspace } from '@/server/workflows/agentEvalRun/utils';
+} from '~server/workflows/agentEvalRun';
+import { resolveAgentEvalRunWorkspace } from '~server/workflows/agentEvalRun/utils';
 
 const log = debug('lobe-server:workflows:run-agent-trajectory');
 

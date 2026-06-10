@@ -3,11 +3,11 @@ import type { LobeChatDatabase } from '@lobechat/database';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TopicDocumentModel } from '@/database/models/topicDocument';
-import { AgentDocumentVfsService } from '@/server/services/agentDocumentVfs';
+import { AgentDocumentVfsService } from '~server/services/agentDocumentVfs';
 
 import { archiveToolResultIfNeeded } from '../archiveToolResult';
 
-vi.mock('@/server/services/agentDocumentVfs', () => ({
+vi.mock('~server/services/agentDocumentVfs', () => ({
   AgentDocumentVfsService: vi.fn(),
 }));
 

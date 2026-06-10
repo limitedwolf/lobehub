@@ -3,9 +3,9 @@ import debug from 'debug';
 
 import { getServerDB } from '@/database/server';
 import { qstashClient } from '@/libs/qstash';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
-import type { ResumeThreadTrajectoryPayload } from '@/server/workflows/agentEvalRun';
-import { resolveAgentEvalRunWorkspace } from '@/server/workflows/agentEvalRun/utils';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
+import type { ResumeThreadTrajectoryPayload } from '~server/workflows/agentEvalRun';
+import { resolveAgentEvalRunWorkspace } from '~server/workflows/agentEvalRun/utils';
 
 const log = debug('lobe-server:workflows:resume-thread-trajectory');
 

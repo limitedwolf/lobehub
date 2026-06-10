@@ -19,7 +19,7 @@ import {
   topics,
   users,
 } from '@/database/schemas';
-import { AgentEvalRunService } from '@/server/services/agentEvalRun';
+import { AgentEvalRunService } from '~server/services/agentEvalRun';
 
 const serverDB = await getTestDB();
 

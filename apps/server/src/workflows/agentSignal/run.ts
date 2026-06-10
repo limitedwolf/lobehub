@@ -27,22 +27,22 @@ import { MessageModel } from '@/database/models/message';
 import { getServerDB } from '@/database/server';
 import { buildWorkspaceWhere } from '@/database/utils/workspace';
 import { extractTraceContext } from '@/libs/observability/traceparent';
-import { isAgentSignalEnabledForUser } from '@/server/services/agentSignal/featureGate';
-import { toAgentSignalTraceEvents } from '@/server/services/agentSignal/observability/traceEvents';
-import type { GeneratedAgentSignalEmissionResult } from '@/server/services/agentSignal/orchestrator';
-import { executeAgentSignalSourceEvent } from '@/server/services/agentSignal/orchestrator';
-import { assembleFeedbackContext } from '@/server/services/agentSignal/policies/analyzeIntent/context/feedbackContextAssembler';
-import { createRedisRuntimeGuardBackend } from '@/server/services/agentSignal/runtime/backend/redisGuard';
-import { createServerSelfFeedbackIntentPolicyOptions } from '@/server/services/agentSignal/services/selfIteration/feedback/server';
+import { isAgentSignalEnabledForUser } from '~server/services/agentSignal/featureGate';
+import { toAgentSignalTraceEvents } from '~server/services/agentSignal/observability/traceEvents';
+import type { GeneratedAgentSignalEmissionResult } from '~server/services/agentSignal/orchestrator';
+import { executeAgentSignalSourceEvent } from '~server/services/agentSignal/orchestrator';
+import { assembleFeedbackContext } from '~server/services/agentSignal/policies/analyzeIntent/context/feedbackContextAssembler';
+import { createRedisRuntimeGuardBackend } from '~server/services/agentSignal/runtime/backend/redisGuard';
+import { createServerSelfFeedbackIntentPolicyOptions } from '~server/services/agentSignal/services/selfIteration/feedback/server';
 import {
   createServerProcedurePolicyOptions,
   createServerSelfReflectionPolicyOptions,
-} from '@/server/services/agentSignal/services/selfIteration/reflection/server';
-import { createServerSelfReviewPolicyOptions } from '@/server/services/agentSignal/services/selfIteration/review/server';
-import type { ClientRuntimeCompleteHydrationDiagnostic } from '@/server/services/agentSignal/sources/hydration/clientRuntimeComplete';
-import { resolveClientRuntimeCompleteFeedbackSource } from '@/server/services/agentSignal/sources/hydration/clientRuntimeComplete';
-import type { ClientRuntimeStartHydrationDiagnostic } from '@/server/services/agentSignal/sources/hydration/clientRuntimeStart';
-import { resolveClientRuntimeStartFeedbackSource } from '@/server/services/agentSignal/sources/hydration/clientRuntimeStart';
+} from '~server/services/agentSignal/services/selfIteration/reflection/server';
+import { createServerSelfReviewPolicyOptions } from '~server/services/agentSignal/services/selfIteration/review/server';
+import type { ClientRuntimeCompleteHydrationDiagnostic } from '~server/services/agentSignal/sources/hydration/clientRuntimeComplete';
+import { resolveClientRuntimeCompleteFeedbackSource } from '~server/services/agentSignal/sources/hydration/clientRuntimeComplete';
+import type { ClientRuntimeStartHydrationDiagnostic } from '~server/services/agentSignal/sources/hydration/clientRuntimeStart';
+import { resolveClientRuntimeStartFeedbackSource } from '~server/services/agentSignal/sources/hydration/clientRuntimeStart';
 
 import type { AgentSignalWorkflowRunPayload } from './types';
 

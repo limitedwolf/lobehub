@@ -1,12 +1,12 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { parametersFixture } from '@/server/services/comfyui/__tests__/fixtures/parameters.fixture';
-import { mockContext } from '@/server/services/comfyui/__tests__/helpers/mockContext';
-import { setupAllMocks } from '@/server/services/comfyui/__tests__/setup/unifiedMocks';
+import { parametersFixture } from '~server/services/comfyui/__tests__/fixtures/parameters.fixture';
+import { mockContext } from '~server/services/comfyui/__tests__/helpers/mockContext';
+import { setupAllMocks } from '~server/services/comfyui/__tests__/setup/unifiedMocks';
 // Import transformation utilities
-import { buildFluxDevWorkflow } from '@/server/services/comfyui/workflows/flux-dev';
-import { buildFluxKontextWorkflow } from '@/server/services/comfyui/workflows/flux-kontext';
+import { buildFluxDevWorkflow } from '~server/services/comfyui/workflows/flux-dev';
+import { buildFluxKontextWorkflow } from '~server/services/comfyui/workflows/flux-kontext';
 
 describe('Parameter Transformation Tests', () => {
   let inputCalls: Map<string, any>;

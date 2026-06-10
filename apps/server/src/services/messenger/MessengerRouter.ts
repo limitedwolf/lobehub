@@ -15,18 +15,18 @@ import { MessengerAccountLinkModel } from '@/database/models/messengerAccountLin
 import { WorkspaceModel } from '@/database/models/workspace';
 import type { MessengerAccountLinkItem } from '@/database/schemas';
 import type { LobeChatDatabase } from '@/database/type';
-import { getServerFeatureFlagsStateFromRuntimeConfig } from '@/server/featureFlags';
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
-import { AiAgentService } from '@/server/services/aiAgent';
-import { AgentBridgeService } from '@/server/services/bot/AgentBridgeService';
-import { buildBotContext } from '@/server/services/bot/buildBotContext';
-import { submitBotFeedback } from '@/server/services/bot/feedbackSubmit';
-import type { PlatformClient } from '@/server/services/bot/platforms';
+import { getServerFeatureFlagsStateFromRuntimeConfig } from '~server/featureFlags';
+import { getAgentRuntimeRedisClient } from '~server/modules/AgentRuntime/redis';
+import { AiAgentService } from '~server/services/aiAgent';
+import { AgentBridgeService } from '~server/services/bot/AgentBridgeService';
+import { buildBotContext } from '~server/services/bot/buildBotContext';
+import { submitBotFeedback } from '~server/services/bot/feedbackSubmit';
+import type { PlatformClient } from '~server/services/bot/platforms';
 import {
   renderCommandReply,
   renderFeedbackSubmitted,
   renderInlineError,
-} from '@/server/services/bot/replyTemplate';
+} from '~server/services/bot/replyTemplate';
 
 import { getInstallationStore } from './installations';
 import type { InstallationCredentials } from './installations/types';

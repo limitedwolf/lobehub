@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { AsyncTaskModel, initUserMemoryExtractionMetadata } from '@/database/models/asyncTask';
 import { asyncTasks } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
-import { parseMemoryExtractionConfig } from '@/server/globalConfig/parseMemoryExtractionConfig';
+import { parseMemoryExtractionConfig } from '~server/globalConfig/parseMemoryExtractionConfig';
 
 const cancelPayloadSchema = z.object({
   // Optional human-readable cancellation reason.

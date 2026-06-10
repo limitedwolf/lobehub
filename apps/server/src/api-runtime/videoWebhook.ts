@@ -17,8 +17,8 @@ import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationModel } from '@/database/models/generation';
 import { generationBatches } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
-import { VideoGenerationService } from '@/server/services/generation/video';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
+import { VideoGenerationService } from '~server/services/generation/video';
 
 const log = debug('lobe-video:webhook');
 

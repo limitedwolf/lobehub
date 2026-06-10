@@ -7,11 +7,11 @@
 import { type PromptBuilder } from '@saintno/comfyui-sdk';
 import debug from 'debug';
 
-import { getWorkflowBuilder } from '@/server/services/comfyui/config/workflowRegistry';
-import { type ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { type ModelResolverService } from '@/server/services/comfyui/core/modelResolverService';
-import { WorkflowError } from '@/server/services/comfyui/errors';
-import { type WorkflowDetectionResult } from '@/server/services/comfyui/utils/workflowDetector';
+import { getWorkflowBuilder } from '~server/services/comfyui/config/workflowRegistry';
+import { type ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { type ModelResolverService } from '~server/services/comfyui/core/modelResolverService';
+import { WorkflowError } from '~server/services/comfyui/errors';
+import { type WorkflowDetectionResult } from '~server/services/comfyui/utils/workflowDetector';
 
 const log = debug('lobe-image:comfyui:workflow-builder');
 

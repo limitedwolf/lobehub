@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { withScopedPermission } from '@/business/server/trpc-middlewares/rbacPermission';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
-import { FileS3 } from '@/server/modules/S3';
+import { FileS3 } from '~server/modules/S3';
 
 export const uploadRouter = router({
   createS3PreSignedUrl: authedProcedure

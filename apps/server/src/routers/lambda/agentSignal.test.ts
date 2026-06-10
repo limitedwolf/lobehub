@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCallerFactory } from '@/libs/trpc/lambda';
 import { type AuthContext } from '@/libs/trpc/lambda/context';
 import { createContextInner } from '@/libs/trpc/lambda/context';
-import { listAgentSignalReceipts } from '@/server/services/agentSignal/services/receiptService';
+import { listAgentSignalReceipts } from '~server/services/agentSignal/services/receiptService';
 
 import { agentSignalRouter } from './agentSignal';
 
@@ -13,13 +13,13 @@ vi.mock('@/database/core/db-adaptor', () => ({
   getServerDB: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock('@/server/services/agentSignal', () => ({
+vi.mock('~server/services/agentSignal', () => ({
   enqueueAgentSignalSourceEvent: vi
     .fn()
     .mockResolvedValue({ accepted: true, scopeKey: 'topic:topic-1', workflowRunId: 'wfr_1' }),
 }));
 
-vi.mock('@/server/services/agentSignal/services/receiptService', () => ({
+vi.mock('~server/services/agentSignal/services/receiptService', () => ({
   listAgentSignalReceipts: vi.fn().mockResolvedValue({
     cursor: undefined,
     receipts: [

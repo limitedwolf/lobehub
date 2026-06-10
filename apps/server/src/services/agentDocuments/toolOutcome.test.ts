@@ -15,9 +15,9 @@ const policyStateStoreMocks = vi.hoisted(() => ({
   redisPolicyStateStore: { sentinel: 'redis-policy-store' },
 }));
 
-vi.mock('@/server/services/agentSignal/procedure', () => procedureMocks);
+vi.mock('~server/services/agentSignal/procedure', () => procedureMocks);
 vi.mock(
-  '@/server/services/agentSignal/store/adapters/redis/policyStateStore',
+  '~server/services/agentSignal/store/adapters/redis/policyStateStore',
   () => policyStateStoreMocks,
 );
 

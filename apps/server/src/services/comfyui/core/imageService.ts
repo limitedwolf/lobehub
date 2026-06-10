@@ -8,14 +8,14 @@ import { type CreateImagePayload, type CreateImageResponse } from '@lobechat/mod
 import { type PromptBuilder } from '@saintno/comfyui-sdk';
 import debug from 'debug';
 
-import { type ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { ErrorHandlerService } from '@/server/services/comfyui/core/errorHandlerService';
-import { type ModelResolverService } from '@/server/services/comfyui/core/modelResolverService';
-import { type WorkflowBuilderService } from '@/server/services/comfyui/core/workflowBuilderService';
-import { ServicesError } from '@/server/services/comfyui/errors';
-import { imageResizer } from '@/server/services/comfyui/utils/imageResizer';
-import { WorkflowDetector } from '@/server/services/comfyui/utils/workflowDetector';
 import { nanoid } from '@/utils/uuid';
+import { type ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { ErrorHandlerService } from '~server/services/comfyui/core/errorHandlerService';
+import { type ModelResolverService } from '~server/services/comfyui/core/modelResolverService';
+import { type WorkflowBuilderService } from '~server/services/comfyui/core/workflowBuilderService';
+import { ServicesError } from '~server/services/comfyui/errors';
+import { imageResizer } from '~server/services/comfyui/utils/imageResizer';
+import { WorkflowDetector } from '~server/services/comfyui/utils/workflowDetector';
 
 const log = debug('lobe-image:comfyui:image-service');
 

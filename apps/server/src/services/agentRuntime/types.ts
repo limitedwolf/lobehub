@@ -9,9 +9,9 @@ import type {
 import type { ChatTopicBotContext, UserInterventionConfig } from '@lobechat/types';
 
 import type { ExecutionPlan } from '@/helpers/executionTarget';
-import { type ServerUserMemoryConfig } from '@/server/modules/Mecha/ContextEngineering/types';
-import type { AgentSignalOperationMarker } from '@/server/services/agentSignal/operationMarker';
-import type { DeviceAccessReason } from '@/server/services/aiAgent/deviceAccessPolicy';
+import { type ServerUserMemoryConfig } from '~server/modules/Mecha/ContextEngineering/types';
+import type { AgentSignalOperationMarker } from '~server/services/agentSignal/operationMarker';
+import type { DeviceAccessReason } from '~server/services/aiAgent/deviceAccessPolicy';
 
 import { type AgentHook } from './hooks/types';
 

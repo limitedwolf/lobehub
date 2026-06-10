@@ -1,7 +1,7 @@
 import { builtinSkills } from '@lobechat/builtin-skills';
 
 import { filterBuiltinSkills } from '@/helpers/skillFilters';
-import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import { AgentDocumentVfsError } from '~server/services/agentDocumentVfs/errors';
 
 import type { SkillMountProvider, SkillMountProviderRequest } from '../SkillMount';
 import type { SkillMountNode } from '../types';

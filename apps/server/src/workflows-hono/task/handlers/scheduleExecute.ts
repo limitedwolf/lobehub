@@ -1,7 +1,7 @@
 import debug from 'debug';
 import type { Context } from 'hono';
 
-import { runScheduleTick } from '@/server/services/taskRunner/scheduleTick';
+import { runScheduleTick } from '~server/services/taskRunner/scheduleTick';
 
 const log = debug('lobe-server:workflows:task:schedule-execute');
 

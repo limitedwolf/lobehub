@@ -1,6 +1,6 @@
 import { createAsyncRouteContext } from '@/libs/trpc/async/context';
 import { createResponseMeta } from '@/libs/trpc/utils/responseMeta';
-import { asyncRouter } from '@/server/routers/async';
+import { asyncRouter } from '~server/routers/async';
 
 import { createTRPCRouteHandler } from './createTRPCRouteHandler';
 

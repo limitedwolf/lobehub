@@ -4,7 +4,7 @@ import { AgentEvalRunTopicModel } from '@/database/models/agentEval';
 
 import { cleanupDB, serverDB, setupMultiCaseRun, userId } from './_setup';
 
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
+vi.mock('~server/services/agentRuntime/AgentRuntimeService', () => ({
   AgentRuntimeService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
@@ -39,7 +39,7 @@ describe('AgentEvalRunService', () => {
       const rt1 = await runTopicModel.findByRunAndTestCase(run.id, cases[0].testCase.id);
       await runTopicModel.updateByRunAndTopic(rt1!.runId, rt1!.topicId, { status: 'pending' });
 
-      const { AgentEvalRunWorkflow } = await import('@/server/workflows/agentEvalRun');
+      const { AgentEvalRunWorkflow } = await import('~server/workflows/agentEvalRun');
       const needExecution = await AgentEvalRunWorkflow.filterTestCasesNeedingExecution(serverDB, {
         runId: run.id,
         testCaseIds: cases.map((c) => c.testCase.id),

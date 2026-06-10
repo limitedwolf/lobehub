@@ -1,6 +1,6 @@
 import { LayersEnum } from '@lobechat/types';
 
-import type { AgentSignalOperationMarker } from '@/server/services/agentSignal/operationMarker';
+import type { AgentSignalOperationMarker } from '~server/services/agentSignal/operationMarker';
 
 import type { AgentSignalReceipt } from '../../receiptService';
 import type { ToolResultWithKind } from '../finalStateExtractor';

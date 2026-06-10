@@ -6,8 +6,8 @@ import { GenerationTopicModel } from '@/database/models/generationTopic';
 import { type GenerationTopicItem } from '@/database/schemas/generation';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { FileService } from '@/server/services/file';
-import { GenerationService } from '@/server/services/generation';
+import { FileService } from '~server/services/file';
+import { GenerationService } from '~server/services/generation';
 
 const generationTopicProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

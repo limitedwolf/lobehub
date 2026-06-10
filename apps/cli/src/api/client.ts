@@ -1,8 +1,8 @@
 import { createTRPCClient, httpLink } from '@trpc/client';
 import superjson from 'superjson';
 
-import type { LambdaRouter } from '@/server/routers/lambda';
-import type { ToolsRouter } from '@/server/routers/tools';
+import type { LambdaRouter } from '~server/routers/lambda';
+import type { ToolsRouter } from '~server/routers/tools';
 
 import { getValidToken } from '../auth/refresh';
 import { CLI_API_KEY_ENV } from '../constants/auth';

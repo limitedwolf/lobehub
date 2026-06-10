@@ -3,8 +3,8 @@ import { ChatErrorType } from '@lobechat/types';
 
 import { checkAuth } from '@/app/(backend)/middleware/auth';
 import { resolveValidWorkspaceIdFromRequest } from '@/app/(backend)/webapi/_utils/workspace';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { createErrorResponse } from '@/utils/errorResponse';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
 
 interface ProviderParams {
   provider: string;

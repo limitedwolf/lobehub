@@ -1,11 +1,11 @@
 import { ComfyApi } from '@saintno/comfyui-sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ComfyUIAuthService } from '@/server/services/comfyui/core/comfyUIAuthService';
-import { ComfyUIClientService } from '@/server/services/comfyui/core/comfyUIClientService';
-import { ComfyUIConnectionService } from '@/server/services/comfyui/core/comfyUIConnectionService';
-import { ServicesError } from '@/server/services/comfyui/errors';
 import { type ComfyUIKeyVault } from '@/types/user/settings/keyVaults';
+import { ComfyUIAuthService } from '~server/services/comfyui/core/comfyUIAuthService';
+import { ComfyUIClientService } from '~server/services/comfyui/core/comfyUIClientService';
+import { ComfyUIConnectionService } from '~server/services/comfyui/core/comfyUIConnectionService';
+import { ServicesError } from '~server/services/comfyui/errors';
 
 // Mock the SDK
 vi.mock('@saintno/comfyui-sdk', () => ({
@@ -14,8 +14,8 @@ vi.mock('@saintno/comfyui-sdk', () => ({
 }));
 
 // Mock the modular services
-vi.mock('@/server/services/comfyui/core/comfyUIAuthService');
-vi.mock('@/server/services/comfyui/core/comfyUIConnectionService');
+vi.mock('~server/services/comfyui/core/comfyUIAuthService');
+vi.mock('~server/services/comfyui/core/comfyUIConnectionService');
 
 describe('ComfyUIClientService', () => {
   let service: ComfyUIClientService;

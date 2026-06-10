@@ -5,7 +5,7 @@ import { authedProcedure, router } from '@/libs/trpc/lambda';
 import {
   getLLMGenerationTracingService,
   LLMGenerationFeedbackError,
-} from '@/server/services/llmGenerationTracing';
+} from '~server/services/llmGenerationTracing';
 
 /**
  * General-purpose feedback endpoint for any `llm_generation_tracing` row.

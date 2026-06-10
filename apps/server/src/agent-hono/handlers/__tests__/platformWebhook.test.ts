@@ -11,7 +11,7 @@ const { mockGetWebhookHandler, mockGetBotMessageRouter } = vi.hoisted(() => {
   };
 });
 
-vi.mock('@/server/services/bot', () => ({
+vi.mock('~server/services/bot', () => ({
   getBotMessageRouter: mockGetBotMessageRouter,
 }));
 

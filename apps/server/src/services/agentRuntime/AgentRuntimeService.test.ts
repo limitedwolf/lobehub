@@ -56,7 +56,7 @@ vi.mock('@/database/models/plugin', () => ({
 }));
 
 // Mock ModelRuntime to avoid server-side env access
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('~server/modules/ModelRuntime', () => ({
   initializeRuntimeOptions: vi.fn(),
   ApiKeyManager: vi.fn().mockImplementation(() => ({
     getApiKey: vi.fn(),
@@ -65,7 +65,7 @@ vi.mock('@/server/modules/ModelRuntime', () => ({
 }));
 
 // Mock search service to avoid server-side env access
-vi.mock('@/server/services/search', () => ({
+vi.mock('~server/services/search', () => ({
   SearchService: vi.fn().mockImplementation(() => ({
     search: vi.fn(),
   })),
@@ -76,11 +76,11 @@ vi.mock('@/server/services/search', () => ({
 
 // Mock factory and redis dependencies to break env import chains,
 // so the barrel can be imported with real AgentRuntimeCoordinator + InMemory backends
-vi.mock('@/server/modules/AgentRuntime/factory', async () => {
+vi.mock('~server/modules/AgentRuntime/factory', async () => {
   const { InMemoryAgentStateManager } =
-    await import('@/server/modules/AgentRuntime/InMemoryAgentStateManager');
+    await import('~server/modules/AgentRuntime/InMemoryAgentStateManager');
   const { InMemoryStreamEventManager } =
-    await import('@/server/modules/AgentRuntime/InMemoryStreamEventManager');
+    await import('~server/modules/AgentRuntime/InMemoryStreamEventManager');
   return {
     createAgentStateManager: () => new InMemoryAgentStateManager(),
     createStreamEventManager: () => new InMemoryStreamEventManager(),
@@ -88,13 +88,13 @@ vi.mock('@/server/modules/AgentRuntime/factory', async () => {
   };
 });
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('~server/modules/AgentRuntime/redis', () => ({
   createAgentRuntimeRedisClient: vi.fn().mockReturnValue(null),
   getAgentRuntimeRedisClient: vi.fn().mockReturnValue(null),
 }));
 
 // Use real AgentRuntimeCoordinator with InMemory backends; only mock unrelated exports
-vi.mock('@/server/modules/AgentRuntime', async (importOriginal) => {
+vi.mock('~server/modules/AgentRuntime', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
@@ -116,7 +116,7 @@ vi.mock('@lobechat/agent-runtime', () => ({
     status === 'waiting_for_human' || status === 'waiting_for_async_tool',
 }));
 
-vi.mock('@/server/services/queue', () => ({
+vi.mock('~server/services/queue', () => ({
   QueueService: vi.fn().mockImplementation(() => ({
     getImpl: vi.fn().mockReturnValue(null),
     scheduleMessage: vi.fn(),
@@ -124,7 +124,7 @@ vi.mock('@/server/services/queue', () => ({
 }));
 
 // Mock Mecha module
-vi.mock('@/server/modules/Mecha', () => ({
+vi.mock('~server/modules/Mecha', () => ({
   createServerAgentToolsEngine: vi.fn().mockReturnValue({
     generateToolsDetailed: vi.fn().mockReturnValue({
       tools: [],

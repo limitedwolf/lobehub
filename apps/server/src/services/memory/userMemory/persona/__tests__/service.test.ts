@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UserPersonaModel } from '@/database/models/userMemory/persona';
 import type * as AiInfraReposModule from '@/database/repositories/aiInfra';
-import { resolveRuntimeAgentConfig } from '@/server/services/memory/userMemory/extract';
+import { resolveRuntimeAgentConfig } from '~server/services/memory/userMemory/extract';
 
 import { UserPersonaService } from '../service';
 
@@ -28,7 +28,7 @@ vi.mock('@/database/repositories/aiInfra', () => {
   return { AiInfraRepos };
 });
 
-vi.mock('@/server/globalConfig/parseMemoryExtractionConfig', () => ({
+vi.mock('~server/globalConfig/parseMemoryExtractionConfig', () => ({
   parseMemoryExtractionConfig: () => ({
     agentLayerExtractor: {
       apiKey: 'test-key',
@@ -48,7 +48,7 @@ vi.mock('@/server/globalConfig/parseMemoryExtractionConfig', () => ({
   }),
 }));
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: { getUserKeyVaults: vi.fn() },
 }));
 
@@ -69,7 +69,7 @@ vi.mock('@lobechat/memory-user-memory', () => ({
   })),
 }));
 
-vi.mock('@/server/services/memory/userMemory/extract', () => ({
+vi.mock('~server/services/memory/userMemory/extract', () => ({
   resolveRuntimeAgentConfig: vi.fn().mockResolvedValue({}),
 }));
 

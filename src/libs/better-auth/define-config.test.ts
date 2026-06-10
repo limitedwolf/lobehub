@@ -95,11 +95,11 @@ vi.mock('@/libs/better-auth/utils/server', () => ({
   parseSSOProviders: vi.fn(() => []),
 }));
 
-vi.mock('@/server/services/email', () => ({
+vi.mock('~server/services/email', () => ({
   EmailService: vi.fn(),
 }));
 
-vi.mock('@/server/services/user', () => ({
+vi.mock('~server/services/user', () => ({
   UserService: vi.fn(),
 }));
 

@@ -72,22 +72,24 @@ import {
 import { shouldEnableBuiltinSkill } from '@/helpers/skillFilters';
 import { buildConnectorManifests } from '@/libs/mcp/buildConnectorManifests';
 import { signOperationJwt, signUserJWT } from '@/libs/trpc/utils/internalJwt';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import type { EvalContext, ServerAgentToolsContext } from '@/server/modules/Mecha';
-import { createServerAgentToolsEngine } from '@/server/modules/Mecha';
-import type { ServerUserMemoryConfig } from '@/server/modules/Mecha/ContextEngineering/types';
-import { AgentService } from '@/server/services/agent';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
+import { ComposioService } from '@/server/services/composio';
+import { markdownToTxt } from '@/utils/markdownToTxt';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import type { EvalContext, ServerAgentToolsContext } from '~server/modules/Mecha';
+import { createServerAgentToolsEngine } from '~server/modules/Mecha';
+import type { ServerUserMemoryConfig } from '~server/modules/Mecha/ContextEngineering/types';
+import { AgentService } from '~server/services/agent';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
 import type {
   AgentExecutionParams,
   AgentExecutionResult,
   AgentRuntimeServiceOptions,
   SubAgentBridgeParams,
-} from '@/server/services/agentRuntime';
-import { AgentRuntimeService } from '@/server/services/agentRuntime';
-import { getAbortError, isAbortError, throwIfAborted } from '@/server/services/agentRuntime/abort';
-import { hookDispatcher } from '@/server/services/agentRuntime/hooks';
-import type { AgentHook } from '@/server/services/agentRuntime/hooks/types';
+} from '~server/services/agentRuntime';
+import { AgentRuntimeService } from '~server/services/agentRuntime';
+import { getAbortError, isAbortError, throwIfAborted } from '~server/services/agentRuntime/abort';
+import { hookDispatcher } from '~server/services/agentRuntime/hooks';
+import type { AgentHook } from '~server/services/agentRuntime/hooks/types';
 import type {
   ExecGroupMemberParams,
   ExecGroupMemberResult,
@@ -95,23 +97,21 @@ import type {
   GroupActionMemberMode,
   GroupActionOnComplete,
   StepLifecycleCallbacks,
-} from '@/server/services/agentRuntime/types';
-import { enqueueAgentSignalSourceEvent } from '@/server/services/agentSignal';
+} from '~server/services/agentRuntime/types';
+import { enqueueAgentSignalSourceEvent } from '~server/services/agentSignal';
 import {
   isAgentSignalEnabledForUser,
   isLobeAiAgentSlug,
   resolveAgentSelfIterationCapability,
-} from '@/server/services/agentSignal/featureGate';
-import { shouldSuppressSignal } from '@/server/services/agentSignal/suppressSignal';
-import { ComposioService } from '@/server/services/composio';
-import { deviceGateway } from '@/server/services/deviceGateway';
-import { DocumentService } from '@/server/services/document';
-import { FileService } from '@/server/services/file';
-import { resolveAttachmentsByFileIds } from '@/server/services/file/resolveAttachments';
-import { HeterogeneousAgentService } from '@/server/services/heterogeneousAgent';
-import type { ConversationHistoryEntry } from '@/server/services/heterogeneousAgent/cloudHeteroContext';
-import { MarketService } from '@/server/services/market';
-import { markdownToTxt } from '@/utils/markdownToTxt';
+} from '~server/services/agentSignal/featureGate';
+import { shouldSuppressSignal } from '~server/services/agentSignal/suppressSignal';
+import { deviceGateway } from '~server/services/deviceGateway';
+import { DocumentService } from '~server/services/document';
+import { FileService } from '~server/services/file';
+import { resolveAttachmentsByFileIds } from '~server/services/file/resolveAttachments';
+import { HeterogeneousAgentService } from '~server/services/heterogeneousAgent';
+import type { ConversationHistoryEntry } from '~server/services/heterogeneousAgent/cloudHeteroContext';
+import { MarketService } from '~server/services/market';
 
 import { resolveDeviceAccessPolicy } from './deviceAccessPolicy';
 import { buildAllowedBuiltinTools, isDeviceToolIdentifier } from './deviceToolRegistry';
@@ -1309,7 +1309,7 @@ export class AiAgentService {
 
       // Build cloud-specific system context (repo list + workspace info + optional agent-level static context).
       const { buildCloudHeteroContext } =
-        await import('@/server/services/heterogeneousAgent/cloudHeteroContext');
+        await import('~server/services/heterogeneousAgent/cloudHeteroContext');
       const systemContext = buildCloudHeteroContext({
         agentSystemContext: agentConfig.agencyConfig?.heterogeneousProvider?.systemContext,
         conversationHistory,
@@ -1434,7 +1434,7 @@ export class AiAgentService {
 
         // Open the stream channel so the gateway WS subscription can receive
         // notify_update events published by agentNotify.notify.
-        const { createStreamEventManager } = await import('@/server/modules/AgentRuntime/factory');
+        const { createStreamEventManager } = await import('~server/modules/AgentRuntime/factory');
         const streamManager = createStreamEventManager();
         await streamManager
           .publishAgentRuntimeInit(operationId, {
@@ -1593,7 +1593,7 @@ export class AiAgentService {
           // (which describes an ephemeral /workspace + pre-cloned repos and
           // would mislead the agent).
           const { buildRemoteDeviceHeteroContext } =
-            await import('@/server/services/heterogeneousAgent/remoteDeviceHeteroContext');
+            await import('~server/services/heterogeneousAgent/remoteDeviceHeteroContext');
           const deviceSystemContext = buildRemoteDeviceHeteroContext({
             agentSystemContext: agentConfig.agencyConfig?.heterogeneousProvider?.systemContext,
             conversationHistory,
@@ -1638,7 +1638,7 @@ export class AiAgentService {
           // Cloud sandbox path — only for local CLI agents (claude-code / codex).
           // Remote agents (openclaw / hermes) always require a bound device.
           const { spawnHeteroSandbox } =
-            await import('@/server/services/heterogeneousAgent/sandboxRunner');
+            await import('~server/services/heterogeneousAgent/sandboxRunner');
           spawnHeteroSandbox({
             ...heteroParams,
             agentType: heteroType as 'claude-code' | 'codex',

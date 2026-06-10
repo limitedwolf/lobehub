@@ -4,7 +4,7 @@ import {
   getAllComponentsWithNames,
   getOptimalComponent,
   SYSTEM_COMPONENTS,
-} from '@/server/services/comfyui/config/systemComponents';
+} from '~server/services/comfyui/config/systemComponents';
 
 describe('SystemComponents', () => {
   describe('SYSTEM_COMPONENTS', () => {
