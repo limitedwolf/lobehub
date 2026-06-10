@@ -36,6 +36,8 @@ const fetchVideoWebhook = async (request: Request, provider: string) =>
   (await import('@/server/api-runtime/videoWebhook')).videoWebhookAPIHandler(request, { provider });
 const fetchAgentTracing = async (request: Request) =>
   (await import('@/server/api-runtime/dev')).agentTracingAPIHandler(request);
+const fetchTestPush = async (request: Request) =>
+  (await import('@/server/api-runtime/dev')).testPushAPIHandler(request);
 const fetchMemoryUserMemoryBenchmarkLoCoMoDev = async (request: Request) =>
   (
     await import('@/server/api-runtime/memoryBenchmarkDev')
@@ -45,6 +47,7 @@ app.post('/auth/check-user', (c) => fetchCheckUser(c.req.raw));
 app.post('/auth/resolve-username', (c) => fetchResolveUsername(c.req.raw));
 app.on(['GET', 'POST'], '/auth/*', (c) => fetchBetterAuth(c.req.raw));
 app.get('/dev/agent-tracing', (c) => fetchAgentTracing(c.req.raw));
+app.post('/dev/test-push', (c) => fetchTestPush(c.req.raw));
 app.post('/dev/memory-user-memory/benchmark-locomo', (c) =>
   fetchMemoryUserMemoryBenchmarkLoCoMoDev(c.req.raw),
 );
