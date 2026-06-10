@@ -48,6 +48,7 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
   let asyncTaskModel: AsyncTaskModel | undefined;
   let asyncTaskId: string | undefined;
   let asyncTaskUserId: string | undefined;
+  let asyncTaskWorkspaceId: string | undefined;
   let asyncTaskMetadata: VideoGenerationTaskMetadata | undefined;
 
   try {
@@ -94,6 +95,7 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
 
     asyncTaskId = asyncTask.id;
     asyncTaskUserId = asyncTask.userId;
+    asyncTaskWorkspaceId = asyncTask.workspaceId ?? undefined;
     asyncTaskMetadata = metadata;
 
     log(
@@ -164,6 +166,7 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
           prechargeResult: metadata?.precharge as any,
           provider,
           userId: asyncTask.userId,
+          workspaceId: asyncTask.workspaceId ?? undefined,
         });
       } catch (refundError) {
         console.error('[video-webhook] Failed to refund precharge on error:', refundError);
@@ -240,6 +243,7 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
         provider,
         usage: result.usage,
         userId: asyncTask.userId,
+        workspaceId: asyncTask.workspaceId ?? undefined,
       });
     } catch (chargeError) {
       console.error('[video-webhook] Failed to charge after generate:', chargeError);
@@ -271,6 +275,7 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
           prechargeResult: asyncTaskMetadata.precharge as any,
           provider,
           userId: asyncTaskUserId,
+          workspaceId: asyncTaskWorkspaceId,
         });
       } catch (refundError) {
         console.error('[video-webhook] Failed to refund precharge on failure:', refundError);
