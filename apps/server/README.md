@@ -8,22 +8,25 @@ The LobeHub backend package. Contains the TRPC routers, runtime handlers, servic
 
 ```
 apps/server/src/
+├── agent-hono/        # /api/agent/* Hono sub-app (execAgent, runStep, gateway, messenger, bot)
 ├── api-hono/          # /api/* catch-all (auth, webhooks, dev, v1, memory)
 ├── api-runtime/       # Per-route handlers (chat, models, oidc, market, ...)
 ├── featureFlags/      # Feature flag resolution
 ├── globalConfig/      # Server-side runtime config
 ├── hono/              # Standalone Hono root app + Node entry
 │   ├── index.ts       # Hono root app — mounts /webapi, /market, /oidc, /f, /trpc, /api
-│   └── standalone.ts  # Node entry — used by dev:hono:server
+│   ├── standalone.ts  # Node entry — used by dev:hono:server and the dist build
+│   └── dev.ts         # Standalone dev entry — loads repo-root .env, then standalone.ts
 ├── modules/           # Domain modules (no DB access)
 ├── routers/           # TRPC routers (async, lambda, mobile, tools)
 ├── runtimeConfig/     # Runtime context (DB, auth, ...)
 ├── services/          # Business services (can access DB)
 ├── utils/             # Shared utilities
-└── workflows/         # Upstash workflow handlers
+├── workflows/         # Upstash workflow handlers
+└── workflows-hono/    # /api/workflows/* Hono sub-app (agent-signal, memory, task)
 ```
 
-The package's exports resolve via the `@/server/*` alias (dual-path tsconfig: `apps/server/src/*` first, `src/server/*` fallback for the pieces that still live there — `agent-hono`, `workflows-hono`).
+The package's exports resolve via the `@/server/*` alias (dual-path tsconfig: `apps/server/src/*` first, `src/server/*` fallback for the SSR-page helpers that still live there).
 
 ## Dev Modes
 
@@ -33,6 +36,23 @@ The package's exports resolve via the `@/server/*` alias (dual-path tsconfig: `a
 | **Hono-Lite** (POC) | `bun run dev:hono-lite` | Hono (`:3011`) + Vite (`:9876`), no Next |
 
 Both modes coexist on this branch — pick whichever fits the task.
+
+### Standalone Server (this package only)
+
+The Hono server can also be started on its own, without the repo-level orchestration scripts:
+
+```bash
+# Dev (vite-node, watch mode). Loads .env / .env.development /
+# .env.development.local from the repo root; shell env wins.
+pnpm --filter @lobechat/server dev
+
+# Production-style: build the dist, then run it with Node. `start` does NOT
+# load any .env file — provide env via the platform/shell.
+pnpm --filter @lobechat/server build
+pnpm --filter @lobechat/server start
+```
+
+Host/port are controlled by `HONO_HOST` / `HONO_PORT` (default `localhost:3011`).
 
 ### Hono-Lite Startup
 
@@ -97,7 +117,7 @@ The following are intentionally out of scope for the T1 dev runtime:
 
 | Symptom                                                            | Likely Cause / Fix                                                                                                                                         |
 | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vite-node` resolves the wrong `@lobehub/editor` and tRPC blows up | `resolve.dedupe:['@lobehub/editor']` in `scripts/viteNodeServer.config.ts` works around the pnpm duplicate. If you tweak that config, keep the dedupe.     |
+| `vite-node` resolves the wrong `@lobehub/editor` and tRPC blows up | `resolve.dedupe:['@lobehub/editor']` in `apps/server/viteNodeServer.config.ts` works around the pnpm duplicate. If you tweak that config, keep the dedupe. |
 | `webapi/models` returns 500 in dev                                 | Local DB schema drift — usually missing `ai_providers._id`. Run `bun run db:migrate`.                                                                      |
 | `Hono server was not ready within 180s`                            | Vite-node failed to bundle the entry; check the `dev:hono:server` stderr — most often a missing env or a broken import path under `apps/server/src/hono/`. |
 | `vite-node` version mismatch                                       | `vite-node` is a workspace devDep pinned to `3.2.4` (matching the workspace `vitest` / Vite 8 stack). Don't bump it independently.                         |

@@ -2797,7 +2797,7 @@ export class MemoryExtractionWorkflowService {
       flowControl: {
         key: `memory-user-memory.pipelines.chat-topic.process-topics.user.${userId}`,
         // NOTICE: if modified the parallelism of
-        // src/server/workflows-hono/memory-user-memory/workflows/processTopics.ts
+        // apps/server/src/workflows-hono/memory-user-memory/workflows/processTopics.ts
         // or added new memory layer, make sure to update the number below.
         //
         // Currently, CEPA (context, experience, preference, activity) + identity = 5 layers.

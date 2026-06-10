@@ -1,6 +1,5 @@
 import debug from 'debug';
 import type { Context } from 'hono';
-import { after } from 'next/server';
 
 import { getServerDB } from '@/database/core/db-adaptor';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
@@ -13,6 +12,7 @@ import {
   resolveConnectionMode,
 } from '@/server/services/bot/platforms';
 import { BotConnectQueue } from '@/server/services/gateway/botConnectQueue';
+import { scheduleAfterResponse } from '@/server/utils/scheduleAfterResponse';
 
 const log = debug('lobe-server:bot:gateway:cron');
 
@@ -25,7 +25,7 @@ const POLL_INTERVAL_MS = 30_000; // 30 seconds
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const waitUntil = (task: Promise<unknown>) => {
-  after(() => task);
+  scheduleAfterResponse(() => task.then(() => {}), 'gateway-cron:wait-until');
 };
 
 function createRuntimeContext(): BotPlatformRuntimeContext {
@@ -131,8 +131,8 @@ async function processConnectQueue(remainingMs: number): Promise<number> {
 
 /**
  * Cron-driven gateway entry point. Runs once per Vercel cron tick and keeps
- * persistent bot connections alive for a 10-minute window via `next/server`'s
- * `after()`.
+ * persistent bot connections alive for a 10-minute window via
+ * `scheduleAfterResponse` (Next `after()` under the Next runtime).
  *
  * Auth: `bearerSecretAuth(CRON_SECRET)` on the route.
  */
@@ -209,7 +209,7 @@ export async function gatewayCron(c: Context): Promise<Response> {
 
   const queued = await processConnectQueue(GATEWAY_DURATION_MS);
 
-  after(async () => {
+  scheduleAfterResponse(async () => {
     const pollEnd = Date.now() + GATEWAY_DURATION_MS;
 
     while (Date.now() < pollEnd) {
@@ -219,7 +219,7 @@ export async function gatewayCron(c: Context): Promise<Response> {
       const remainingMs = pollEnd - Date.now();
       await processConnectQueue(remainingMs);
     }
-  });
+  }, 'gateway-cron:poll-window');
 
   return c.json({ platforms: stats, queued, started, total });
 }
