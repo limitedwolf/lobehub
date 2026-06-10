@@ -32,10 +32,10 @@ The package's exports resolve via the `~server/*` alias (`apps/server/src/*`); `
 
 Every `src/app/(backend)/**/route.ts` is a thin forwarder into this package:
 
-- In dev, `fetchHonoRuntime` proxies each request to the standalone Hono server (`LOBE_DEV_HONO_TARGET`, default `http://localhost:3011`).
+- In dev, `fetchBackendRuntime` (`src/server/backend-proxy/client.ts`) proxies each request to the standalone Hono server (`LOBE_DEV_HONO_TARGET`, default `http://localhost:3011`).
 - In production, it loads the vite-built `apps/server/dist/index.js` in-process via an opaque runtime `require` (override with `LOBE_HONO_DIST_ENTRY`), so the backend never passes through `next build`.
 - Route file paths, HTTP method export names, and segment config (`maxDuration`, `dynamic`) are contractual — the cloud repo re-exports them by path. `src/app/(backend)/route-shell.guard.test.ts` enforces that route files stay logic-free.
-- Exceptions: `webapi/revalidate` (Next ISR machinery) and `hono-runtime/[...path]` (the binding route itself).
+- Exception: `webapi/revalidate` (Next ISR machinery).
 
 The root `build` / `build:raw` scripts run `build:hono` first so the dist always pairs with the Next build.
 

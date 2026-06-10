@@ -92,7 +92,7 @@ const loadProductionHonoApp = () => {
   return app;
 };
 
-export const fetchHonoRuntime = async (request: Request) => {
+export const fetchBackendRuntime = async (request: Request) => {
   const devTarget = process.env.LOBE_DEV_HONO_TARGET;
 
   if (process.env.NODE_ENV !== 'production' && devTarget) {

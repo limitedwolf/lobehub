@@ -1,6 +1,6 @@
-import { fetchHonoRuntime } from '@/server/hono-runtime/client';
+import { fetchBackendRuntime } from '@/server/backend-proxy/client';
 
-const handler = (req: Request) => fetchHonoRuntime(req);
+const handler = (req: Request) => fetchBackendRuntime(req);
 
 export const POST = handler;
 

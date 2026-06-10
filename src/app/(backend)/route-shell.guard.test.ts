@@ -15,8 +15,6 @@ const BACKEND_DIR = join(__dirname);
 
 /** Routes allowed to keep Next-only logic, with the reason. */
 const EXCEPTIONS = new Set([
-  // POC binding route: forwards into the standalone Hono runtime itself
-  'hono-runtime/[...path]/route.ts',
   // revalidateTag is Next ISR machinery and cannot leave the Next runtime
   'webapi/revalidate/route.ts',
 ]);
