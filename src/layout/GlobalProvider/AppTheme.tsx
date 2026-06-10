@@ -1,20 +1,21 @@
 'use client';
 
 import 'antd/dist/reset.css';
+import '@fontsource-variable/geist/index.css';
 
 import { TITLE_BAR_HEIGHT } from '@lobechat/desktop-bridge';
 import { type NeutralColors, type PrimaryColors } from '@lobehub/ui';
 import { ConfigProvider, FontLoader, ThemeProvider } from '@lobehub/ui';
 import { message as antdMessage } from 'antd';
 import { AppConfigContext } from 'antd/es/app/context';
-import { createStaticStyles, cx, useTheme } from 'antd-style';
+import { createStaticStyles, cx } from 'antd-style';
 import * as m from 'motion/react-m';
 import { type ReactNode } from 'react';
 import { memo, useEffect, useMemo, useState } from 'react';
 
 import AntdStaticMethods from '@/components/AntdStaticMethods';
 import Link from '@/components/Link';
-import { LOBE_THEME_NEUTRAL_COLOR, LOBE_THEME_PRIMARY_COLOR } from '@/const/theme';
+import { LOBE_THEME_NEUTRAL_COLOR, LOBE_THEME_PRIMARY_COLOR, UI_FONT_FAMILY } from '@/const/theme';
 import { isDesktop } from '@/const/version';
 import { useIsDark } from '@/hooks/useIsDark';
 import { getUILocaleAndResources } from '@/libs/getUILocaleAndResources';
@@ -103,7 +104,6 @@ const AppTheme = memo<AppThemeProps>(
     customFontFamily,
   }) => {
     const language = useGlobalStore(systemStatusSelectors.language);
-    const antdTheme = useTheme();
     const isDark = useIsDark();
 
     const [primaryColor, neutralColor, animationMode] = useUserStore((s) => [
@@ -168,8 +168,8 @@ const AppTheme = memo<AppThemeProps>(
             cssVar: { key: 'lobe-vars' },
             token: {
               fontFamily: customFontFamily
-                ? `${customFontFamily},${antdTheme.fontFamily}`
-                : undefined,
+                ? `${customFontFamily},${UI_FONT_FAMILY}`
+                : UI_FONT_FAMILY,
               motion: animationMode !== 'disabled',
               motionUnit: animationMode === 'agile' ? 0.05 : 0.1,
             },

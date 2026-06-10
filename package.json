@@ -198,6 +198,7 @@
     "@emotion/react": "^11.14.0",
     "@fal-ai/client": "^1.8.4",
     "@floating-ui/react": "^0.27.19",
+    "@fontsource-variable/geist": "^5.2.9",
     "@formkit/auto-animate": "^0.9.0",
     "@google/genai": "~1.50.1",
     "@henrygd/queue": "^1.2.0",

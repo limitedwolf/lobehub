@@ -1,6 +1,7 @@
 'use client';
 
 import 'antd/dist/reset.css';
+import '@fontsource-variable/geist/index.css';
 
 import { ConfigProvider, ThemeProvider } from '@lobehub/ui';
 import { App } from 'antd';
@@ -10,6 +11,7 @@ import { type PropsWithChildren } from 'react';
 import { memo } from 'react';
 
 import AntdStaticMethods from '@/components/AntdStaticMethods';
+import { UI_FONT_FAMILY } from '@/const/theme';
 import { useIsDark } from '@/hooks/useIsDark';
 import Image from '@/libs/next/Image';
 
@@ -30,6 +32,9 @@ const AuthThemeLite = memo<AuthThemeLiteProps>(({ children, globalCDN }) => {
       style={{ height: '100%' }}
       theme={{
         cssVar: { key: 'lobe-vars' },
+        token: {
+          fontFamily: UI_FONT_FAMILY,
+        },
       }}
     >
       <App style={{ height: '100%' }}>
