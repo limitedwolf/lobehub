@@ -43,14 +43,17 @@ export const agentEvalRunOnThreadCompleteAPIHandler = async (request: Request) =
       duration,
     );
 
-    const [{ AgentEvalRunModel }, { getServerDB }, { AgentEvalRunService }] = await Promise.all([
-      import('@/database/models/agentEval'),
-      import('@/database/server'),
-      import('@/server/services/agentEvalRun'),
-    ]);
+    const [{ AgentEvalRunModel }, { getServerDB }, { AgentEvalRunService }, workflowUtils] =
+      await Promise.all([
+        import('@/database/models/agentEval'),
+        import('@/database/server'),
+        import('@/server/services/agentEvalRun'),
+        import('@/server/workflows/agentEvalRun/utils'),
+      ]);
     const db = await getServerDB();
+    const wsId = await workflowUtils.resolveAgentEvalRunWorkspace(db, runId);
 
-    const runModel = new AgentEvalRunModel(db, userId);
+    const runModel = new AgentEvalRunModel(db, userId, wsId);
     const run = await runModel.findById(runId);
     if (run?.status === 'aborted') {
       threadLog(
@@ -62,7 +65,7 @@ export const agentEvalRunOnThreadCompleteAPIHandler = async (request: Request) =
       return Response.json({ cancelled: true });
     }
 
-    const service = new AgentEvalRunService(db, userId);
+    const service = new AgentEvalRunService(db, userId, wsId);
 
     const { allThreadsDone, allRunDone } = await service.recordThreadCompletion({
       runId,
@@ -145,21 +148,24 @@ export const agentEvalRunOnTrajectoryCompleteAPIHandler = async (request: Reques
       totalTokens,
     );
 
-    const [{ AgentEvalRunModel }, { getServerDB }, { AgentEvalRunService }] = await Promise.all([
-      import('@/database/models/agentEval'),
-      import('@/database/server'),
-      import('@/server/services/agentEvalRun'),
-    ]);
+    const [{ AgentEvalRunModel }, { getServerDB }, { AgentEvalRunService }, workflowUtils] =
+      await Promise.all([
+        import('@/database/models/agentEval'),
+        import('@/database/server'),
+        import('@/server/services/agentEvalRun'),
+        import('@/server/workflows/agentEvalRun/utils'),
+      ]);
     const db = await getServerDB();
+    const wsId = await workflowUtils.resolveAgentEvalRunWorkspace(db, runId);
 
-    const runModel = new AgentEvalRunModel(db, userId);
+    const runModel = new AgentEvalRunModel(db, userId, wsId);
     const run = await runModel.findById(runId);
     if (run?.status === 'aborted') {
       trajectoryLog('Run aborted, skipping: runId=%s testCaseId=%s', runId, testCaseId);
       return Response.json({ cancelled: true });
     }
 
-    const service = new AgentEvalRunService(db, userId);
+    const service = new AgentEvalRunService(db, userId, wsId);
 
     const { allDone, completedCount } = await service.recordTrajectoryCompletion({
       runId,

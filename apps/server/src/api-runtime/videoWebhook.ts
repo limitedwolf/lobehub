@@ -111,7 +111,11 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
       return Response.json({ success: true });
     }
 
-    const generationModel = new GenerationModel(db, asyncTask.userId);
+    const generationModel = new GenerationModel(
+      db,
+      asyncTask.userId,
+      asyncTask.workspaceId ?? undefined,
+    );
 
     const generation = await generationModel.findByAsyncTaskId(asyncTask.id);
     if (!generation) {
@@ -124,7 +128,7 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
 
     log('Found generation: %s', generation.id);
 
-    asyncTaskModel = new AsyncTaskModel(db, asyncTask.userId);
+    asyncTaskModel = new AsyncTaskModel(db, asyncTask.userId, asyncTask.workspaceId ?? undefined);
 
     const batch = await db.query.generationBatches.findFirst({
       where: eq(generationBatches.id, generation.generationBatchId!),
@@ -168,7 +172,11 @@ export const videoWebhookAPIHandler = async (request: Request, params: VideoWebh
       return Response.json({ success: true });
     }
 
-    const videoService = new VideoGenerationService(db, asyncTask.userId);
+    const videoService = new VideoGenerationService(
+      db,
+      asyncTask.userId,
+      asyncTask.workspaceId ?? undefined,
+    );
     const processResult = await videoService.processVideoForGeneration(result.videoUrl);
 
     const asset: VideoGenerationAsset = {

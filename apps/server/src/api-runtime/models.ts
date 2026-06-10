@@ -2,6 +2,7 @@ import type { ChatCompletionErrorPayload, PullModelParams } from '@lobechat/mode
 import { ChatErrorType } from '@lobechat/types';
 
 import { checkAuth } from '@/app/(backend)/middleware/auth';
+import { resolveValidWorkspaceIdFromRequest } from '@/app/(backend)/webapi/_utils/workspace';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { createErrorResponse } from '@/utils/errorResponse';
 
@@ -12,11 +13,22 @@ interface ProviderParams {
 const createProviderParams = (provider: string) => Promise.resolve({ provider });
 
 export const modelsAPIHandler = (request: Request, { provider }: ProviderParams) =>
-  checkAuth(async (_req, { params, userId, serverDB }) => {
+  checkAuth(async (authedRequest, { params, userId, serverDB }) => {
     const routeProvider = (await params).provider!;
 
     try {
-      const agentRuntime = await initModelRuntimeFromDB(serverDB, userId, routeProvider);
+      const workspaceId = await resolveValidWorkspaceIdFromRequest({
+        req: authedRequest,
+        serverDB,
+        userId,
+      });
+
+      const agentRuntime = await initModelRuntimeFromDB(
+        serverDB,
+        userId,
+        routeProvider,
+        workspaceId,
+      );
 
       const list = await agentRuntime.models();
 

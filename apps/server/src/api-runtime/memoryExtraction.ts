@@ -241,7 +241,7 @@ export const memoryExtractChatTopicCancelWebhookAPIHandler = async (request: Req
       },
     };
 
-    const asyncTaskModel = new AsyncTaskModel(db, task.userId);
+    const asyncTaskModel = new AsyncTaskModel(db, task.userId, task.workspaceId ?? undefined);
     await asyncTaskModel.update(task.id, {
       error: new AsyncTaskError(
         AsyncTaskErrorType.TaskCancelled,
