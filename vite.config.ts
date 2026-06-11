@@ -295,6 +295,10 @@ export default defineConfig({
   server: {
     cors: true,
     host: true,
+    // Absolute dev asset URLs: CSS-referenced assets (e.g. self-hosted font files) must
+    // resolve to the Vite origin even when the SPA HTML is served from the Next.js dev
+    // server or the online debug proxy, where root-relative URLs hit the wrong origin.
+    origin: 'http://localhost:9876',
     port: 9876,
     proxy: {
       '/api': `http://localhost:${process.env.PORT || 3010}`,
