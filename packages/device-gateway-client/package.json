@@ -8,7 +8,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "bunx vitest run --silent='passed-only'",
-    "test:coverage": "bunx vitest run --coverage"
+    "test:coverage": "bunx vitest run --coverage --silent='passed-only'"
   },
   "dependencies": {
     "ws": "^8.18.1"
