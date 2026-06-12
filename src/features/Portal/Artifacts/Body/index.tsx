@@ -1,4 +1,5 @@
 import { Flexbox, Highlighter } from '@lobehub/ui';
+import { createStaticStyles } from 'antd-style';
 import { memo, useEffect, useMemo } from 'react';
 
 import { useChatStore } from '@/store/chat';
@@ -7,10 +8,20 @@ import { ArtifactDisplayMode } from '@/store/chat/slices/portal/initialState';
 import { ArtifactType } from '@/types/artifact';
 
 import Renderer from './Renderer';
+import { useArtifactCodeAutoScroll } from './useArtifactCodeAutoScroll';
+
+const styles = createStaticStyles(({ css }) => ({
+  codeScroll: css`
+    pre.shiki {
+      overflow: visible !important;
+    }
+  `,
+}));
 
 const ArtifactsUI = memo(() => {
   const [
     messageId,
+    artifactIdentifier,
     displayMode,
     isMessageGenerating,
     artifactType,
@@ -23,6 +34,7 @@ const ArtifactsUI = memo(() => {
 
     return [
       messageId,
+      identifier,
       s.portalArtifactDisplayMode,
       messageStateSelectors.isMessageGenerating(messageId)(s),
       chatPortalSelectors.artifactType(s),
@@ -64,8 +76,14 @@ const ArtifactsUI = memo(() => {
     artifactType === ArtifactType.Code ||
     !isArtifactTagClosed ||
     displayMode === ArtifactDisplayMode.Code;
-  const isStreamingCode = isMessageGenerating && showCode && !isArtifactTagClosed;
+  const isStreamingCode = showCode && !isArtifactTagClosed;
   const isStreamingArtifact = isMessageGenerating && !isArtifactTagClosed;
+  const { handleScroll: handleCodeScroll, ref: codeScrollRef } =
+    useArtifactCodeAutoScroll<HTMLDivElement>({
+      content: artifactContent,
+      enabled: isStreamingCode,
+      resetKey: `${messageId}:${artifactIdentifier}`,
+    });
 
   // make sure the message and id is valid
   if (!messageId) return;
@@ -80,7 +98,13 @@ const ArtifactsUI = memo(() => {
       style={{ overflow: 'hidden' }}
     >
       {showCode ? (
-        <Flexbox flex={1} style={{ minHeight: 0, overflow: 'auto' }}>
+        <Flexbox
+          className={styles.codeScroll}
+          flex={1}
+          ref={codeScrollRef}
+          style={{ minHeight: 0, overflow: 'auto' }}
+          onScroll={handleCodeScroll}
+        >
           <Highlighter
             animated={isStreamingCode}
             language={language || 'txt'}

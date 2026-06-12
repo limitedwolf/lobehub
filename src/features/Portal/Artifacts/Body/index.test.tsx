@@ -101,6 +101,14 @@ describe('ArtifactsUI', () => {
     expect(mockArtifactState.setState).not.toHaveBeenCalled();
   });
 
+  it('keeps streaming source animation enabled while the artifact tag is still open', () => {
+    mockArtifactState.isMessageGenerating = false;
+
+    render(<ArtifactsUI />);
+
+    expect(screen.getByTestId('artifact-code')).toHaveAttribute('data-animated', 'true');
+  });
+
   it('renders the final preview after the artifact tag closes', () => {
     mockArtifactState.artifactContent = '<!doctype html><html><body>Done</body></html>';
     mockArtifactState.isArtifactTagClosed = true;
