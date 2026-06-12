@@ -140,6 +140,42 @@ const normalizeModelFetchError = (error: unknown): Record<string, unknown> => {
   return { message: safeError === undefined ? 'Unknown error' : String(safeError) };
 };
 
+const extractModelFetchErrorMessage = (
+  error: unknown,
+  seen = new WeakSet<object>(),
+  depth = 0,
+): string | undefined => {
+  if (error === null || error === undefined) return;
+  if (typeof error === 'string') return error || undefined;
+  if (typeof error === 'number' || typeof error === 'boolean' || typeof error === 'bigint') {
+    return String(error);
+  }
+  if (!isRecord(error)) return;
+  if (seen.has(error) || depth >= MAX_ERROR_DEPTH) return;
+
+  seen.add(error);
+
+  const record = error as Record<string, unknown>;
+  const nestedErrorKeys = ['error', 'body', 'cause', 'response', 'detail', 'details', 'reason'];
+
+  for (const key of nestedErrorKeys) {
+    const message = extractModelFetchErrorMessage(record[key], seen, depth + 1);
+    if (message) return message;
+  }
+
+  if (Array.isArray(record.errors)) {
+    for (const item of record.errors) {
+      const message = extractModelFetchErrorMessage(item, seen, depth + 1);
+      if (message) return message;
+    }
+  }
+
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof record.message === 'string' && record.message) return record.message;
+  if (typeof record.status === 'number') return `HTTP ${record.status}`;
+  if (typeof record.statusCode === 'number') return `HTTP ${record.statusCode}`;
+};
+
 const normalizeModelListResponse = (list: unknown) => toJsonSafeValue(list);
 
 export const GET = checkAuth(async (req, { params, userId, serverDB }) => {
@@ -158,9 +194,9 @@ export const GET = checkAuth(async (req, { params, userId, serverDB }) => {
     const errorPayload = isRecord(e) ? (e as Partial<ChatCompletionErrorPayload>) : undefined;
     const errorType = errorPayload?.errorType || AgentRuntimeErrorType.ProviderBizError;
     const errorContent = errorPayload?.error;
-    const message = errorPayload?.message;
 
     const error = errorContent || e;
+    const message = extractModelFetchErrorMessage(error) || errorPayload?.message;
     // track the error at server side
     console.error(`Route: [${provider}] ${errorType}:`, error);
 

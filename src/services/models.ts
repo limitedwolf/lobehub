@@ -20,8 +20,50 @@ const isChatMessageError = (error: unknown): error is ChatMessageError => {
   return 'type' in error && 'message' in error;
 };
 
+const MAX_ERROR_DEPTH = 4;
+
+const extractModelFetchErrorMessage = (
+  error: unknown,
+  seen = new WeakSet<object>(),
+  depth = 0,
+): string | undefined => {
+  if (error === null || error === undefined) return;
+  if (typeof error === 'string') return error || undefined;
+  if (typeof error === 'number' || typeof error === 'boolean' || typeof error === 'bigint') {
+    return String(error);
+  }
+  if (!isRecord(error) || depth >= MAX_ERROR_DEPTH) return;
+  if (seen.has(error)) return;
+
+  seen.add(error);
+
+  const nestedErrorKeys = ['error', 'body', 'cause', 'response', 'detail', 'details', 'reason'];
+
+  for (const key of nestedErrorKeys) {
+    const message = extractModelFetchErrorMessage(error[key], seen, depth + 1);
+    if (message) return message;
+  }
+
+  if (Array.isArray(error.errors)) {
+    for (const item of error.errors) {
+      const message = extractModelFetchErrorMessage(item, seen, depth + 1);
+      if (message) return message;
+    }
+  }
+
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error.message === 'string' && error.message) return error.message;
+  if (typeof error.status === 'number') return `HTTP ${error.status}`;
+  if (typeof error.statusCode === 'number') return `HTTP ${error.statusCode}`;
+};
+
 export const normalizeModelFetchError = (error: unknown, provider: string): ChatMessageError => {
-  if (isChatMessageError(error)) return error;
+  if (isChatMessageError(error)) {
+    return {
+      ...error,
+      message: extractModelFetchErrorMessage(error.body) || error.message,
+    };
+  }
 
   if (isRecord(error) && 'errorType' in error) {
     const errorType = error.errorType as ChatMessageError['type'];
@@ -29,22 +71,27 @@ export const normalizeModelFetchError = (error: unknown, provider: string): Chat
 
     return {
       body: { error: errorContent, provider },
-      message: typeof error.message === 'string' ? error.message : String(errorType),
+      message:
+        extractModelFetchErrorMessage(errorContent) ||
+        (typeof error.message === 'string' ? error.message : undefined) ||
+        String(errorType),
       type: errorType,
     };
   }
 
   if (error instanceof Error) {
+    const message = extractModelFetchErrorMessage(error) || error.message;
+
     return {
       body: { error: { message: error.message, name: error.name }, provider },
-      message: error.message,
+      message,
       type: AgentRuntimeErrorType.ProviderBizError,
     };
   }
 
   return {
     body: { error, provider },
-    message: String(error),
+    message: error === undefined ? 'Unknown error' : String(error),
     type: AgentRuntimeErrorType.ProviderBizError,
   };
 };

@@ -130,6 +130,62 @@ describe('ModelsService', () => {
           error: { message: 'Provider failed' },
           provider: 'openai',
         },
+        message: 'Provider failed',
+        type: AgentRuntimeErrorType.ProviderBizError,
+      });
+    });
+
+    it('should extract nested provider message from parsed server errors', async () => {
+      (fetch as Mock).mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            body: {
+              error: {
+                errors: [{ message: 'Cloudflare authentication error' }],
+                result: null,
+              },
+              provider: 'cloudflare',
+            },
+            errorType: AgentRuntimeErrorType.ProviderBizError,
+          }),
+          { status: 471 },
+        ),
+      );
+
+      await expect(modelsService.getModels('cloudflare')).rejects.toMatchObject({
+        body: {
+          error: {
+            errors: [{ message: 'Cloudflare authentication error' }],
+            result: null,
+          },
+          provider: 'cloudflare',
+        },
+        message: 'Cloudflare authentication error',
+        type: AgentRuntimeErrorType.ProviderBizError,
+      });
+    });
+
+    it('should prefer nested provider messages over parsed wrapper messages', async () => {
+      (fetch as Mock).mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            body: {
+              error: {
+                errors: [{ message: 'Cloudflare authentication error' }],
+                message: 'Request failed',
+                result: null,
+              },
+              provider: 'cloudflare',
+            },
+            errorType: AgentRuntimeErrorType.ProviderBizError,
+            message: 'Provider request failed',
+          }),
+          { status: 471 },
+        ),
+      );
+
+      await expect(modelsService.getModels('cloudflare')).rejects.toMatchObject({
+        message: 'Cloudflare authentication error',
         type: AgentRuntimeErrorType.ProviderBizError,
       });
     });

@@ -169,10 +169,14 @@ const ModelFetchErrorAlert = memo<ModelFetchErrorAlertProps>(({ error, provider 
 
   if (!error) return null;
 
+  const title = getRuntimeErrorMessage(t, error.type, { provider: providerName });
+  const description = error.message && error.message !== title ? error.message : undefined;
+
   return (
     <Alert
       showIcon
-      title={getRuntimeErrorMessage(t, error.type, { provider: providerName })}
+      description={description}
+      title={title}
       type={'error'}
       extra={
         <Flexbox paddingBlock={8} paddingInline={16}>

@@ -119,6 +119,33 @@ describe('GET handler', () => {
 
       expect(responseBody.body.error.code).toBe('PROVIDER_ERROR');
       expect(responseBody.body.error.details).toBe('API limit exceeded');
+      expect(responseBody.body.message).toBe('API limit exceeded');
+    });
+
+    it('should prefer nested provider messages over wrapper messages', async () => {
+      const mockParams = Promise.resolve({ provider: 'cloudflare' });
+
+      const structuredError = {
+        errorType: AgentRuntimeErrorType.ProviderBizError,
+        message: 'Provider request failed',
+        error: {
+          errors: [{ message: 'Cloudflare authentication error' }],
+          message: 'Request failed',
+          result: null,
+        },
+      };
+
+      const mockRuntime: LobeRuntimeAI = {
+        baseURL: 'abc',
+        chat: vi.fn(),
+        models: vi.fn().mockRejectedValue(structuredError),
+      };
+      vi.mocked(initModelRuntimeFromDB).mockResolvedValue(new ModelRuntime(mockRuntime));
+
+      const response = await GET(request, { params: mockParams });
+      const responseBody = await response.json();
+
+      expect(responseBody.body.message).toBe('Cloudflare authentication error');
     });
 
     it('should return provider biz error for unstructured errors', async () => {
