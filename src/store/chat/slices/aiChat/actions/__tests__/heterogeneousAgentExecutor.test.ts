@@ -67,7 +67,21 @@ vi.mock('@/services/electron/heterogeneousAgent', () => ({
 
 // Gateway event handler — we spy on it but let it run (it calls getMessages)
 vi.mock('../gatewayEventHandler', () => ({
-  createGatewayEventHandler: vi.fn(() => vi.fn()),
+  createGatewayEventHandler: vi.fn((get: () => any, params: Record<string, any>) =>
+    vi.fn(async (event: { type: string }) => {
+      if (event.type !== 'agent_runtime_end') return;
+
+      for (const callback of params.beforeRunComplete ?? []) {
+        await callback().catch(console.error);
+      }
+
+      get().completeOperation?.(params.operationId);
+
+      for (const callback of params.afterRunComplete ?? []) {
+        await callback().catch(console.error);
+      }
+    }),
+  ),
 }));
 
 // ─── Helpers ───

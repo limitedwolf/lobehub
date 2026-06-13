@@ -35,13 +35,12 @@ import { message as antdMessage } from '@/components/AntdStaticMethods';
 import { heterogeneousAgentService } from '@/services/electron/heterogeneousAgent';
 import { messageService } from '@/services/message';
 import { threadService } from '@/services/thread';
-import { type ChatStore, useChatStore } from '@/store/chat/store';
+import type { ChatStore } from '@/store/chat/store';
 import { resolveNotificationNavigatePath } from '@/store/chat/utils/desktopNotification';
 import { markdownToTxt } from '@/utils/markdownToTxt';
 import { addUsageToOperationMetrics } from '@/utils/operationUsageMetrics';
 
-import { messageMapKey } from '../../../utils/messageMapKey';
-import { mergeQueuedMessages } from '../../operation/types';
+import { completeAgentRunLifecycle } from './agentRunLifecycle';
 import { createGatewayEventHandler } from './gatewayEventHandler';
 
 /** Mirrors `idGenerator('threads', 16)` on the server so sync-allocated ids have the same shape. */
@@ -374,12 +373,57 @@ export const executeHeterogeneousAgent = async (
   } = params;
 
   const adapterType = resolveAdapterType(heterogeneousProvider);
+  let agentSessionId: string | undefined;
+  let unsubscribe: (() => void) | undefined;
+  let completed = false;
+  let fallbackPromise: Promise<void> | undefined;
+  let resumeFallbackTriggered = false;
+  let completionNotificationContent = '';
 
   // Create the unified event handler (same one Gateway uses)
   const eventHandler = createGatewayEventHandler(get, {
+    afterRunComplete: [
+      async () => {
+        // Signal completion to the user — dock badge + (window-hidden) notification.
+        // Skip for aborted runs and for error terminations.
+        if (isAborted() || deferredTerminalEvent?.type === 'error') return;
+
+        const body = completionNotificationContent
+          ? markdownToTxt(completionNotificationContent)
+          : t('notification.finishChatGeneration', { ns: 'electron' });
+        await notifyCompletion(
+          t('notification.finishChatGeneration', { ns: 'electron' }),
+          body,
+          context,
+        );
+      },
+    ],
     assistantMessageId,
+    beforeRunComplete: [
+      async () => {
+        if (!agentSessionId) return;
+
+        // Source of truth shifted from renderer's adapter to main's pipeline as of
+        // phase 0; pull it back through the existing `getSessionInfo`
+        // IPC, which already returns the freshest `agentSessionId` main has
+        // mirrored from `pipeline.sessionId`.
+        const sessionInfo = await heterogeneousAgentService
+          .getSessionInfo(agentSessionId)
+          .catch((error) => {
+            console.error('[HeterogeneousAgent] Failed to read session info:', error);
+            return undefined;
+          });
+        if (!sessionInfo?.agentSessionId || !context.topicId) return;
+
+        await updateTopicMetadata?.(context.topicId, {
+          heteroSessionId: sessionInfo.agentSessionId,
+          workingDirectory: workingDirectory ?? '',
+        });
+      },
+    ],
     context,
     operationId,
+    runtimeType: 'heterogeneous',
   });
   const persistTerminalError = async (
     messageError: ChatMessageError,
@@ -387,7 +431,6 @@ export const executeHeterogeneousAgent = async (
   ) => {
     writeTopicStatus('failed');
     get().internal_toggleToolCallingStreaming(mainState.currentAssistantId, undefined);
-    get().completeOperation(operationId);
 
     if (options?.clearContent) {
       await messageService
@@ -428,13 +471,18 @@ export const executeHeterogeneousAgent = async (
       },
       { operationId },
     );
-  };
 
-  let agentSessionId: string | undefined;
-  let unsubscribe: (() => void) | undefined;
-  let completed = false;
-  let fallbackPromise: Promise<void> | undefined;
-  let resumeFallbackTriggered = false;
+    await completeAgentRunLifecycle({
+      anchorMessageId: mainState.currentAssistantId,
+      assistantMessageId: mainState.currentAssistantId,
+      context,
+      drainQueuedMessages: false,
+      get,
+      operationId,
+      runtimeType: 'heterogeneous',
+      status: 'failed',
+    });
+  };
 
   /**
    * Global `tool_use.id → tool message DB id` lookup, shared across the
@@ -1325,6 +1373,7 @@ export const executeHeterogeneousAgent = async (
         // Snapshot the final content BEFORE the terminal reduce resets the
         // accumulator — used for the completion notification body below.
         const finalContent = mainState.accContent;
+        completionNotificationContent = finalContent;
         const terminalEvent: AgentStreamEvent = deferredTerminalEvent ?? {
           data: {},
           operationId,
@@ -1368,19 +1417,6 @@ export const executeHeterogeneousAgent = async (
           // NOW forward the deferred terminal event — handler will
           // fetchAndReplaceMessages and pick up the final persisted state.
           eventHandler(terminalEvent);
-        }
-
-        // Signal completion to the user — dock badge + (window-hidden) notification.
-        // Skip for aborted runs and for error terminations.
-        if (!isAborted() && !isErrorTerminal) {
-          const body = finalContent
-            ? markdownToTxt(finalContent)
-            : t('notification.finishChatGeneration', { ns: 'electron' });
-          notifyCompletion(
-            t('notification.finishChatGeneration', { ns: 'electron' }),
-            body,
-            context,
-          );
         }
       },
 
@@ -1429,78 +1465,6 @@ export const executeHeterogeneousAgent = async (
 
     // Send the prompt — blocks until process exits
     await heterogeneousAgentService.sendPrompt(agentSessionId, message, operationId, imageList);
-
-    // Persist heterogeneous-agent session id + the cwd it was created under,
-    // for multi-turn resume. CC stores sessions per-cwd
-    // (`~/.claude/projects/<encoded-cwd>/`), so the next turn must verify the
-    // cwd hasn't changed before `--resume`. Reuses `workingDirectory` as the
-    // topic-level binding — pinning the topic to this cwd once the agent has
-    // executed here.
-    //
-    // Source of truth shifted from renderer's adapter to main's pipeline as of
-    // phase 0; pull it back through the existing `getSessionInfo`
-    // IPC, which already returns the freshest `agentSessionId` main has
-    // mirrored from `pipeline.sessionId`.
-    const sessionInfo = await heterogeneousAgentService
-      .getSessionInfo(agentSessionId)
-      .catch(() => undefined);
-    if (sessionInfo?.agentSessionId && context.topicId) {
-      await updateTopicMetadata?.(context.topicId, {
-        heteroSessionId: sessionInfo.agentSessionId,
-        workingDirectory: workingDirectory ?? '',
-      });
-    }
-
-    // ━━━ Drain queued messages after a successful CC turn ━━━
-    // Mirrors the client-mode drain in streamingExecutor.ts. With Plan A we
-    // don't extend CC's stdin lifetime — a follow-up message just spawns a
-    // new `claude` (with --resume via topic metadata) once the current run
-    // exits. Must run AFTER the `updateTopicMetadata` await above so the next
-    // sendMessage's `resolveHeteroResume` reads the just-finished session id
-    // instead of starting a fresh CLI session and breaking turn-to-turn
-    // continuity. Skip on abort/error so a manual stop preserves the queue
-    // for the user to manage via QueueTray; "send now" = stop + send.
-    // Cast: TS narrows the closure-mutated `deferredTerminalEvent` back to
-    // `null` in linear flow (it can't see writes from the async IPC handler).
-    const terminalEvent = deferredTerminalEvent as AgentStreamEvent | null;
-    if (!isAborted() && terminalEvent?.type !== 'error') {
-      const contextKey = messageMapKey(context);
-      const remainingQueued = get().drainQueuedMessages?.(contextKey) ?? [];
-      if (remainingQueued.length > 0) {
-        // Force-complete this op + mark unread BEFORE the next sendMessage,
-        // otherwise its queue check (covering all AI_RUNTIME_OPERATION_TYPES)
-        // would still see this op as "running" and re-queue the merged content
-        // into a now-orphaned operation.
-        get().completeOperation(operationId);
-        const completedOp = get().operations?.[operationId];
-        if (completedOp?.context.agentId) {
-          get().markUnreadCompleted?.(completedOp.context.agentId, completedOp.context.topicId);
-        }
-
-        const merged = mergeQueuedMessages(remainingQueued);
-        const mergedFiles =
-          merged.files.length > 0 ? merged.files.map((id) => ({ id }) as any) : undefined;
-
-        setTimeout(() => {
-          useChatStore
-            .getState()
-            .sendMessage({
-              context: { ...context },
-              editorData: merged.editorData,
-              files: mergedFiles,
-              ...(merged.forceRuntime ? { forceRuntime: merged.forceRuntime } : {}),
-              message: merged.content,
-              metadata: merged.metadata,
-            })
-            .catch((e: unknown) => {
-              console.error(
-                '[heterogeneousAgentExecutor] sendMessage for queued content failed:',
-                e,
-              );
-            });
-        }, 100);
-      }
-    }
   } catch (error) {
     if (!completed) {
       if (retryWithoutResume(error)) {

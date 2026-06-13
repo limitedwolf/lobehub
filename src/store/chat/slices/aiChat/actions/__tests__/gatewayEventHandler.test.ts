@@ -32,6 +32,7 @@ function createMockStore() {
   return {
     associateMessageWithOperation: vi.fn(),
     completeOperation: vi.fn(),
+    drainQueuedMessages: vi.fn(() => []),
     internal_dispatchMessage: vi.fn(),
     internal_executeClientTool: vi.fn().mockResolvedValue(undefined),
     internal_toggleToolCallingStreaming: vi.fn(),
@@ -43,6 +44,7 @@ function createMockStore() {
       },
     } as Record<string, any>,
     replaceMessages: vi.fn(),
+    sendMessage: vi.fn(async () => {}),
     startOperation: vi.fn(() => {
       reasoningCounter += 1;
       return {
@@ -670,7 +672,7 @@ describe('createGatewayEventHandler', () => {
       handler(makeEvent('agent_runtime_end'));
       await flush();
 
-      expect(emitClientAgentSignalSourceEvent).toHaveBeenLastCalledWith(
+      expect(emitClientAgentSignalSourceEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           payload: expect.objectContaining({
             anchorMessageId: 'msg-step2',
@@ -678,6 +680,17 @@ describe('createGatewayEventHandler', () => {
             operationId: 'op-1',
           }),
           sourceType: 'client.gateway.runtime_end',
+        }),
+      );
+      expect(emitClientAgentSignalSourceEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            assistantMessageId: 'msg-step2',
+            operationId: 'op-1',
+            runtimeType: 'gateway',
+            status: 'completed',
+          }),
+          sourceType: 'client.runtime.complete',
         }),
       );
     });

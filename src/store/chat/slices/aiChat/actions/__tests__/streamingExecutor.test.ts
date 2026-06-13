@@ -742,7 +742,7 @@ describe('StreamingExecutor actions', () => {
 
       // Error should have been logged
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[executeClientAgent] afterCompletion callback error:',
+        '[AgentRunLifecycle] afterCompletion callback failed:',
         expect.any(Error),
       );
 

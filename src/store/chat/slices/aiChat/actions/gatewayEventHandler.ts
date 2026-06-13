@@ -21,6 +21,9 @@ import type { ChatStore } from '@/store/chat/store';
 import { notifyDesktopHumanApprovalRequired } from '@/store/chat/utils/desktopNotification';
 import { addUsageToOperationMetrics, type OperationUsageLike } from '@/utils/operationUsageMetrics';
 
+import type { AgentRunLifecycleCallback, AgentRunRuntimeType } from './agentRunLifecycle';
+import { completeAgentRunLifecycle } from './agentRunLifecycle';
+
 // Lazy-loaded to break the import cycle:
 //   gateway.ts → gatewayEventHandler.ts → executors/index.ts (which pulls in
 //   tool client barrels that import `@/store/chat/store`) → chat store
@@ -199,8 +202,11 @@ const toChatMessageError = (data: unknown): ChatMessageError => {
 export const createGatewayEventHandler = (
   get: () => ChatStore,
   params: {
+    afterRunComplete?: AgentRunLifecycleCallback[];
     assistantMessageId: string;
+    beforeRunComplete?: AgentRunLifecycleCallback[];
     context: ConversationContext;
+    drainQueuedMessages?: boolean;
     /**
      * Server-side operation id — used to look up the `AgentStreamClient` in
      * `gatewayConnections` so we can `sendToolResult` back over the same WS.
@@ -208,10 +214,12 @@ export const createGatewayEventHandler = (
      */
     gatewayOperationId?: string;
     operationId: string;
+    runtimeType?: AgentRunRuntimeType;
   },
 ) => {
   const { context, operationId } = params;
   const gatewayOperationId = params.gatewayOperationId ?? operationId;
+  const runtimeType = params.runtimeType ?? 'gateway';
 
   // Dispatch context — ensures internal_dispatchMessage resolves the correct messageMapKey
   const dispatchContext = { operationId };
@@ -536,6 +544,10 @@ export const createGatewayEventHandler = (
       case 'agent_runtime_end': {
         enqueue(async () => {
           const data = event.data as { reason?: string; uiMessages?: UIChatMessage[] } | undefined;
+          const terminalStatus =
+            data?.reason === 'interrupted' || data?.reason === 'waiting_for_async_tool'
+              ? 'cancelled'
+              : 'completed';
 
           void emitClientAgentSignalSourceEvent({
             payload: {
@@ -554,12 +566,6 @@ export const createGatewayEventHandler = (
           });
           get().internal_toggleToolCallingStreaming(currentAssistantMessageId, undefined);
           endReasoningIfNeeded();
-          get().completeOperation(operationId);
-
-          const completedOp = get().operations[operationId];
-          if (completedOp?.context.agentId) {
-            get().markUnreadCompleted(completedOp.context.agentId, completedOp.context.topicId);
-          }
 
           // Terminal step has no later step_start to carry SoT — server
           // pushes the canonical snapshot directly on this event. Fall back
@@ -595,6 +601,19 @@ export const createGatewayEventHandler = (
           } else {
             await fetchAndReplaceMessages(get, context).catch(console.error);
           }
+
+          await completeAgentRunLifecycle({
+            afterRunComplete: params.afterRunComplete,
+            anchorMessageId: currentAssistantMessageId,
+            assistantMessageId: currentAssistantMessageId,
+            beforeRunComplete: params.beforeRunComplete,
+            context,
+            drainQueuedMessages: params.drainQueuedMessages,
+            get,
+            operationId,
+            runtimeType,
+            status: terminalStatus,
+          });
         });
         break;
       }
@@ -626,7 +645,6 @@ export const createGatewayEventHandler = (
 
           get().internal_toggleToolCallingStreaming(currentAssistantMessageId, undefined);
           endReasoningIfNeeded();
-          get().completeOperation(operationId);
 
           const updateResult = await messageService
             .updateMessageError(currentAssistantMessageId, messageError, {
@@ -657,6 +675,19 @@ export const createGatewayEventHandler = (
             },
             dispatchContext,
           );
+
+          await completeAgentRunLifecycle({
+            afterRunComplete: params.afterRunComplete,
+            anchorMessageId: currentAssistantMessageId,
+            assistantMessageId: currentAssistantMessageId,
+            beforeRunComplete: params.beforeRunComplete,
+            context,
+            drainQueuedMessages: false,
+            get,
+            operationId,
+            runtimeType,
+            status: 'failed',
+          });
         });
         break;
       }

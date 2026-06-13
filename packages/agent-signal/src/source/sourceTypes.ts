@@ -172,6 +172,8 @@ export interface AgentSignalSourcePayloadMap {
     /** Legacy assistant response identifier kept for compatibility. */
     assistantMessageId?: string;
     operationId: string;
+    /** Client-side runtime path that produced this terminal boundary. */
+    runtimeType?: 'client' | 'gateway' | 'heterogeneous';
     serializedContext?: string;
     status?: 'cancelled' | 'completed' | 'failed';
     threadId?: string;

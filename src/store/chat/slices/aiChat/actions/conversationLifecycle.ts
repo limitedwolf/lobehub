@@ -40,11 +40,12 @@ import {
 } from '@/store/agent/selectors';
 import { agentGroupByIdSelectors, getChatGroupStoreState } from '@/store/agentGroup';
 import { selectRuntimeType } from '@/store/chat/slices/aiChat/actions/agentDispatcher';
+import { runAfterUserMessagePersistedLifecycle } from '@/store/chat/slices/aiChat/actions/agentRunLifecycle';
 import { resolveHeteroResume } from '@/store/chat/slices/aiChat/actions/heteroResume';
 import { dispatchNonHeteroSubAgent } from '@/store/chat/slices/aiChat/actions/nonHeteroSubAgentDispatcher';
 import { PortalViewType } from '@/store/chat/slices/portal/initialState';
 import { chatPortalSelectors } from '@/store/chat/slices/portal/selectors';
-import { type ChatStore } from '@/store/chat/store';
+import type { ChatStore } from '@/store/chat/store';
 import {
   mergeAgentRuntimeInitialContexts,
   resolveActiveTopicDocumentInitialContext,
@@ -58,7 +59,7 @@ import { getElectronStoreState } from '@/store/electron';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 import { pageAgentRuntime } from '@/store/tool/slices/builtin/executors/lobe-page-agent';
-import { type StoreSetter } from '@/store/types';
+import type { StoreSetter } from '@/store/types';
 import { useUserMemoryStore } from '@/store/userMemory';
 import { markdownToTxt } from '@/utils/markdownToTxt';
 
@@ -644,6 +645,15 @@ export class ConversationLifecycleActionImpl {
         { operationId },
       );
 
+      runAfterUserMessagePersistedLifecycle({
+        agentId,
+        assistantMessageId: heteroData.assistantMessageId,
+        get: this.#get,
+        isCreateNewTopic: heteroData.isCreateNewTopic,
+        messages: heteroMessages,
+        topicId: heteroData.topicId ?? heteroContext.topicId,
+      }).catch(console.error);
+
       // Complete sendMessage operation, start ACP execution as child operation
       this.#get().completeOperation(operationId);
 
@@ -982,46 +992,14 @@ export class ConversationLifecycleActionImpl {
 
     if (data.topicId) this.#get().internal_updateTopicLoading(data.topicId, true);
 
-    // Dev-only fast path: fall back to slicing the first user message instead of calling
-    // the LLM. Keeps chat logs uncluttered while still giving the topic a usable title.
-    // Only honored in non-production builds so a misconfigured prod env can't disable it.
-    const shouldSliceTopicTitle = __DEV__ && process.env.NEXT_PUBLIC_DEV_DISABLE_AUTO_TOPIC === '1';
-
-    const applyTopicTitle = async (topicId: string, messages: UIChatMessage[]) => {
-      if (!shouldSliceTopicTitle) {
-        await this.#get().summaryTopicTitle(topicId, messages);
-        return;
-      }
-
-      const firstUserText = messages.find((m) => m.role === 'user')?.content?.trim() ?? '';
-      const title = markdownToTxt(firstUserText).slice(0, 80) || 'New Topic';
-      await this.#get().internal_updateTopic(topicId, { title });
-      // summaryTopicTitle would normally clear loading via onLoadingChange; do it manually.
-      this.#get().internal_updateTopicLoading(topicId, false);
-      console.info('[dev] sliced topic title (NEXT_PUBLIC_DEV_DISABLE_AUTO_TOPIC=1):', title);
-    };
-
-    const summaryTitle = async () => {
-      // check activeTopic and then auto update topic title
-      if (data.isCreateNewTopic) {
-        await applyTopicTitle(data.topicId, data.messages);
-        return;
-      }
-
-      if (!data.topicId) return;
-
-      const topic = topicSelectors.getTopicById(data.topicId)(this.#get());
-
-      if (topic && !topic.title) {
-        const chats = displayMessageSelectors
-          .getDisplayMessagesByKey(messageMapKey({ agentId, topicId: topic.id }))(this.#get())
-          .filter((item) => item.id !== data.assistantMessageId);
-
-        await applyTopicTitle(topic.id, chats);
-      }
-    };
-
-    summaryTitle().catch(console.error);
+    runAfterUserMessagePersistedLifecycle({
+      agentId,
+      assistantMessageId: data.assistantMessageId,
+      get: this.#get,
+      isCreateNewTopic: data.isCreateNewTopic,
+      messages: data.messages,
+      topicId: data.topicId,
+    }).catch(console.error);
 
     // Complete sendMessage operation here - message creation is done
     // execAgentRuntime is a separate operation (child) that handles AI response generation
