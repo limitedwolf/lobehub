@@ -1,12 +1,18 @@
 import type { AgentStreamEvent } from '@lobechat/agent-gateway-client';
 import { RequestTrigger } from '@lobechat/types';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type * as ConstVersion from '@/const/version';
 import { aiAgentService } from '@/services/aiAgent';
+import { messageService } from '@/services/message';
+import { runAfterUserMessagePersistedLifecycle } from '@/store/chat/slices/aiChat/actions/agentRunLifecycle';
 
 import type { GatewayConnection } from '../gateway';
 import { GatewayActionImpl } from '../gateway';
+
+vi.mock('@/store/chat/slices/aiChat/actions/agentRunLifecycle', () => ({
+  runAfterUserMessagePersistedLifecycle: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('@/services/aiAgent', () => ({
   aiAgentService: {
@@ -116,6 +122,12 @@ function createTestAction() {
 }
 
 describe('GatewayActionImpl', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(messageService.getMessages).mockResolvedValue([]);
+    vi.mocked(runAfterUserMessagePersistedLifecycle).mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -416,6 +428,7 @@ describe('GatewayActionImpl', () => {
     function createExecuteTestAction() {
       const mockClient = createMockClient();
       const state: Record<string, any> = { gatewayConnections: {}, topicDataMap: {} };
+      const refreshTopic = vi.fn().mockResolvedValue(undefined);
       const set = vi.fn((updater: any) => {
         if (typeof updater === 'function') {
           Object.assign(state, updater(state));
@@ -432,6 +445,7 @@ describe('GatewayActionImpl', () => {
         internal_updateTopicLoading: vi.fn(),
         onOperationCancel: vi.fn(),
         replaceMessages: vi.fn(),
+        refreshTopic,
         startOperation: vi.fn(() => ({ operationId: 'gw-op-1' })),
         switchTopic: vi.fn(),
       })) as any;
@@ -448,7 +462,7 @@ describe('GatewayActionImpl', () => {
       const action = new GatewayActionImpl(set as any, get, undefined);
       action.createClient = vi.fn(() => mockClient);
 
-      return { action, get, mockClient, set, state };
+      return { action, get, mockClient, refreshTopic, set, state };
     }
 
     afterEach(() => {
@@ -485,6 +499,91 @@ describe('GatewayActionImpl', () => {
           prompt: 'Original question',
         }),
         expect.anything(),
+      );
+    });
+
+    it('should run post-persist lifecycle after gateway task init', async () => {
+      const { action } = createExecuteTestAction();
+
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'server-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        token: 'test-token',
+        topicId: 'topic-1',
+        userMessageId: 'usr-1',
+      });
+
+      await action.executeGatewayAgent({
+        context: { agentId: 'agent-1', topicId: 'topic-1', threadId: null, scope: 'main' },
+        message: 'Hello',
+      });
+
+      await vi.waitFor(() => {
+        expect(runAfterUserMessagePersistedLifecycle).toHaveBeenCalledWith(
+          expect.objectContaining({
+            agentId: 'agent-1',
+            assistantMessageId: 'ast-1',
+            isCreateNewTopic: false,
+            messages: [],
+            topicId: 'topic-1',
+          }),
+        );
+      });
+    });
+
+    it('should refresh a new gateway topic before running post-persist lifecycle', async () => {
+      const { action, refreshTopic } = createExecuteTestAction();
+      const events: string[] = [];
+      const persistedMessages = [
+        { id: 'usr-1', content: 'Hello', role: 'user' },
+        { id: 'ast-1', content: '', role: 'assistant' },
+      ] as any[];
+
+      refreshTopic.mockImplementation(async () => {
+        events.push('refreshTopic');
+      });
+      vi.mocked(runAfterUserMessagePersistedLifecycle).mockImplementation(async () => {
+        events.push('postPersistLifecycle');
+      });
+      vi.mocked(messageService.getMessages).mockResolvedValueOnce(persistedMessages);
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'server-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        token: 'test-token',
+        topicId: 'topic-new',
+        userMessageId: 'usr-1',
+      });
+
+      await action.executeGatewayAgent({
+        context: { agentId: 'agent-1', topicId: null, threadId: null, scope: 'main' },
+        message: 'Hello',
+      });
+
+      await vi.waitFor(() => {
+        expect(events).toEqual(['refreshTopic', 'postPersistLifecycle']);
+      });
+      expect(runAfterUserMessagePersistedLifecycle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agentId: 'agent-1',
+          assistantMessageId: 'ast-1',
+          isCreateNewTopic: true,
+          messages: persistedMessages,
+          topicId: 'topic-new',
+        }),
       );
     });
 

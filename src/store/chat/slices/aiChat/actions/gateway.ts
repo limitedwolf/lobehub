@@ -4,7 +4,12 @@ import {
   type AgentStreamEvent,
   type ConnectionStatus,
 } from '@lobechat/agent-gateway-client';
-import type { ConversationContext, ExecAgentResult, MessageMetadata } from '@lobechat/types';
+import type {
+  ConversationContext,
+  ExecAgentResult,
+  MessageMetadata,
+  UIChatMessage,
+} from '@lobechat/types';
 
 import { isDesktop } from '@/const/version';
 import { aiAgentService, type ResumeApprovalParam } from '@/services/aiAgent';
@@ -19,6 +24,7 @@ import type { ChatStore } from '@/store/chat/store';
 import type { StoreSetter } from '@/store/types';
 import { useUserStore } from '@/store/user';
 
+import { runAfterUserMessagePersistedLifecycle } from './agentRunLifecycle';
 import { createGatewayEventHandler } from './gatewayEventHandler';
 
 /**
@@ -394,6 +400,8 @@ export class GatewayActionImpl {
       throw abortSignal.reason ?? new DOMException('Aborted', 'AbortError');
     }
 
+    let persistedMessagesForLifecycle: UIChatMessage[] = [];
+
     // If server created a new topic, fetch messages first then switch topic
     // (same pattern as client mode: replaceMessages before switchTopic to avoid skeleton flash)
     if (isCreateNewTopic && result.topicId) {
@@ -402,6 +410,7 @@ export class GatewayActionImpl {
       try {
         const newContext = { ...context, topicId: result.topicId };
         const messages = await messageService.getMessages(newContext);
+        persistedMessagesForLifecycle = messages;
         this.#get().replaceMessages(messages, { context: newContext });
       } catch {
         /* non-critical */
@@ -411,14 +420,6 @@ export class GatewayActionImpl {
         clearNewKey: true,
         skipRefreshMessage: true,
       });
-
-      // Refresh the topic list so the new topic appears in topicDataMap (sidebar).
-      // Unlike the direct-API sendMessage path (which receives topics[] in the
-      // response and calls internal_updateTopics), the gateway path only gets a
-      // topicId — we must explicitly refetch so the sidebar shows the new topic.
-      this.#get()
-        .refreshTopic()
-        .catch((err) => console.error('[Gateway] refreshTopic after topic creation failed:', err));
 
       if (abortSignal?.aborted) {
         aiAgentService
@@ -430,6 +431,31 @@ export class GatewayActionImpl {
 
     // Use the server-created topicId for the execution context
     const execContext = { ...context, topicId: result.topicId };
+
+    // Refresh the topic list before the post-persist lifecycle for new topics:
+    // gateway only receives a topicId, while title summarization needs the
+    // topic to be visible in topicDataMap.
+    const refreshCreatedTopic =
+      isCreateNewTopic && result.topicId
+        ? this.#get()
+            .refreshTopic()
+            .catch((err) =>
+              console.error('[Gateway] refreshTopic after topic creation failed:', err),
+            )
+        : Promise.resolve();
+
+    void refreshCreatedTopic
+      .then(() =>
+        runAfterUserMessagePersistedLifecycle({
+          agentId: context.agentId,
+          assistantMessageId: result.assistantMessageId,
+          get: this.#get,
+          isCreateNewTopic,
+          messages: persistedMessagesForLifecycle,
+          topicId: result.topicId,
+        }),
+      )
+      .catch(console.error);
 
     if (result.topicId) {
       this.#get().internal_updateTopicLoading(result.topicId, true);
