@@ -104,7 +104,7 @@ interface AgentRunLifecycleExtension {
     event: AgentRunLifecycleEvent,
     context: AgentRunLifecycleExtensionContext,
   ) => Promise<void> | void;
-  runtimeTypes?: AgentRunRuntimeType[];
+  runtimeTypes?: readonly AgentRunRuntimeType[];
 }
 
 // Application-level control plane for side effects mounted on agent run lifecycle events.
@@ -297,7 +297,8 @@ const runAgentRunLifecycleExtensions = async (
     if (extension.phase !== event.phase) return false;
     if (!extension.runtimeTypes) return true;
     if (!runtimeType) return false;
-    return extension.runtimeTypes.includes(runtimeType);
+    const runtimeTypes: readonly AgentRunRuntimeType[] = extension.runtimeTypes;
+    return runtimeTypes.includes(runtimeType);
   }).sort((a, b) => a.order - b.order);
 
   for (const extension of extensions) {
