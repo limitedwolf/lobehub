@@ -127,6 +127,71 @@ describe('HeterogeneousAgentCtr', () => {
     await rm(appStoragePath, { force: true, recursive: true });
   });
 
+  describe('spawnLhHeteroExec', () => {
+    beforeEach(() => {
+      spawnCalls.length = 0;
+      execFileMock.mockReset();
+      nextFakeProc = null;
+    });
+
+    it('passes the detector-resolved Codex command to remote-device lh hetero exec', async () => {
+      const resolvedPath = '/Applications/Codex.app/Contents/Resources/codex';
+      const searchPath = '/Users/h/.local/share/mise/shims:/usr/bin:/bin';
+      const detect = vi
+        .fn()
+        .mockResolvedValue({ available: true, path: resolvedPath, resolvedPathEnv: searchPath });
+      const { proc, writes } = createFakeProc();
+      nextFakeProc = proc;
+
+      const ctr = new HeterogeneousAgentCtr({
+        appStoragePath,
+        storeManager: { get: vi.fn() },
+        toolDetectorManager: { detect },
+      } as any);
+
+      await ctr.spawnLhHeteroExec({
+        agentType: 'codex',
+        command: 'codex',
+        jwt: 'jwt-1',
+        operationId: 'op-1',
+        prompt: 'hello codex',
+        serverUrl: 'https://server.example.com',
+        topicId: 'topic-1',
+      });
+
+      expect(detect).toHaveBeenCalledWith('codex', true);
+      expect(spawnCalls[0].command).toBe('lh');
+      expect(spawnCalls[0].args).toEqual(
+        expect.arrayContaining(['--type', 'codex', '--command', resolvedPath]),
+      );
+      expect(spawnCalls[0].options.env.PATH).toBe(searchPath);
+      expect(writes).toEqual([JSON.stringify('hello codex')]);
+    });
+
+    it('rejects before spawning lh when the Codex command is unavailable on the device', async () => {
+      const detect = vi.fn().mockResolvedValue({ available: false });
+      const ctr = new HeterogeneousAgentCtr({
+        appStoragePath,
+        storeManager: { get: vi.fn() },
+        toolDetectorManager: { detect },
+      } as any);
+
+      await expect(
+        ctr.spawnLhHeteroExec({
+          agentType: 'codex',
+          command: 'codex',
+          jwt: 'jwt-1',
+          operationId: 'op-1',
+          prompt: 'hello codex',
+          serverUrl: 'https://server.example.com',
+          topicId: 'topic-1',
+        }),
+      ).rejects.toThrow('codex CLI command "codex" was not found on this device');
+
+      expect(spawnCalls).toHaveLength(0);
+    });
+  });
+
   describe('image cache (delegates to shared `normalizeImage`)', () => {
     // Image fetch + cache moved to `@lobechat/heterogeneous-agents/spawn`'s
     // `normalizeImage`. The desktop controller passes its own cacheDir so the

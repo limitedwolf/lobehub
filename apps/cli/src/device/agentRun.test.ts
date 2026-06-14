@@ -103,6 +103,16 @@ describe('spawnHeteroAgentRun', () => {
     expect(args).toContain('sess-9');
   });
 
+  it('passes an explicit CLI command through to `lh hetero exec`', () => {
+    const child = makeFakeChild();
+    spawnMock.mockReturnValue(child);
+
+    void spawnHeteroAgentRun({ ...baseParams, command: '/opt/bin/codex' });
+
+    const [, args] = spawnMock.mock.calls[0];
+    expect(args).toEqual(expect.arrayContaining(['--command', '/opt/bin/codex']));
+  });
+
   it('sends a content-block array to stdin when systemContext is provided', async () => {
     const child = makeFakeChild();
     spawnMock.mockReturnValue(child);

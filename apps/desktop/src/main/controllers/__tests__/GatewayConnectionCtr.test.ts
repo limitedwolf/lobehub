@@ -199,6 +199,10 @@ vi.mock('@lobechat/device-gateway-client', () => ({
   GatewayClient: MockGatewayClient,
 }));
 
+vi.mock('@lobechat/device-identity', () => ({
+  deriveDeviceId: vi.fn(() => 'mock-device-id'),
+}));
+
 vi.mock('@/services/imessageBridgeSrv', () => ({
   default: class ImessageBridgeService {},
 }));
@@ -845,9 +849,10 @@ describe('GatewayConnectionCtr', () => {
       },
     );
 
-    it('forwards cwd and systemContext from the request to spawnLhHeteroExec', async () => {
+    it('forwards cwd, command, and systemContext from the request to spawnLhHeteroExec', async () => {
       const client = await connectAndOpen();
       client.simulateAgentRunRequest('claude-code', 'op-ctx', 'hi', 'mock-jwt', {
+        command: '/custom/bin/claude',
         cwd: '/Users/alice/repo',
         systemContext: 'WORKSPACE CONTEXT',
       });
@@ -855,6 +860,7 @@ describe('GatewayConnectionCtr', () => {
 
       expect(mockHeterogeneousAgentCtr.spawnLhHeteroExec).toHaveBeenCalledWith(
         expect.objectContaining({
+          command: '/custom/bin/claude',
           cwd: '/Users/alice/repo',
           systemContext: 'WORKSPACE CONTEXT',
         }),

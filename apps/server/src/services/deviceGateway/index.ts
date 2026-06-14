@@ -713,6 +713,7 @@ export class DeviceGateway {
 
   async dispatchAgentRun(params: {
     agentType: HeterogeneousAgentType;
+    command?: string;
     cwd?: string;
     deviceId?: string;
     /** Image attachments forwarded to the device as fetchable (signed) URLs. */

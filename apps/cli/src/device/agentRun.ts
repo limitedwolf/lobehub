@@ -7,6 +7,7 @@ import {
 
 export interface SpawnHeteroAgentRunParams {
   agentType: string;
+  command?: string;
   cwd?: string;
   /** Image attachments (signed URLs) appended as image content blocks. */
   imageList?: HeteroExecImageRef[];
@@ -52,6 +53,7 @@ export function spawnHeteroAgentRun(
 ): Promise<AgentRunAckResult> {
   const {
     agentType,
+    command,
     cwd,
     imageList,
     jwt,
@@ -72,6 +74,7 @@ export function spawnHeteroAgentRun(
     'exec',
     '--type',
     agentType,
+    ...(command ? ['--command', command] : []),
     '--operation-id',
     operationId,
     '--topic',

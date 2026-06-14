@@ -286,11 +286,12 @@ export default class GatewayConnectionCtr extends ControllerModule {
         return { reason: 'Remote server URL not configured', status: 'rejected' };
       }
 
-      // Fire-and-forget: lh hetero exec handles spawn -> adapt ->
+      // Hand off to `lh hetero exec`; the spawned CLI then owns adapt ->
       // BatchIngester -> heteroIngest/heteroFinish -> server -> Gateway -> clients.
       // Same command as spawnHeteroSandbox() on the server side.
-      this.heterogeneousAgentCtr.spawnLhHeteroExec({
+      await this.heterogeneousAgentCtr.spawnLhHeteroExec({
         agentType: request.agentType,
+        command: request.command,
         cwd: request.cwd,
         imageList: request.imageList,
         jwt: request.jwt,

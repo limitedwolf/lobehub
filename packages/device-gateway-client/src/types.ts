@@ -195,6 +195,11 @@ export interface RpcResponseMessage {
 /** Server → Client: request the desktop to spawn `lh hetero exec`. */
 export interface AgentRunRequestMessage {
   agentType: string;
+  /**
+   * Optional CLI command/path to use for this agent. Device clients may resolve
+   * bare commands to an executable path before invoking `lh hetero exec`.
+   */
+  command?: string;
   cwd?: string;
   /**
    * Image attachments from the user message, as URLs the device can fetch

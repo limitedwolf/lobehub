@@ -36,6 +36,7 @@ import {
 import { app as electronApp, BrowserWindow } from 'electron';
 
 import { HETERO_AGENT_FILES_DIR, HETERO_AGENT_TRACING_DIR } from '@/const/heteroAgent';
+import type { ToolStatus } from '@/core/infrastructure/ToolDetectorManager';
 import { getHeterogeneousAgentDriver } from '@/modules/heterogeneousAgent';
 import type {
   HeterogeneousAgentBuildPlan,
@@ -219,6 +220,11 @@ interface CliTraceSession {
   writeQueue: Promise<void>;
 }
 
+interface ResolvedDeviceHeteroCommand {
+  command: string;
+  resolvedPathEnv?: string;
+}
+
 /**
  * External Agent Controller — manages external agent CLI processes via Electron IPC.
  *
@@ -257,6 +263,58 @@ export default class HeterogeneousAgentCtr extends ControllerModule {
     if (resolvedCommand) return resolvedCommand;
 
     return session.agentType === 'codex' ? 'codex' : 'claude';
+  }
+
+  private getDefaultCommandForAgentType(agentType: string): string | undefined {
+    if (agentType === 'codex') return 'codex';
+    if (agentType === 'claude-code') return 'claude';
+  }
+
+  private isBareCommand(command: string): boolean {
+    return !command.includes('/') && !command.includes('\\');
+  }
+
+  private async resolveDeviceHeteroCommand(
+    agentType: string,
+    command?: string,
+  ): Promise<ResolvedDeviceHeteroCommand | undefined> {
+    const requestedCommand = command?.trim() || this.getDefaultCommandForAgentType(agentType);
+    if (!requestedCommand) return;
+
+    if (agentType !== 'claude-code' && agentType !== 'codex') {
+      return { command: requestedCommand };
+    }
+
+    const defaultCommand = this.getDefaultCommandForAgentType(agentType);
+    let status: ToolStatus | undefined;
+    try {
+      status =
+        requestedCommand === defaultCommand && defaultCommand
+          ? await this.app.toolDetectorManager?.detect?.(defaultCommand, true)
+          : await detectHeterogeneousCliCommand(
+              agentType === 'claude-code' ? 'claude-code' : 'codex',
+              requestedCommand,
+            );
+
+      if (status?.available && status.path && this.isBareCommand(requestedCommand)) {
+        return { command: status.path, resolvedPathEnv: status.resolvedPathEnv };
+      }
+    } catch (err) {
+      logger.warn(
+        'resolveDeviceHeteroCommand: failed to resolve %s command "%s": %s',
+        agentType,
+        requestedCommand,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+
+    if (status && !status.available) {
+      throw new Error(
+        `${agentType} CLI command "${requestedCommand}" was not found on this device`,
+      );
+    }
+
+    return { command: requestedCommand };
   }
 
   private buildCodexCliMissingError(session: AgentSession): HeterogeneousAgentSessionError {
@@ -1469,8 +1527,9 @@ export default class HeterogeneousAgentCtr extends ControllerModule {
    * AgentStreamPipeline or IPC broadcast needed. Mirrors
    * `spawnHeteroSandbox()` on the server side.
    */
-  spawnLhHeteroExec(params: {
+  async spawnLhHeteroExec(params: {
     agentType: string;
+    command?: string;
     cwd?: string;
     /** Image attachments (signed URLs) appended as image content blocks. */
     imageList?: HeteroExecImageRef[];
@@ -1481,9 +1540,10 @@ export default class HeterogeneousAgentCtr extends ControllerModule {
     serverUrl: string;
     systemContext?: string;
     topicId: string;
-  }): void {
+  }): Promise<void> {
     const {
       agentType,
+      command,
       cwd,
       imageList,
       jwt,
@@ -1495,6 +1555,7 @@ export default class HeterogeneousAgentCtr extends ControllerModule {
       topicId,
     } = params;
     const workDir = cwd ?? process.cwd();
+    const resolvedCommand = await this.resolveDeviceHeteroCommand(agentType, command);
 
     // When CLI tracing is enabled (dev builds, or the Help-menu toggle in
     // packaged builds), have `lh hetero exec` persist the agent process's RAW
@@ -1509,6 +1570,7 @@ export default class HeterogeneousAgentCtr extends ControllerModule {
       'exec',
       '--type',
       agentType,
+      ...(resolvedCommand?.command ? ['--command', resolvedCommand.command] : []),
       '--operation-id',
       operationId,
       '--topic',
@@ -1526,6 +1588,7 @@ export default class HeterogeneousAgentCtr extends ControllerModule {
     const env = {
       ...process.env,
       ...buildProxyEnv(this.app.storeManager.get('networkProxy')),
+      ...(resolvedCommand?.resolvedPathEnv ? { PATH: resolvedCommand.resolvedPathEnv } : {}),
       LOBEHUB_JWT: jwt,
       LOBEHUB_SERVER: serverUrl,
     };

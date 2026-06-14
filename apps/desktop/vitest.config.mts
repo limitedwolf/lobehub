@@ -6,6 +6,7 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src/main'),
       '~common': resolve(__dirname, './src/common'),
+      '@lobechat/device-control': resolve(__dirname, '../../packages/device-control/src'),
       '@lobechat/local-file-shell': resolve(__dirname, '../../packages/local-file-shell/src'),
     },
     coverage: {
