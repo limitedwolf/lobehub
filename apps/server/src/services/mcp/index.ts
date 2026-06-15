@@ -109,10 +109,14 @@ export class MCPService {
       async (bail, attemptNumber) => {
         // Skip cache on retry attempts to drop the stale (dead) session
         const skipCache = attemptNumber > 1;
-        const client = await this.getClient(params, skipCache);
         log(`${operationName} for params: %O (attempt ${attemptNumber})`, loggableParams);
 
         try {
+          // Keep getClient inside the guarded block: a client initialization
+          // failure (bad URL/token, stdio spawn error) is NOT a stale-session
+          // error, so it must bail immediately instead of retrying — otherwise
+          // we'd repeat auth attempts / respawn stdio commands needlessly.
+          const client = await this.getClient(params, skipCache);
           return await operation(client);
         } catch (error) {
           // Only retry for NoValidSessionId errors

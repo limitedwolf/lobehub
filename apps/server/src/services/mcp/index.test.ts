@@ -271,6 +271,23 @@ describe('MCPService', () => {
       // McpError is a tool result, not a session error → must not retry
       expect(mockClient.callTool).toHaveBeenCalledTimes(1);
     });
+
+    it('should bail immediately on client initialization failure without retrying', async () => {
+      // getClient throws (e.g. bad URL/token, stdio spawn error) — not a stale session
+      const initError = new Error('Failed to initialize MCP client');
+      getClientSpy.mockRejectedValue(initError);
+
+      await expect(
+        mcpService.callTool({
+          clientParams: mockParams,
+          toolName: 'testTool',
+          argsStr: '{}',
+        }),
+      ).rejects.toThrow(TRPCError);
+      // Must NOT respawn/re-auth on init failure
+      expect(getClientSpy).toHaveBeenCalledTimes(1);
+      expect(mockClient.callTool).not.toHaveBeenCalled();
+    });
   });
 
   describe('listTools', () => {
