@@ -3,6 +3,7 @@ import { DEFAULT_MODEL, DEFAUTT_AGENT_TTS_CONFIG, isDesktop } from '@lobechat/co
 import { type AgentBuilderContext } from '@lobechat/context-engine';
 import {
   type AgentMode,
+  getWorkingDirEffectivePath,
   type LobeAgentAgencyConfig,
   type LobeAgentTTSConfig,
   type RuntimeEnvConfig,
@@ -140,7 +141,7 @@ const getAgentWorkingDirectoryById =
     const agencyConfig = agentSelectors.getAgentConfigById(agentId)(s)?.agencyConfig;
     const targetDeviceId = resolveTargetDeviceId(agencyConfig, currentDeviceId);
     const agentChoice = targetDeviceId
-      ? agencyConfig?.workingDirByDevice?.[targetDeviceId]
+      ? getWorkingDirEffectivePath(agencyConfig?.workingDirByDevice?.[targetDeviceId])
       : undefined;
 
     return (
