@@ -340,6 +340,7 @@ export default {
   'devices.actions.edit': 'Edit',
   'devices.actions.remove': 'Remove',
   'devices.channel.connected': 'Connected {{time}}',
+  'devices.channel.more': '{{channel}} etc.',
   'devices.currentBadge': 'This device',
   'devices.detail.addDir': 'Add directory',
   'devices.detail.connections': 'Connections',

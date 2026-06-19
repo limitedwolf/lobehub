@@ -288,6 +288,7 @@
   "devices.capabilities.tools.desc": "连接本地工具，扩展智能体的能力边界。",
   "devices.capabilities.tools.title": "调用系统工具",
   "devices.channel.connected": "已连接 {{time}}",
+  "devices.channel.more": "{{channel}} 等",
   "devices.connectWizard.button": "连接设备",
   "devices.connectWizard.cli.connectDesc": "启动后台守护进程，保持设备在线并等待远程操作。",
   "devices.connectWizard.cli.connectTitle": "启动守护进程",

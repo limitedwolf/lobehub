@@ -288,6 +288,7 @@
   "devices.capabilities.tools.desc": "Connect local tools to extend what agents can do.",
   "devices.capabilities.tools.title": "Call system tools",
   "devices.channel.connected": "Connected {{time}}",
+  "devices.channel.more": "{{channel}} etc.",
   "devices.connectWizard.button": "Connect Device",
   "devices.connectWizard.cli.connectDesc": "Start the background daemon to keep the device online and listening for remote operations.",
   "devices.connectWizard.cli.connectTitle": "Start the daemon",

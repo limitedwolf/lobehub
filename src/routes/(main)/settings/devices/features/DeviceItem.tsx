@@ -78,6 +78,16 @@ const DeviceItem = memo<DeviceItemProps>(({ device, isCurrent, onSelect, selecte
   // Online when the device has at least one live connection in `device.channels`.
   const channels = device.channels ?? [];
   const online = channels.length > 0;
+  // Surface how the device is connected at a glance: show the primary channel
+  // label (e.g. `desktop`), suffixed with `等` / `etc.` when more than one live
+  // connection exists, so single- vs multi-channel is obvious from the list.
+  const primaryChannel = channels.find((channel) => channel.channel)?.channel ?? null;
+  const channelLabel =
+    online && primaryChannel
+      ? channels.length > 1
+        ? t('devices.channel.more', { channel: primaryChannel })
+        : primaryChannel
+      : null;
   const statusTooltip = online
     ? t('devices.channel.connected', {
         time: dayjs(channels[0]?.connectedAt ?? device.lastSeen).fromNow(),
@@ -112,7 +122,14 @@ const DeviceItem = memo<DeviceItemProps>(({ device, isCurrent, onSelect, selecte
             {displayName}
           </Text>
           <Tooltip title={statusTooltip}>
-            <span className={online ? styles.dotOnline : styles.dotOffline} />
+            <Flexbox horizontal align={'center'} gap={6} style={{ flex: 'none' }}>
+              <span className={online ? styles.dotOnline : styles.dotOffline} />
+              {channelLabel && (
+                <Text style={{ fontSize: 12 }} type={'secondary'}>
+                  {channelLabel}
+                </Text>
+              )}
+            </Flexbox>
           </Tooltip>
           {isCurrent && <Tag>{t('devices.currentBadge')}</Tag>}
           {isFallback && (
