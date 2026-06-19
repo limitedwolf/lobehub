@@ -485,8 +485,9 @@ async function runConnect(options: ConnectOptions, isDaemonChild: boolean) {
   if (identity) {
     try {
       // Reuse the already-resolved auth (respects `--token` mode) so we don't
-      // re-discover creds and exit when none are found.
-      await registerDevice(auth, identity);
+      // re-discover creds and exit when none are found. Seed the default working
+      // directory with the launch dir (applied only on first registration).
+      await registerDevice(auth, identity, { defaultCwd: process.cwd() });
     } catch (err) {
       error(`Device registration failed (non-fatal): ${(err as Error).message}`);
     }

@@ -611,6 +611,9 @@ export const deviceRouter = router({
   register: deviceProcedure
     .input(
       z.object({
+        // Seeds the user-owned default working directory on first registration
+        // only (e.g. the dir `lh connect` ran from); preserved on re-register.
+        defaultCwd: z.string().nullable().optional(),
         deviceId: z.string().min(1).max(64),
         hostname: z.string().nullable().optional(),
         identitySource: z.enum(['machine-id', 'fallback']),

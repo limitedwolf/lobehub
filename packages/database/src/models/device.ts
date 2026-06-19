@@ -6,6 +6,12 @@ import { devices } from '../schemas';
 import type { LobeChatDatabase } from '../type';
 
 export interface RegisterDeviceParams {
+  /**
+   * Seed value for the user-owned default working directory. Only applied on the
+   * very first insert (e.g. the directory `lh connect` was launched from); a
+   * re-register never overwrites a value the user has since set.
+   */
+  defaultCwd?: string | null;
   deviceId: string;
   hostname?: string | null;
   identitySource: string;
@@ -43,13 +49,15 @@ export class DeviceModel {
    * Auto-register from desktop/CLI. Upserts on the (userId, deviceId) unique
    * index. On conflict only the machine-reported fields + lastSeenAt are
    * refreshed — friendlyName / defaultCwd / workingDirs are user-owned and
-   * must survive re-registration.
+   * must survive re-registration. `defaultCwd` is therefore seeded on the first
+   * insert only and intentionally left out of the conflict `set`.
    */
   register = async (params: RegisterDeviceParams) => {
     const now = new Date();
     const [result] = await this.db
       .insert(devices)
       .values({
+        defaultCwd: params.defaultCwd,
         deviceId: params.deviceId,
         hostname: params.hostname,
         identitySource: params.identitySource,

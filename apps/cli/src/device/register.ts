@@ -25,13 +25,20 @@ export function resolveDeviceIdentity(
  * device row exists right after auth) and `lh connect` (so the row exists
  * before the WS opens). Best-effort by contract: callers should wrap this in a
  * try/catch and treat any failure as non-fatal.
+ *
+ * `defaultCwd` seeds the user-owned "default working directory" on the device's
+ * first registration only — the server preserves any value the user has since
+ * set. `lh connect` passes its launch directory so a freshly connected device
+ * defaults to a sensible working directory; `lh login` omits it.
  */
 export async function registerDevice(
   auth: { serverUrl: string; token: string; tokenType: 'apiKey' | 'jwt' | 'serviceToken' },
   identity: DeviceIdentity,
+  options?: { defaultCwd?: string },
 ): Promise<void> {
   const trpc = createLambdaClient(auth);
   await trpc.device.register.mutate({
+    defaultCwd: options?.defaultCwd,
     deviceId: identity.deviceId,
     hostname: os.hostname(),
     identitySource: identity.identitySource,

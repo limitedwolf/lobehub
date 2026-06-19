@@ -96,6 +96,36 @@ describe('DeviceModel', () => {
         workingDirs: [{ path: '/Users/me/work' }, { path: '/Users/me/tmp', repoType: 'github' }],
       });
     });
+
+    it('should seed defaultCwd on the first registration', async () => {
+      await deviceModel.register({
+        defaultCwd: '/Users/me/project',
+        deviceId: 'dev-1',
+        identitySource: 'machine-id',
+      });
+
+      const row = await deviceModel.findByDeviceId('dev-1');
+      expect(row?.defaultCwd).toBe('/Users/me/project');
+    });
+
+    it('should NOT overwrite an existing defaultCwd when re-register seeds a new one', async () => {
+      await deviceModel.register({
+        defaultCwd: '/Users/me/first',
+        deviceId: 'dev-1',
+        identitySource: 'machine-id',
+      });
+
+      // Reconnect from a different directory — the seed must not win over the
+      // value already stored (which the user may have since edited).
+      await deviceModel.register({
+        defaultCwd: '/Users/me/second',
+        deviceId: 'dev-1',
+        identitySource: 'machine-id',
+      });
+
+      const row = await deviceModel.findByDeviceId('dev-1');
+      expect(row?.defaultCwd).toBe('/Users/me/first');
+    });
   });
 
   describe('query', () => {
