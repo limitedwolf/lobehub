@@ -50,6 +50,27 @@ export class FlatListBuilder {
   }
 
   /**
+   * Children to follow for the *active path*, honoring sub-topic (thread) scope.
+   *
+   * A message with a `threadId` belongs to a sub-topic branch, not the main
+   * flow. When a node has both main-flow children and thread children — e.g. a
+   * source message that was branched into a sub-topic *and* continued in the
+   * parent topic — the thread child must NOT compete with, or replace, the main
+   * continuation; otherwise sub-topic messages bleed into / hijack the parent
+   * history (this mirrors `buildIdTree`'s `!child.threadId` filter, keeping the
+   * flatList and the contextTree consistent on thread isolation).
+   *
+   * Thread children are only followed when they are the *sole* continuation —
+   * i.e. inside a thread-scoped message set, where the source message's main
+   * continuation is absent and the thread chain itself is the active path.
+   */
+  private activePathChildIds(parentId: string | null): string[] {
+    const childIds = this.childrenMap.get(parentId) ?? [];
+    const mainFlowChildIds = childIds.filter((id) => !this.messageMap.get(id)?.threadId);
+    return mainFlowChildIds.length > 0 ? mainFlowChildIds : childIds;
+  }
+
+  /**
    * Recursively build flatList following the active path
    */
   private buildFlatListRecursive(
@@ -58,7 +79,7 @@ export class FlatListBuilder {
     processedIds: Set<string>,
     allMessages: Message[],
   ): void {
-    const children = this.childrenMap.get(parentId) ?? [];
+    const children = this.activePathChildIds(parentId);
 
     // Pre-loop check: AgentCouncil mode on parent (tool message with multiple assistant children)
     // This handles the case when we continue from a tool message that triggered broadcast
@@ -296,7 +317,9 @@ export class FlatListBuilder {
       }
 
       // Priority 3a: Compare mode from user message metadata
-      const childMessages = this.childrenMap.get(message.id) ?? [];
+      // Use active-path children so sub-topic (thread) children never register
+      // as regenerate-branches of a main-flow continuation.
+      const childMessages = this.activePathChildIds(message.id);
       // Non-tool children only are branch candidates (dual-form reader invariant: tool children are inline, not branches):
       // a tool child is inline data of its assistant, never a sibling branch.
       const nonToolChildMessages = childMessages.filter(
@@ -576,7 +599,7 @@ export class FlatListBuilder {
   ): { child: Message; parentId: string } | undefined {
     return parentIds
       .flatMap((parentId) =>
-        (this.childrenMap.get(parentId) ?? [])
+        this.activePathChildIds(parentId)
           .map((childId) => this.messageMap.get(childId))
           .filter((child): child is Message => !!child && !processedIds.has(child.id))
           .map((child) => ({ child, parentId })),
@@ -586,7 +609,7 @@ export class FlatListBuilder {
 
   private shouldDrainParentContinuations(parentId: string, processedIds: Set<string>): boolean {
     const parentMessage = this.messageMap.get(parentId);
-    const children = (this.childrenMap.get(parentId) ?? []).filter(
+    const children = this.activePathChildIds(parentId).filter(
       (childId) => !processedIds.has(childId),
     );
     if (!parentMessage || children.length <= 1) return false;
