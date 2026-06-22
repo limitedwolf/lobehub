@@ -1,6 +1,6 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { oidcProviderAPIHandler } from '~server/api-runtime/oidc';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
+const handler = (req: Request) => oidcProviderAPIHandler(req);
 
 export const GET = handler;
 export const POST = handler;

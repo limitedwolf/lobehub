@@ -1,5 +1,3 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import app from '~server/workflows-hono';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const POST = handler;
+export const POST = (request: Request) => app.fetch(request);

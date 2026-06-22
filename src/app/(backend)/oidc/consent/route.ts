@@ -1,5 +1,1 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
-
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const POST = handler;
+export { oidcConsentAPIHandler as POST } from '~server/api-runtime/oidc';

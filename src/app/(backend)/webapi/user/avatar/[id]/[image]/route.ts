@@ -1,5 +1,4 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { userAvatarAPIHandler } from '~server/api-runtime/userAvatar';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const GET = handler;
+export const GET = async (req: Request, ctx: { params: Promise<{ id: string; image: string }> }) =>
+  userAvatarAPIHandler(req, await ctx.params);

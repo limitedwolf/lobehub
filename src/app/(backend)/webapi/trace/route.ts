@@ -1,5 +1,3 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { traceAPIHandler } from '~server/api-runtime/trace';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const POST = handler;
+export const POST = (req: Request) => traceAPIHandler(req);

@@ -1,6 +1,6 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { betterAuthAPIHandler } from '~server/api-runtime/betterAuth';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
+const handler = (req: Request) => betterAuthAPIHandler(req);
 
 export const GET = handler;
 export const POST = handler;

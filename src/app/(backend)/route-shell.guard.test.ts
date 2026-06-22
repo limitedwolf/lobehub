@@ -5,19 +5,15 @@ import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Guard: every route.ts under src/app/(backend) must stay a thin shell that
- * delegates to apps/server (the ~server alias). Handler logic creeping back
- * into a route file reintroduces the dual-source drift this migration removed
- * (see docs/superpowers/specs/2026-06-10-backend-route-shell-migration-design.md).
+ * Guard: every route.ts under src/app/(backend)/hono-gray must stay a thin
+ * shell that delegates to apps/server via fetchBackendRuntime. The non-gray
+ * (backend)/** routes intentionally hold the canary next handlers (direct
+ * imports from ~server/api-runtime/*) so the gray-release flag can switch
+ * between the two implementations.
  */
 
 const BACKEND_DIR = join(__dirname);
-
-/** Routes allowed to keep Next-only logic, with the reason. */
-const EXCEPTIONS = new Set([
-  // revalidateTag is Next ISR machinery and cannot leave the Next runtime
-  'webapi/revalidate/route.ts',
-]);
+const HONO_GRAY_DIR = join(BACKEND_DIR, 'hono-gray');
 
 const MAX_LINES = 30;
 
@@ -48,16 +44,14 @@ const collectRouteFiles = (dir: string): string[] => {
   return files;
 };
 
-describe('(backend) route shell guard', () => {
-  const routeFiles = collectRouteFiles(BACKEND_DIR).filter(
-    (file) => !EXCEPTIONS.has(relative(BACKEND_DIR, file)),
-  );
+describe('(backend)/hono-gray route shell guard', () => {
+  const routeFiles = collectRouteFiles(HONO_GRAY_DIR);
 
-  it('found the backend route files', () => {
+  it('found the hono-gray route files', () => {
     expect(routeFiles.length).toBeGreaterThan(40);
   });
 
-  it.each(routeFiles.map((file) => [relative(BACKEND_DIR, file), file]))(
+  it.each(routeFiles.map((file) => [relative(HONO_GRAY_DIR, file), file]))(
     '%s stays a thin shell',
     (_name, file) => {
       const content = readFileSync(file, 'utf8');

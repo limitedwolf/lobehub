@@ -7,6 +7,9 @@ export const config = {
   matcher: [
     // include any files in the api or trpc folders that might have an extension
     '/(api|trpc|webapi)(.*)',
+    // gray-release shells — middleware blocks external access and only the
+    // internal rewrite reaches the (backend)/hono-gray segment.
+    '/hono-gray(.*)',
     // include the /
     '/',
     '/community',

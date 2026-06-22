@@ -1,6 +1,1 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
-
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const GET = handler;
-export const POST = handler;
+export { mobileTRPCHandler as GET, mobileTRPCHandler as POST } from '~server/trpc-runtime/mobile';

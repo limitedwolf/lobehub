@@ -1,6 +1,6 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { openAPIHandler } from '~server/api-runtime/openapi';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
+const handler = (req: Request) => openAPIHandler(req);
 
 export const GET = handler;
 export const POST = handler;

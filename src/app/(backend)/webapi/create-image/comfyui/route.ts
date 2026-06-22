@@ -1,7 +1,5 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
-
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const POST = handler;
+import { comfyUICreateImageAPIHandler } from '~server/api-runtime/createImage';
 
 export const maxDuration = 300;
+
+export const POST = (req: Request) => comfyUICreateImageAPIHandler(req);

@@ -9,6 +9,7 @@ import { LOBE_LOCALE_COOKIE } from '@/const/locale';
 import { appEnv } from '@/envs/app';
 import { authEnv } from '@/envs/auth';
 import { type Locales } from '@/locales/resources';
+import { isHonoGrayPath, resolveGrayRewrite } from '@/server/backend-proxy/gray';
 import { parseBrowserLanguage } from '@/utils/locale';
 import { DEFAULT_LANG, locales, RouteVariants } from '@/utils/server/routeVariants';
 
@@ -55,8 +56,21 @@ export function defineConfig() {
     const url = new URL(request.url);
     logDefault('Processing request: %s %s', request.method, request.url);
 
+    // `/hono-gray/*` is an internal-only rewrite target — external traffic
+    // must go through the canary path so the gray flag can route it.
+    if (isHonoGrayPath(url.pathname)) {
+      logDefault('Rejecting external hono-gray access: %s', url.pathname);
+      return new NextResponse('Not Found', { status: 404 });
+    }
+
     // skip all api requests
     if (backendApiEndpoints.some((path) => url.pathname.startsWith(path))) {
+      const grayPath = resolveGrayRewrite(url.pathname);
+      if (grayPath) {
+        logDefault('Hono gray rewrite: %s -> %s', url.pathname, grayPath);
+        url.pathname = grayPath;
+        return NextResponse.rewrite(url);
+      }
       logDefault('Skipping API request: %s', url.pathname);
       return NextResponse.next();
     }

@@ -92,17 +92,33 @@ const loadProductionHonoApp = () => {
   return app;
 };
 
+// The `(backend)/hono-gray/*` route segment hosts dual-rollout stubs that the
+// gray middleware rewrites traffic into; the Hono app itself is mounted at the
+// original `/api|/trpc|/webapi|/oidc|/oauth/connector|/f|/market` roots, so the
+// prefix must be stripped before the request reaches Hono.
+const HONO_GRAY_PREFIX = '/hono-gray';
+
+const stripHonoGrayPrefix = (request: Request): Request => {
+  const url = new URL(request.url);
+  if (url.pathname !== HONO_GRAY_PREFIX && !url.pathname.startsWith(`${HONO_GRAY_PREFIX}/`)) {
+    return request;
+  }
+  url.pathname = url.pathname.slice(HONO_GRAY_PREFIX.length) || '/';
+  return createForwardRequest(request, url);
+};
+
 export const fetchBackendRuntime = async (request: Request) => {
+  const normalized = stripHonoGrayPrefix(request);
   const devTarget = process.env.LOBE_DEV_HONO_TARGET;
 
   if (process.env.NODE_ENV !== 'production' && devTarget) {
-    const sourceUrl = new URL(request.url);
+    const sourceUrl = new URL(normalized.url);
     const targetUrl = new URL(devTarget);
     targetUrl.pathname = sourceUrl.pathname;
     targetUrl.search = sourceUrl.search;
 
-    return fetch(createForwardRequest(request, targetUrl));
+    return fetch(createForwardRequest(normalized, targetUrl));
   }
 
-  return loadProductionHonoApp().fetch(request);
+  return loadProductionHonoApp().fetch(normalized);
 };

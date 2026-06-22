@@ -1,5 +1,4 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { videoWebhookAPIHandler } from '~server/api-runtime/videoWebhook';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const POST = handler;
+export const POST = async (req: Request, ctx: { params: Promise<{ provider: string }> }) =>
+  videoWebhookAPIHandler(req, await ctx.params);

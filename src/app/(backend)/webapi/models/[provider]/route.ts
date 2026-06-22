@@ -1,5 +1,4 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { modelsAPIHandler } from '~server/api-runtime/models';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const GET = handler;
+export const GET = async (req: Request, ctx: { params: Promise<{ provider: string }> }) =>
+  modelsAPIHandler(req, await ctx.params);

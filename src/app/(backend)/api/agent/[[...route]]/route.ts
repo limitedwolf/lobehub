@@ -1,6 +1,6 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import app from '~server/agent-hono';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
+const handler = (request: Request) => app.fetch(request);
 
 export const GET = handler;
 export const POST = handler;

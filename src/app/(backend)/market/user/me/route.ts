@@ -1,7 +1,5 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { marketUserMeAPIHandler } from '~server/api-runtime/market';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const PUT = handler;
+export const PUT = (req: Request) => marketUserMeAPIHandler(req);
 
 export const dynamic = 'force-dynamic';

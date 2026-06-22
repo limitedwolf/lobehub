@@ -1,5 +1,3 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { oidcCallbackDesktopAPIHandler } from '~server/api-runtime/oidc';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const GET = handler;
+export const GET = (req: Request) => oidcCallbackDesktopAPIHandler(req);

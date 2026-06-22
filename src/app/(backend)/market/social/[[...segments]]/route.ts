@@ -1,6 +1,9 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { marketSocialAPIHandler } from '~server/api-runtime/market';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
+type RouteContext = { params: Promise<{ segments?: string[] }> };
+
+const handler = async (req: Request, ctx: RouteContext) =>
+  marketSocialAPIHandler(req, await ctx.params);
 
 export const GET = handler;
 export const POST = handler;

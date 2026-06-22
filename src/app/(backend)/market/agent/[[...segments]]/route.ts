@@ -1,6 +1,9 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { marketAgentAPIHandler } from '~server/api-runtime/market';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
+type RouteContext = { params: Promise<{ segments?: string[] }> };
+
+const handler = async (req: Request, ctx: RouteContext) =>
+  marketAgentAPIHandler(req, await ctx.params);
 
 export const GET = handler;
 export const POST = handler;

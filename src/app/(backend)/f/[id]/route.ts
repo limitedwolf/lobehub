@@ -1,5 +1,4 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { fileProxyAPIHandler } from '~server/api-runtime/fileProxy';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const GET = handler;
+export const GET = async (req: Request, ctx: { params: Promise<{ id: string }> }) =>
+  fileProxyAPIHandler(req, await ctx.params);

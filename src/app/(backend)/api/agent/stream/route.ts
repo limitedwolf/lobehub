@@ -1,5 +1,3 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { agentStreamAPIHandler } from '~server/api-runtime/agentStream';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const GET = handler;
+export const GET = (req: Request) => agentStreamAPIHandler(req);

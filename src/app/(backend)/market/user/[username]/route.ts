@@ -1,7 +1,6 @@
-import { fetchBackendRuntime } from '@/server/backend-proxy/client';
+import { marketUserProfileAPIHandler } from '~server/api-runtime/market';
 
-const handler = (req: Request) => fetchBackendRuntime(req);
-
-export const GET = handler;
+export const GET = async (req: Request, ctx: { params: Promise<{ username: string }> }) =>
+  marketUserProfileAPIHandler(req, await ctx.params);
 
 export const dynamic = 'force-dynamic';
