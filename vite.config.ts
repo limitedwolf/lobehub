@@ -1,5 +1,3 @@
-import { spawn } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { DevTools } from '@vitejs/devtools';
@@ -7,6 +5,7 @@ import type { PluginOption, ViteDevServer } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+import { createDevProxyPrintPlugin } from './plugins/vite/devProxyPrint';
 import { viteEnvRestartKeys } from './plugins/vite/envRestartKeys';
 import {
   createSharedRolldownOutput,
@@ -28,80 +27,6 @@ const platform = isAuth ? 'auth' : isMobile ? 'mobile' : 'web';
 const enableViteDevTools = process.env.LOBE_VITE_DEVTOOLS === 'true';
 
 if (isDev) process.title = `lobe-dev-vite-${platform}`;
-
-const resolveCommandExecutable = (cmd: string) => {
-  const pathValue = process.env.PATH;
-  if (!pathValue) return;
-
-  if (process.platform === 'win32') {
-    const pathExt = (process.env.PATHEXT || '.COM;.EXE;.BAT;.CMD')
-      .split(';')
-      .filter(Boolean)
-      .map((ext) => ext.toLowerCase());
-    const candidateNames = cmd.includes('.') ? [cmd] : pathExt.map((ext) => `${cmd}${ext}`);
-
-    for (const entry of pathValue.split(path.delimiter).filter(Boolean)) {
-      for (const candidate of candidateNames) {
-        const resolved = path.win32.join(entry, candidate);
-        if (fs.existsSync(resolved)) return resolved;
-      }
-    }
-
-    return;
-  }
-
-  for (const entry of pathValue.split(path.delimiter).filter(Boolean)) {
-    const resolved = path.join(entry, cmd);
-    if (fs.existsSync(resolved)) return resolved;
-  }
-};
-
-const openExternalBrowser = async (
-  url: string,
-  logger?: { warn: (msg: string) => void },
-): Promise<boolean> => {
-  const command =
-    process.platform === 'win32'
-      ? {
-          args: ['url.dll,FileProtocolHandler', url],
-          cmd: 'rundll32',
-        }
-      : {
-          args: [url],
-          cmd: process.platform === 'darwin' ? 'open' : 'xdg-open',
-        };
-
-  const executable = resolveCommandExecutable(command.cmd);
-  if (!executable) {
-    logger?.warn(`openExternalBrowser: ${command.cmd} not found on PATH`);
-    return false;
-  }
-
-  return new Promise<boolean>((resolve) => {
-    try {
-      const child = spawn(executable, command.args, {
-        detached: true,
-        stdio: 'ignore',
-      });
-      let settled = false;
-      const done = (ok: boolean, reason?: string) => {
-        if (settled) return;
-        settled = true;
-        if (!ok && reason) logger?.warn(`openExternalBrowser: ${reason}`);
-        resolve(ok);
-      };
-      child.once('error', (err) => done(false, (err as Error).message));
-      child.once('spawn', () => {
-        child.unref();
-        done(true);
-      });
-      setTimeout(() => done(true), 200);
-    } catch (e) {
-      logger?.warn(`openExternalBrowser: ${(e as Error).message}`);
-      resolve(false);
-    }
-  });
-};
 
 const devTopology = process.env.LOBE_DEV_TOPOLOGY;
 const honoLite = devTopology === 'hono-lite' || devTopology === 'hono';
@@ -144,134 +69,49 @@ export default defineConfig({
     ...sharedRendererPlugins({ platform }),
 
     isDev && {
-      name: 'lobe-dev-proxy-print',
+      name: 'spa-html-dev-entry',
+      enforce: 'pre' as const,
       configureServer(server: ViteDevServer) {
-        const ONLINE_HOST = 'https://app.lobehub.com';
-        const c = {
-          green: (s: string) => `\x1B[32m${s}\x1B[0m`,
-          bold: (s: string) => `\x1B[1m${s}\x1B[0m`,
-          cyan: (s: string) => `\x1B[36m${s}\x1B[0m`,
-        };
-        const { info } = server.config.logger;
-        const isBundledDev = (server.config.experimental as any)?.bundledDev;
-
-        const getProxyUrl = () => {
-          const urls = server.resolvedUrls;
-          if (!urls?.local?.[0]) return;
-          const localHost = urls.local[0].replace(/\/$/, '');
-          return `${ONLINE_HOST}/_dangerous_local_dev_proxy?debug-host=${encodeURIComponent(localHost)}`;
-        };
-        const printProxyUrl = () => {
-          const proxyUrl = getProxyUrl();
-          if (!proxyUrl) return;
-          const colorUrl = (url: string) =>
-            c.cyan(url.replace(/:(\d+)\//, (_, port) => `:${c.bold(port)}/`));
-          info(`  ${c.green('➜')}  ${c.bold('Debug Proxy')}: ${colorUrl(proxyUrl)}`);
-        };
-        const openProxyUrl = async () => {
-          const proxyUrl = getProxyUrl();
-          if (!proxyUrl) return;
-
-          const opened = await openExternalBrowser(proxyUrl, server.config.logger);
-
-          if (!opened) {
-            server.config.logger.warn(`Failed to open Debug Proxy automatically: ${proxyUrl}`);
+        const AUTH_PATH_PREFIXES = [
+          '/signin',
+          '/signup',
+          '/verify-email',
+          '/reset-password',
+          '/auth-error',
+          '/market-auth-callback',
+        ];
+        server.middlewares.use((req, _res, next) => {
+          const raw = req.url;
+          if (!raw) return next();
+          const q = raw.indexOf('?');
+          const pathOnly = q === -1 ? raw : raw.slice(0, q);
+          const search = q === -1 ? '' : raw.slice(q);
+          const isAsset =
+            pathOnly.includes('.') ||
+            pathOnly.startsWith('/@') ||
+            pathOnly.startsWith('/__') ||
+            pathOnly.startsWith('/node_modules');
+          if (isAsset) return next();
+          // Dedicated AUTH=true / MOBILE=true dev servers always serve their bundle.
+          if (isAuth) {
+            req.url = `/index.auth.html${search}`;
+            return next();
           }
-        };
-
-        if (isBundledDev) {
-          // Disable Vite's built-in browser opening. We always open the debug
-          // proxy URL after the first bundled compile finishes instead.
-          server.openBrowser = () => {};
-
-          const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-          let spinnerIdx = 0;
-          let spinnerTimer: NodeJS.Timeout | null = null;
-          const formatElapsed = (ms: number) =>
-            ms < 1000 ? `${Math.max(0, Math.round(ms))}ms` : `${(ms / 1000).toFixed(1)}s`;
-
-          const startSpinner = (msg: string, since: number) => {
-            spinnerIdx = 0;
-            spinnerTimer = setInterval(() => {
-              const elapsed = formatElapsed(Date.now() - since);
-              process.stdout.write(`\r${c.cyan(spinnerFrames[spinnerIdx])} ${msg} (${elapsed})`);
-              spinnerIdx = (spinnerIdx + 1) % spinnerFrames.length;
-            }, 80);
-          };
-          const stopSpinner = (clearLine = true) => {
-            if (spinnerTimer) {
-              clearInterval(spinnerTimer);
-              spinnerTimer = null;
-            }
-            if (clearLine) process.stdout.write('\r\x1B[K');
-          };
-
-          server.httpServer?.once('listening', () => {
-            void (async () => {
-              const rootUrl =
-                server.resolvedUrls?.local?.[0] ||
-                `http://localhost:${String(server.config.server.port || 9876)}/`;
-              const startedAt = Date.now();
-              const timeout = 180_000;
-              const interval = 400;
-              let ready = false;
-
-              startSpinner('Vite: compile and bundle...', startedAt);
-
-              try {
-                while (Date.now() - startedAt < timeout) {
-                  try {
-                    const res = await fetch(rootUrl, { signal: AbortSignal.timeout(5_000) });
-                    const text = await res.text();
-                    if (text.includes('Bundling in progress')) {
-                      await new Promise((r) => setTimeout(r, interval));
-                      continue;
-                    }
-                    ready = true;
-                    stopSpinner();
-                    info(
-                      `  ${c.green('✅')}  Vite: compile and bundle finished (${res.status}) ${rootUrl}`,
-                    );
-                    void openProxyUrl();
-                    break;
-                  } catch {
-                    await new Promise((r) => setTimeout(r, interval));
-                  }
-                }
-              } catch (e) {
-                stopSpinner();
-                console.warn('⚠️ Vite: could not wait for compile and bundle:', e);
-              }
-
-              if (!ready && spinnerTimer) {
-                stopSpinner();
-                console.warn(`⚠️ Vite: compile and bundle timed out after ${timeout / 1000}s`);
-              }
-
-              printProxyUrl();
-            })();
-          });
-        }
-
-        return () => {
-          const originalPrintUrls = server.printUrls.bind(server);
-          const printHonoUrl = () => {
-            if (process.env.LOBE_DEV_TOPOLOGY !== 'hono-lite') return;
-            const honoPort = process.env.HONO_PORT || '3011';
-            const honoUrl = `http://localhost:${honoPort}/`;
-            const colorUrl = (url: string) =>
-              c.cyan(url.replace(/:(\d+)\//, (_, port) => `:${c.bold(port)}/`));
-            info(`  ${c.green('➜')}  ${c.bold('Hono API')}:    ${colorUrl(honoUrl)}`);
-          };
-          server.printUrls = () => {
-            if (isBundledDev) return;
-            originalPrintUrls();
-            printHonoUrl();
-            printProxyUrl();
-          };
-        };
+          if (isMobile) {
+            req.url = `/index.mobile.html${search}`;
+            return next();
+          }
+          // Main SPA: route known auth paths to the auth bundle so /signin et al.
+          // render without needing a separate dev server.
+          if (AUTH_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`))) {
+            req.url = `/index.auth.html${search}`;
+          }
+          next();
+        });
       },
     },
+
+    isDev && createDevProxyPrintPlugin(),
 
     !isAuth &&
       VitePWA({

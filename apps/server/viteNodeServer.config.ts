@@ -1,8 +1,17 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
+
+const HONO_SERVER_CONFIG_DIR = path.dirname(new URL(import.meta.url).pathname);
+const cloudRootTsconfig = path.resolve(HONO_SERVER_CONFIG_DIR, '../../../tsconfig.json');
+const lobehubRootTsconfig = path.resolve(HONO_SERVER_CONFIG_DIR, '../../tsconfig.json');
+const honoTsconfigProjects = [
+  existsSync(cloudRootTsconfig) ? cloudRootTsconfig : null,
+  lobehubRootTsconfig,
+].filter((value): value is string => value !== null);
 
 export const rawMdPlugin: Plugin = {
   name: 'lobe-vite-node-raw-md',
@@ -14,7 +23,10 @@ export const rawMdPlugin: Plugin = {
   },
 };
 
-export const honoServerPlugins = () => [rawMdPlugin, tsconfigPaths()];
+export const honoServerPlugins = () => [
+  rawMdPlugin,
+  tsconfigPaths({ loose: true, projects: honoTsconfigProjects }),
+];
 
 // pnpm links an older `@lobehub/editor` copy into
 // `packages/editor-runtime/node_modules` while the repo root resolves `^4.16.1`.
