@@ -52,6 +52,7 @@ const WORKSPACE_MIRRORED_FIRST_SEGMENTS = new Set([
   'agent',
   'community',
   'eval',
+  'fleet',
   'group',
   'image',
   'memory',

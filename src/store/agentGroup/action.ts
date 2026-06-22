@@ -3,9 +3,8 @@ import isEqual from 'fast-deep-equal';
 import { produce } from 'immer';
 import { type StateCreator } from 'zustand/vanilla';
 
-import { getActiveWorkspaceId } from '@/business/client/hooks/useActiveWorkspaceId';
 import { type ChatGroupItem } from '@/database/schemas/chatGroup';
-import { augmentKey, mutate, useClientDataSWRWithSync } from '@/libs/swr';
+import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
 import { groupKeys } from '@/libs/swr/keys';
 import { chatGroupService } from '@/services/chatGroup';
 import { getAgentStoreState } from '@/store/agent';
@@ -64,9 +63,6 @@ class ChatGroupInternalAction implements ResetableStore {
       payload,
     );
   };
-
-  private buildWorkspaceScopedKey = (key: unknown): Parameters<typeof mutate>[0] =>
-    augmentKey(key, getActiveWorkspaceId()) as Parameters<typeof mutate>[0];
 
   private removeStaleGroup = (groupId: string) => {
     this.internal_dispatchChatGroup({ payload: groupId, type: 'deleteGroup' });
@@ -153,11 +149,11 @@ class ChatGroupInternalAction implements ResetableStore {
   };
 
   refreshGroupDetail = async (groupId: string) => {
-    await mutate(this.buildWorkspaceScopedKey(groupKeys.detail(groupId)));
+    await mutate(groupKeys.detail(groupId));
   };
 
   refreshGroups = async () => {
-    await mutate(this.buildWorkspaceScopedKey(groupKeys.list(true)));
+    await mutate(groupKeys.list(true));
   };
 
   toggleGroupSetting = (open: boolean) => {

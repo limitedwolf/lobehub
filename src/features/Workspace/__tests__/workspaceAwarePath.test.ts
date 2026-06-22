@@ -15,6 +15,7 @@ describe('buildWorkspaceAwarePath', () => {
       '/acme/community/agent/jailbreak',
     );
     expect(buildWorkspaceAwarePath('/group/group-1', 'acme')).toBe('/acme/group/group-1');
+    expect(buildWorkspaceAwarePath('/fleet', 'acme')).toBe('/acme/fleet');
   });
 
   it('bypasses the prefix when `escape` is true', () => {
