@@ -446,7 +446,7 @@ export const sanitizeGeminiSchema = (schema: any): any => {
 
   // Recursively sanitize items (for array types). A node carrying `items` is an
   // array node; backfill a missing `type` so Gemini's predicate validator
-  // (`$type == Type.ARRAY`) accepts it. See LOBE-10066.
+  // (`$type == Type.ARRAY`) accepts it. See https://linear.app/lobehub/issue/LOBE-10066
   if ('items' in sanitized) {
     sanitized.items = sanitizeGeminiSchema(sanitized.items);
     if (sanitized.type === undefined) sanitized.type = 'array';
