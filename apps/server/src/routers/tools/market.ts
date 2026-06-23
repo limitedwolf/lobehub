@@ -14,7 +14,11 @@ import { isTrustedClientEnabled } from '@/libs/trusted-client';
 import { DiscoverService } from '~server/services/discover';
 import { FileService } from '~server/services/file';
 import { MarketService } from '~server/services/market';
-import { contentBlocksToString, processContentBlocks } from '~server/services/mcp/contentProcessor';
+import { listSkillToolsWithLiveFallback } from '~server/services/market/listSkillToolsWithLiveFallback';
+import {
+  contentBlocksToString,
+  processContentBlocks,
+} from '~server/services/mcp/contentProcessor';
 import { createSandboxService } from '~server/services/sandbox';
 
 import { scheduleToolCallReport } from './_helpers';
@@ -422,6 +426,7 @@ export const marketRouter = router({
 
         return {
           data: response.data,
+          error: (response as any).error,
           success: response.success,
         };
       } catch (error) {
@@ -591,7 +596,17 @@ export const marketRouter = router({
       log('connectListTools: provider=%s', input.provider);
 
       try {
-        const response = await ctx.marketSDK.skills.listTools(input.provider);
+        const response = await listSkillToolsWithLiveFallback(
+          ctx.marketSDK.skills,
+          input.provider,
+          (error) => {
+            log(
+              'listSkillToolsWithLiveFallback: live discovery failed for %s, falling back to static tools: %O',
+              input.provider,
+              error,
+            );
+          },
+        );
         return {
           provider: input.provider,
           tools: response.tools || [],
