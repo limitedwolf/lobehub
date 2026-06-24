@@ -125,7 +125,7 @@ const NOOP = async () => {};
  * be reused as the shared implementation when gateway/hetero are wired in the
  * follow-up entry convergence. `completeRun` handles only TERMINAL states;
  * parked states route to `onRunParked` and fire no terminal side effects — a
- * run is not complete while it is parked (see LOBE-10382).
+ * run is not complete while it is parked.
  */
 export const buildRunLifecycle = (
   get: () => ChatStore,
@@ -172,7 +172,7 @@ export const buildRunLifecycle = (
     afterUserMessagePersisted: NOOP,
     afterRunComplete: async (event: RunCompleteEvent) => {
       // Desktop notification + dock badge. Single home for all three runtimes'
-      // completion notification (LOBE-10379 "通知去重，统一到 afterRunComplete").
+      // completion notification (通知去重，统一到 afterRunComplete).
       // Top-level-only: a nested sub-agent finishing is not a user-facing run
       // completion — the parent run is still going, so it must not fire a
       // "generation finished" notification / badge. See RunScope.
