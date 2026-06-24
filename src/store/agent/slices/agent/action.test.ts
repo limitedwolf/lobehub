@@ -99,6 +99,39 @@ describe('AgentSlice Actions', () => {
     });
   });
 
+  describe('streaming system role', () => {
+    it('saves an empty streamed prompt so clearing the prompt still works', async () => {
+      vi.mocked(agentService.updateAgentConfig).mockResolvedValue({
+        agent: { systemRole: '' } as any,
+        success: true,
+      });
+
+      const { result } = renderHook(() => useAgentStore());
+
+      act(() => {
+        useAgentStore.setState({
+          agentMap: { 'agent-1': { systemRole: 'old prompt' } },
+          streamingSystemRole: '',
+          streamingSystemRoleInProgress: true,
+        });
+      });
+
+      await act(async () => {
+        await result.current.finishStreamingSystemRole('agent-1');
+      });
+
+      expect(agentService.updateAgentConfig).toHaveBeenCalledWith(
+        'agent-1',
+        {
+          systemRole: '',
+        },
+        undefined,
+      );
+      expect(result.current.streamingSystemRole).toBeUndefined();
+      expect(result.current.streamingSystemRoleInProgress).toBe(false);
+    });
+  });
+
   describe('useFetchAgentDocuments', () => {
     it('should fetch agent documents via listDocuments', async () => {
       const docs = [

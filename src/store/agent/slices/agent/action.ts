@@ -131,7 +131,7 @@ export class AgentSliceActionImpl {
   finishStreamingSystemRole = async (agentId: string): Promise<void> => {
     const { streamingSystemRole } = this.#get();
 
-    if (!streamingSystemRole) {
+    if (streamingSystemRole === undefined) {
       this.#set({ streamingSystemRoleInProgress: false }, false, 'finishStreamingSystemRole');
       return;
     }

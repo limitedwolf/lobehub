@@ -69,7 +69,7 @@ const EditorCanvas = memo(() => {
   // Streaming state from AgentStore
   const streamingSystemRole = useAgentStore((s) => s.streamingSystemRole);
   const streamingInProgress = useAgentStore((s) => s.streamingSystemRoleInProgress);
-  const prevStreamingRef = useRef<string | undefined>(undefined);
+  const latestStreamingContentRef = useRef<string | undefined>(undefined);
   const wasStreamingRef = useRef(false);
 
   // Collaborative edit-lock state, peeked-on-open and driven by the always-mounted
@@ -94,29 +94,30 @@ const EditorCanvas = memo(() => {
     handleContentChange(updateConfig);
   }, [editable, handleContentChange, updateConfig, streamingInProgress, setHasEdited]);
 
-  // Handle streaming updates - update editor with streaming content
+  // Track generated content while keeping the previous editor content visible
+  // until the full prompt is ready.
   useEffect(() => {
-    if (!editor || !editorInit) return;
-    if (!streamingInProgress) {
-      prevStreamingRef.current = undefined;
-      return;
-    }
-
-    // Only update if content has changed
-    if (streamingSystemRole !== prevStreamingRef.current) {
-      prevStreamingRef.current = streamingSystemRole;
-      try {
-        editor.setDocument('markdown', streamingSystemRole || '');
-      } catch {
-        // Ignore errors during streaming updates
-      }
-    }
-  }, [editor, editorInit, streamingSystemRole, streamingInProgress]);
+    if (streamingInProgress) latestStreamingContentRef.current = streamingSystemRole ?? '';
+  }, [streamingSystemRole, streamingInProgress]);
 
   // Trigger save when streaming ends
   useEffect(() => {
     if (wasStreamingRef.current && !streamingInProgress && editor && editorInit) {
-      if (!editable) return;
+      wasStreamingRef.current = false;
+
+      if (!editable) {
+        latestStreamingContentRef.current = undefined;
+        return;
+      }
+
+      const finalContent = latestStreamingContentRef.current ?? systemRole ?? '';
+      latestStreamingContentRef.current = undefined;
+
+      try {
+        editor.setDocument('markdown', finalContent);
+      } catch {
+        // Ignore errors during streaming updates
+      }
 
       // Streaming just ended, wait for editor to update its internal state then save
       // This ensures editorData (json) is properly updated from the markdown content
@@ -126,7 +127,15 @@ const EditorCanvas = memo(() => {
       return () => clearTimeout(timer);
     }
     wasStreamingRef.current = !!streamingInProgress;
-  }, [editable, streamingInProgress, editor, editorInit, handleContentChange, updateConfig]);
+  }, [
+    editable,
+    streamingInProgress,
+    editor,
+    editorInit,
+    handleContentChange,
+    updateConfig,
+    systemRole,
+  ]);
 
   useEffect(() => {
     if (!editorInit || !editor || contentInit) return;

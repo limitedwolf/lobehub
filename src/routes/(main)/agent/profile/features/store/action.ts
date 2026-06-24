@@ -26,7 +26,8 @@ export interface Action {
   /** Publish the latest edit-lock state from the always-mounted lock driver. */
   setLockState: (lockState: EditLockState) => void;
   /**
-   * Start streaming mode - clears editor and prepares for streaming content
+   * Start streaming mode - keeps existing editor content visible while
+   * generated content is still incomplete.
    */
   startStreaming: () => void;
 }
@@ -150,17 +151,6 @@ export const store: (initState?: Partial<State>) => StateCreator<Store> =
       },
 
       startStreaming: () => {
-        const { editor } = get();
-
-        // Clear editor content and prepare for streaming
-        if (editor) {
-          try {
-            editor.setDocument('markdown', '');
-          } catch {
-            // Ignore errors
-          }
-        }
-
         set({
           streamingContent: '',
           streamingInProgress: true,
