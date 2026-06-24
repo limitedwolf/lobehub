@@ -55,6 +55,27 @@ export const AgentBuilderManifest: BuiltinToolManifest = {
     // ==================== Write Operations ====================
     {
       description:
+        "Generate a context-aware opening message and suggested opening questions for the current agent, then save them to the agent configuration. Use this when the user asks to create, auto-generate, improve, or refresh the agent's opening message / welcome message / opening questions.",
+      name: AgentBuilderApiName.generateOpeningMessage,
+      parameters: {
+        properties: {
+          questionCount: {
+            description:
+              'Optional number of opening questions to generate. Defaults to 3, capped at 6.',
+            type: 'number',
+          },
+          styleHint: {
+            description:
+              'Optional tone or style direction for the generated opening experience, e.g. "friendly and concise".',
+            type: 'string',
+          },
+        },
+        required: [],
+        type: 'object',
+      },
+    },
+    {
+      description:
         'Install a plugin for the agent. This tool ALWAYS REQUIRES user approval before installation, even in auto-run mode. For MCP marketplace plugins, it will install and enable the plugin. For Composio tools and LobehubSkill providers that need OAuth, it will initiate the connection flow and wait for user to complete authorization.',
       name: AgentBuilderApiName.installPlugin,
       parameters: {

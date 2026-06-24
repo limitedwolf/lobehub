@@ -14,11 +14,12 @@ export const AgentBuilderApiName = {
   // Note: getAgentConfig, getAgentMeta, getPrompt, getAvailableTools, searchOfficialTools are removed
   // because the current agent context is now automatically injected
   getAvailableModels: 'getAvailableModels',
-  installPlugin: 'installPlugin',
   searchMarketTools: 'searchMarketTools',
   // Write operations
   // Note: setModel, setOpeningMessage, setOpeningQuestions, updateChatConfig, updateAgentMeta, togglePlugin are removed
   // and consolidated into updateAgentConfig
+  generateOpeningMessage: 'generateOpeningMessage',
+  installPlugin: 'installPlugin',
   updateAgentConfig: 'updateConfig',
   updatePrompt: 'updatePrompt',
 } as const;
@@ -70,6 +71,17 @@ export interface UpdatePromptParams {
   streaming?: boolean;
 }
 
+export interface GenerateOpeningMessageParams {
+  /**
+   * Number of opening questions to generate. Defaults to 3 and is capped at 6.
+   */
+  questionCount?: number;
+  /**
+   * Optional user-facing tone/style direction, e.g. "friendly and concise".
+   */
+  styleHint?: string;
+}
+
 // ============== State Types (for Render components) ==============
 
 export interface UpdateConfigState {
@@ -116,6 +128,15 @@ export interface UpdatePromptState {
   newPrompt: string;
   previousPrompt?: string;
   success: boolean;
+}
+
+export interface GenerateOpeningMessageState {
+  openingMessage: string;
+  openingQuestions: string[];
+  previousOpeningMessage?: string;
+  previousOpeningQuestions?: string[];
+  success: boolean;
+  tracingId?: string;
 }
 
 // ============== SearchMarketTools Types ==============

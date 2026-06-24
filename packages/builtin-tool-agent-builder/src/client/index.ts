@@ -1,6 +1,7 @@
 // Inspector components (customized tool call headers)
 export { AgentBuilderInspectors } from './Inspector';
 export {
+  GenerateOpeningMessageInspector,
   GetAvailableModelsInspector,
   InstallPluginInspector,
   SearchMarketToolsInspector,

@@ -1,4 +1,5 @@
 import { AgentBuilderApiName } from '../../types';
+import GenerateOpeningMessage from './GenerateOpeningMessage';
 import GetAvailableModels from './GetAvailableModels';
 import InstallPlugin from './InstallPlugin';
 import SearchMarketTools from './SearchMarketTools';
@@ -20,6 +21,7 @@ export const AgentBuilderRenders = {
   [AgentBuilderApiName.searchMarketTools]: SearchMarketTools,
 
   // Write operations
+  [AgentBuilderApiName.generateOpeningMessage]: GenerateOpeningMessage,
   [AgentBuilderApiName.installPlugin]: InstallPlugin,
   [AgentBuilderApiName.updateAgentConfig]: UpdateConfig,
   [AgentBuilderApiName.updatePrompt]: UpdatePrompt,

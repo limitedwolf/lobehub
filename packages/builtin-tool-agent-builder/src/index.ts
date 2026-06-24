@@ -6,6 +6,8 @@ export {
   AgentBuilderIdentifier,
   type AvailableModel,
   type AvailableProvider,
+  type GenerateOpeningMessageParams,
+  type GenerateOpeningMessageState,
   type GetAvailableModelsParams,
   type GetAvailableModelsState,
   type InstallPluginParams,

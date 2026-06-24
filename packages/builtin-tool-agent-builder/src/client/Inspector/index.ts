@@ -1,6 +1,7 @@
 import type { BuiltinInspector } from '@lobechat/types';
 
 import { AgentBuilderApiName } from '../../types';
+import { GenerateOpeningMessageInspector } from './GenerateOpeningMessage';
 import { GetAvailableModelsInspector } from './GetAvailableModels';
 import { InstallPluginInspector } from './InstallPlugin';
 import { SearchMarketToolsInspector } from './SearchMarketTools';
@@ -14,6 +15,7 @@ import { UpdatePromptInspector } from './UpdatePrompt';
  * of tool calls in the conversation UI.
  */
 export const AgentBuilderInspectors: Record<string, BuiltinInspector> = {
+  [AgentBuilderApiName.generateOpeningMessage]: GenerateOpeningMessageInspector as BuiltinInspector,
   [AgentBuilderApiName.getAvailableModels]: GetAvailableModelsInspector as BuiltinInspector,
   [AgentBuilderApiName.installPlugin]: InstallPluginInspector as BuiltinInspector,
   [AgentBuilderApiName.searchMarketTools]: SearchMarketToolsInspector as BuiltinInspector,
@@ -22,6 +24,7 @@ export const AgentBuilderInspectors: Record<string, BuiltinInspector> = {
 };
 
 // Re-export individual inspectors for reuse in group-agent-builder
+export { GenerateOpeningMessageInspector } from './GenerateOpeningMessage';
 export { GetAvailableModelsInspector } from './GetAvailableModels';
 export { InstallPluginInspector } from './InstallPlugin';
 export { SearchMarketToolsInspector } from './SearchMarketTools';
