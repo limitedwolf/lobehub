@@ -44,15 +44,19 @@ const registerTaskWork = async (
 ) => {
   if (!ctx?.topicId) return;
 
+  const taskId = task.id ?? (task.identifier?.startsWith('task_') ? task.identifier : undefined);
+  const taskIdentifier =
+    task.identifier && !task.identifier.startsWith('task_') ? task.identifier : undefined;
+
   const registerParams = {
     agentId: ctx.agentId,
     messageId: ctx.messageId,
     operationId: ctx.operationId,
     sourceIdentifier,
-    taskId: task.id,
-    taskIdentifier: task.identifier,
+    taskId,
+    taskIdentifier,
     threadId: ctx.threadId,
-    title: task.name || task.identifier,
+    title: task.name || taskIdentifier || taskId,
     toolCallId: ctx.toolCallId,
     topicId: ctx.topicId,
   };
@@ -375,7 +379,7 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
       priority?: number;
       removeDependencies?: string[];
     },
-    _ctx?: BuiltinToolContext,
+    ctx?: BuiltinToolContext,
   ): Promise<BuiltinToolResult> => {
     try {
       log('[TaskExecutor] editTask - params:', params);
@@ -441,6 +445,9 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
       }
 
       await Promise.all(ops);
+      if (ops.length > 0) {
+        await registerTaskWork({ identifier, name: params.name }, ctx, TaskApiName.editTask);
+      }
 
       return {
         content: formatTaskEdited(identifier, changes),
@@ -467,7 +474,7 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
       schedulePattern?: string | null;
       scheduleTimezone?: string | null;
     },
-    _ctx?: BuiltinToolContext,
+    ctx?: BuiltinToolContext,
   ): Promise<BuiltinToolResult> => {
     try {
       log('[TaskExecutor] setTaskSchedule - params:', params);
@@ -548,6 +555,7 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
 
       await Promise.all(ops);
       await store.internal_refreshTaskDetail(identifier);
+      await registerTaskWork({ identifier }, ctx, TaskApiName.setTaskSchedule);
 
       return {
         content: formatTaskEdited(identifier, changes),
@@ -742,6 +750,7 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
       const id = await getTaskStoreState().updateTaskStatus(identifier, params.status, {
         error: params.error,
       });
+      await registerTaskWork({ identifier: id }, ctx, TaskApiName.updateTaskStatus);
 
       return {
         content:

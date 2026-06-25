@@ -2621,6 +2621,31 @@ table verify_runs {
   }
 }
 
+table work_versions {
+  id text [pk, not null]
+  work_id text [not null]
+  version integer [not null]
+  title text [not null]
+  snapshot jsonb [not null]
+  source_type text [not null]
+  source_identifier text [not null]
+  message_id text
+  operation_id text
+  tool_call_id text
+  user_id text [not null]
+  workspace_id text
+  created_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    (work_id, version) [name: 'work_versions_work_id_version_unique', unique]
+    (work_id, tool_call_id) [name: 'work_versions_work_id_tool_call_unique', unique]
+    work_id [name: 'work_versions_work_id_idx']
+    user_id [name: 'work_versions_user_id_idx']
+    workspace_id [name: 'work_versions_workspace_id_idx']
+    created_at [name: 'work_versions_created_at_idx']
+  }
+}
+
 table works {
   id text [pk, not null]
   title text [not null]

@@ -137,7 +137,7 @@ describe('createTaskRuntime', () => {
       };
       const taskCaller = {} as any;
       const workModel = {
-        register: vi.fn().mockResolvedValue({ id: 'work-1' }),
+        registerTask: vi.fn().mockResolvedValue({ id: 'work-1' }),
       };
       return { agentModel, taskCaller, taskModel, taskService, workModel };
     };
@@ -196,20 +196,16 @@ describe('createTaskRuntime', () => {
         status: 'backlog',
         success: true,
       });
-      expect(deps.workModel.register).toHaveBeenCalledWith({
+      expect(deps.workModel.registerTask).toHaveBeenCalledWith({
         agentId: 'agt-xyz',
-        contentRefId: 'task-1',
-        contentRefIdentifier: 'T-1',
-        contentRefType: 'task',
         messageId: 'msg-assistant',
         operationId: 'op-1',
         sourceIdentifier: 'createTask',
-        sourceType: 'tool',
+        taskId: 'task-1',
         threadId: 'thread-1',
         title: 'Test',
         toolCallId: 'call-1',
         topicId: 'topic-1',
-        type: 'task',
       });
     });
 
@@ -511,7 +507,7 @@ describe('createTaskRuntime', () => {
         taskCaller: {} as any,
         taskModel,
         taskService,
-        workModel: { register: vi.fn().mockResolvedValue({ id: 'work-1' }) },
+        workModel: { registerTask: vi.fn().mockResolvedValue({ id: 'work-1' }) },
       };
     };
 
@@ -523,6 +519,7 @@ describe('createTaskRuntime', () => {
         taskCaller: deps.taskCaller,
         taskModel: deps.taskModel as any,
         taskService: deps.taskService as any,
+        topicId: 'topic-create-tasks',
         workModel: deps.workModel as any,
       });
 
@@ -546,14 +543,14 @@ describe('createTaskRuntime', () => {
         ],
         succeeded: 2,
       });
-      expect(deps.workModel.register).toHaveBeenCalledTimes(2);
-      expect(deps.workModel.register).toHaveBeenNthCalledWith(
+      expect(deps.workModel.registerTask).toHaveBeenCalledTimes(2);
+      expect(deps.workModel.registerTask).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
-          contentRefId: 'db-A',
-          contentRefIdentifier: 'T-A',
           sourceIdentifier: 'createTasks',
+          taskId: 'db-A',
           title: 'A',
+          topicId: 'topic-create-tasks',
         }),
       );
     });

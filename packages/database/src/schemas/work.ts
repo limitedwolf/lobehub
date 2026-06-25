@@ -3,12 +3,13 @@ import type {
   WorkSourceType,
   WorkStatus,
   WorkType,
+  WorkVersionSnapshot,
 } from '@lobechat/types';
 import { isNotNull, isNull } from 'drizzle-orm';
-import { index, pgTable, text, uniqueIndex } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, pgTable, text, uniqueIndex } from 'drizzle-orm/pg-core';
 
 import { idGenerator } from '../utils/idGenerator';
-import { timestamps } from './_helpers';
+import { createdAt, timestamps } from './_helpers';
 import { agents } from './agent';
 import { threads, topics } from './topic';
 import { users } from './user';
@@ -75,3 +76,53 @@ export const works = pgTable(
 
 export type NewWork = typeof works.$inferInsert;
 export type WorkItem = typeof works.$inferSelect;
+
+/**
+ * Immutable snapshots for a Work item.
+ *
+ * `works` remains a one-row registry per durable deliverable. This table records
+ * meaningful tool-driven mutations under that stable Work identity, for example
+ * a task created as v1 and later edited by an agent as v2.
+ */
+export const workVersions = pgTable(
+  'work_versions',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => idGenerator('workVersions'))
+      .notNull(),
+
+    workId: text('work_id')
+      .references(() => works.id, { onDelete: 'cascade' })
+      .notNull(),
+    version: integer('version').notNull(),
+    title: text('title').notNull(),
+    snapshot: jsonb('snapshot').$type<WorkVersionSnapshot>().notNull(),
+
+    sourceType: text('source_type').$type<WorkSourceType>().notNull(),
+    sourceIdentifier: text('source_identifier').notNull(),
+    messageId: text('message_id'),
+    operationId: text('operation_id'),
+    toolCallId: text('tool_call_id'),
+
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
+
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('work_versions_work_id_version_unique').on(t.workId, t.version),
+    uniqueIndex('work_versions_work_id_tool_call_unique')
+      .on(t.workId, t.toolCallId)
+      .where(isNotNull(t.toolCallId)),
+    index('work_versions_work_id_idx').on(t.workId),
+    index('work_versions_user_id_idx').on(t.userId),
+    index('work_versions_workspace_id_idx').on(t.workspaceId),
+    index('work_versions_created_at_idx').on(t.createdAt),
+  ],
+);
+
+export type NewWorkVersion = typeof workVersions.$inferInsert;
+export type WorkVersionItem = typeof workVersions.$inferSelect;

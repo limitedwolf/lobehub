@@ -812,6 +812,13 @@
       "when": 1782379821803,
       "tag": "0115_add_works_registry",
       "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1782395084437,
+      "tag": "0116_add_work_versions",
+      "breakpoints": true
     }
   ],
   "version": "6"

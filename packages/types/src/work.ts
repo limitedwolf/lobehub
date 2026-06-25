@@ -1,4 +1,4 @@
-import type { TaskStatus } from './task';
+import type { TaskAutomationMode, TaskStatus } from './task';
 
 export type WorkContentRefType = 'task';
 
@@ -27,6 +27,53 @@ export interface WorkItem {
   type: WorkType;
   updatedAt: Date;
   userId: string;
+  workspaceId?: string | null;
+}
+
+export interface TaskWorkVersionSnapshot {
+  assigneeAgentId?: string | null;
+  assigneeUserId?: string | null;
+  automationMode?: TaskAutomationMode | null;
+  config?: unknown;
+  context?: unknown;
+  createdByAgentId?: string | null;
+  currentTopicId?: string | null;
+  description?: string | null;
+  editorData?: unknown;
+  error?: string | null;
+  heartbeatInterval?: number | null;
+  heartbeatTimeout?: number | null;
+  id: string;
+  identifier: string;
+  instruction: string;
+  maxTopics?: number | null;
+  name?: string | null;
+  parentTaskId?: string | null;
+  priority?: number | null;
+  schedulePattern?: string | null;
+  scheduleTimezone?: string | null;
+  sortOrder?: number | null;
+  status: TaskStatus;
+  totalTopics?: number | null;
+}
+
+export interface WorkVersionSnapshot {
+  task: TaskWorkVersionSnapshot;
+}
+
+export interface WorkVersionItem {
+  createdAt: Date;
+  id: string;
+  messageId?: string | null;
+  operationId?: string | null;
+  snapshot: WorkVersionSnapshot;
+  sourceIdentifier: string;
+  sourceType: WorkSourceType;
+  title: string;
+  toolCallId?: string | null;
+  userId: string;
+  version: number;
+  workId: string;
   workspaceId?: string | null;
 }
 

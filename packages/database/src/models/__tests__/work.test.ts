@@ -137,9 +137,117 @@ describe('WorkModel', () => {
       toolCallId: 'tool-call-register-task',
       topicId,
     });
+    if (!work) throw new Error('Expected work to be registered');
+
+    const versions = await model.listVersions(work.id);
+    expect(versions).toHaveLength(1);
+    expect(versions[0]).toMatchObject({
+      messageId: 'message-register-task',
+      operationId: 'operation-register-task',
+      sourceIdentifier: 'createTask',
+      title: 'Daily summary',
+      toolCallId: 'tool-call-register-task',
+      version: 1,
+      workId: work.id,
+    });
+    expect(versions[0].snapshot.task).toMatchObject({
+      id: task.id,
+      identifier: task.identifier,
+      name: 'Daily summary',
+      priority: 3,
+      status: 'backlog',
+    });
 
     const items = await model.listByConversation({ topicId });
     expect(items.map((item) => item.contentRefIdentifier)).toEqual([task.identifier]);
+  });
+
+  it('creates new versions for task updates without creating another work', async () => {
+    const agentId = await createAgent('work-agent-version-updates');
+    const topicId = await createTopic('work-topic-version-updates', agentId);
+    const taskModel = new TaskModel(serverDB, userId);
+    const task = await taskModel.create({
+      instruction: 'Create a changelog',
+      name: 'Initial title',
+      priority: 1,
+    });
+    const model = new WorkModel(serverDB, userId);
+
+    const first = await model.registerTask({
+      agentId,
+      sourceIdentifier: 'createTask',
+      taskIdentifier: task.identifier,
+      toolCallId: 'tool-call-version-create',
+      topicId,
+    });
+    if (!first) throw new Error('Expected initial work to be registered');
+
+    await taskModel.update(task.id, { name: 'Updated title', priority: 5 });
+
+    const second = await model.registerTask({
+      agentId,
+      sourceIdentifier: 'editTask',
+      taskId: task.id,
+      toolCallId: 'tool-call-version-edit',
+      topicId,
+    });
+
+    expect(second?.id).toBe(first.id);
+
+    const versions = await model.listVersions(first.id);
+    expect(versions.map((version) => version.version)).toEqual([2, 1]);
+    expect(versions[0]).toMatchObject({
+      sourceIdentifier: 'editTask',
+      title: 'Updated title',
+      toolCallId: 'tool-call-version-edit',
+    });
+    expect(versions[0].snapshot.task).toMatchObject({
+      id: task.id,
+      identifier: task.identifier,
+      name: 'Updated title',
+      priority: 5,
+    });
+    expect(versions[1]).toMatchObject({
+      sourceIdentifier: 'createTask',
+      title: 'Initial title',
+      toolCallId: 'tool-call-version-create',
+    });
+    expect(versions[1].snapshot.task).toMatchObject({
+      id: task.id,
+      identifier: task.identifier,
+      name: 'Initial title',
+      priority: 1,
+    });
+  });
+
+  it('deduplicates task versions by tool call id', async () => {
+    const agentId = await createAgent('work-agent-version-idempotent');
+    const topicId = await createTopic('work-topic-version-idempotent', agentId);
+    const task = await new TaskModel(serverDB, userId).create({
+      instruction: 'Keep one version per tool call',
+      name: 'Idempotent task',
+    });
+    const model = new WorkModel(serverDB, userId);
+
+    const first = await model.registerTask({
+      agentId,
+      sourceIdentifier: 'createTask',
+      taskIdentifier: task.identifier.toLowerCase(),
+      toolCallId: 'tool-call-version-idempotent',
+      topicId,
+    });
+    if (!first) throw new Error('Expected initial work to be registered');
+
+    const second = await model.registerTask({
+      agentId,
+      sourceIdentifier: 'createTask',
+      taskIdentifier: task.id,
+      toolCallId: 'tool-call-version-idempotent',
+      topicId,
+    });
+
+    expect(second?.id).toBe(first.id);
+    expect(await model.listVersions(first.id)).toHaveLength(1);
   });
 
   it('does not register task works across users', async () => {

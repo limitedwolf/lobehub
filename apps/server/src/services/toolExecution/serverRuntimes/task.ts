@@ -62,16 +62,8 @@ export interface TaskRuntimeDeps {
 }
 
 export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
-  const {
-    agentId,
-    assistantMessageId,
-    operationId,
-    scope,
-    taskId,
-    threadId,
-    toolCallId,
-    topicId,
-  } = deps;
+  const { agentId, assistantMessageId, operationId, scope, taskId, threadId, toolCallId, topicId } =
+    deps;
   // Models are read through `deps` (not destructured) so callers can swap them
   // in lazily — e.g. after async workspace resolution in the runtime factory.
   const agentModel = () => deps.agentModel;
@@ -79,6 +71,32 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
   const taskService = () => deps.taskService;
   const taskCaller = () => deps.taskCaller;
   const workModel = () => deps.workModel;
+
+  const registerTaskWork = async (params: {
+    sourceIdentifier: string;
+    taskId?: string;
+    taskIdentifier?: string;
+    title?: string | null;
+  }) => {
+    if (!topicId) return;
+
+    try {
+      await workModel()?.registerTask({
+        agentId,
+        messageId: assistantMessageId,
+        operationId,
+        sourceIdentifier: params.sourceIdentifier,
+        taskId: params.taskId,
+        taskIdentifier: params.taskIdentifier,
+        threadId,
+        title: params.title ?? undefined,
+        toolCallId,
+        topicId,
+      });
+    } catch (error) {
+      console.error('[TaskRuntime] register task work failed:', error);
+    }
+  };
 
   const resolveAssigneeAgent = async (assigneeAgentId?: string | null) => {
     if (!assigneeAgentId) return { success: true } as const;
@@ -149,20 +167,10 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
       sortOrder: args.sortOrder,
     });
 
-    await workModel()?.register({
-      agentId,
-      contentRefId: task.id,
-      contentRefIdentifier: task.identifier,
-      contentRefType: 'task',
-      messageId: assistantMessageId,
-      operationId,
+    await registerTaskWork({
       sourceIdentifier,
-      sourceType: 'tool',
-      threadId,
+      taskId: task.id,
       title: task.name || task.identifier,
-      toolCallId,
-      topicId,
-      type: 'task',
     });
 
     return {
@@ -409,6 +417,14 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
       const firstDepError = depErrors.find((e) => e);
       if (firstDepError) return { content: firstDepError, success: false };
 
+      if (ops.length > 0 || depResults.length > 0) {
+        await registerTaskWork({
+          sourceIdentifier: TaskApiName.editTask,
+          taskId: task.id,
+          title: args.name || task.name || task.identifier,
+        });
+      }
+
       return { content: formatTaskEdited(task.identifier, changes), success: true };
     },
 
@@ -518,6 +534,11 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
       }
 
       await Promise.all(ops);
+      await registerTaskWork({
+        sourceIdentifier: TaskApiName.setTaskSchedule,
+        taskId: task.id,
+        title: task.name || task.identifier,
+      });
 
       return { content: formatTaskEdited(task.identifier, changes), success: true };
     },
@@ -619,6 +640,11 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
           id,
           status: args.status,
         });
+        await registerTaskWork({
+          sourceIdentifier: TaskApiName.updateTaskStatus,
+          taskId: result.data.id,
+          title: result.data.name || result.data.identifier,
+        });
 
         return {
           content:
@@ -665,8 +691,16 @@ export const taskRuntime: ServerRuntimeRegistration = {
 
     const db = context.serverDB;
     const userId = context.userId;
-    const { agentId, assistantMessageId, operationId, taskId, threadId, toolCallId, topicId, scope } =
-      context;
+    const {
+      agentId,
+      assistantMessageId,
+      operationId,
+      taskId,
+      threadId,
+      toolCallId,
+      topicId,
+      scope,
+    } = context;
 
     // Models are wired in lazily after the workspaceId is resolved from the
     // owning task row. `createTaskRuntime` reads them through this shared
