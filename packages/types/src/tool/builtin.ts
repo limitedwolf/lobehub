@@ -543,6 +543,11 @@ export interface BuiltinToolContext {
   toolCallId?: string;
 
   /**
+   * The current thread ID when the tool runs inside a conversation thread.
+   */
+  threadId?: string | null;
+
+  /**
    * The current topic ID (only available when operating within a topic)
    * Used by tools that need to create messages or operations within a topic
    */

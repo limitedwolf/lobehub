@@ -63,6 +63,7 @@ function setup(options: { hasConnection?: boolean; sendReturns?: boolean } = {})
           agentId: 'agent-1',
           documentId: 'documents-row-id',
           scope: 'page',
+          threadId: 'thread-1',
           topicId: 'topic-1',
         },
       },
@@ -111,6 +112,8 @@ describe('internal_executeClientTool', () => {
           messageId: 'call_1',
           operationId: 'op-1',
           scope: 'page',
+          threadId: 'thread-1',
+          toolCallId: 'call_1',
           topicId: 'topic-1',
         }),
       );

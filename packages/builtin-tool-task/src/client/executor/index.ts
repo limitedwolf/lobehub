@@ -19,6 +19,7 @@ import { BaseExecutor } from '@lobechat/types';
 import debug from 'debug';
 
 import { taskService } from '@/services/task';
+import { workService } from '@/services/work';
 import { getTaskStoreState } from '@/store/task';
 import { findSubtaskParentId } from '@/store/task/slices/detail/reducer';
 
@@ -35,6 +36,31 @@ import type {
 import { TaskApiName } from '../../types';
 
 const log = debug('lobe-task:executor');
+
+const registerTaskWork = async (
+  task: { id?: string; identifier?: string; name?: string | null },
+  ctx: BuiltinToolContext | undefined,
+  sourceIdentifier: string,
+) => {
+  if (!ctx?.topicId) return;
+
+  await workService
+    .registerTask({
+      agentId: ctx.agentId,
+      messageId: ctx.messageId,
+      operationId: ctx.operationId,
+      sourceIdentifier,
+      taskId: task.id,
+      taskIdentifier: task.identifier,
+      threadId: ctx.threadId,
+      title: task.name || task.identifier,
+      toolCallId: ctx.toolCallId,
+      topicId: ctx.topicId,
+    })
+    .catch((error) => {
+      log('[TaskExecutor] register task work failed:', error);
+    });
+};
 
 // APIs whose execution mutates state that's surfaced in the renderer's task
 // list or detail caches. Used by `onAfterCall` to decide what to revalidate.
@@ -162,6 +188,7 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
       sortOrder?: number;
     },
     ctx?: BuiltinToolContext,
+    sourceIdentifier: string = TaskApiName.createTask,
   ): Promise<BuiltinToolResult> => {
     try {
       log('[TaskExecutor] createTask - params:', params);
@@ -184,6 +211,8 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
           success: false,
         };
       }
+
+      await registerTaskWork(task, ctx, sourceIdentifier);
 
       return {
         content: formatTaskCreated({
@@ -241,7 +270,7 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
     const lines: string[] = [];
 
     for (const [index, item] of items.entries()) {
-      const result = await this.createTask(item, ctx);
+      const result = await this.createTask(item, ctx, TaskApiName.createTasks);
       const success = result.success === true;
       const identifier =
         success && result.state && typeof result.state.identifier === 'string'

@@ -1,3 +1,5 @@
+import type { TaskStatus } from './task';
+
 export type WorkContentRefType = 'task';
 
 export type WorkSourceType = 'tool';
@@ -51,4 +53,16 @@ export interface RegisterWorkParams {
   topicId?: string;
   type: WorkType;
 }
-import type { TaskStatus } from './task';
+
+export interface RegisterTaskWorkParams {
+  agentId?: string;
+  messageId?: string;
+  operationId?: string;
+  sourceIdentifier: string;
+  taskId?: string;
+  taskIdentifier?: string;
+  threadId?: string | null;
+  title?: string;
+  toolCallId?: string;
+  topicId?: string;
+}

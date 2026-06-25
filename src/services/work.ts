@@ -1,8 +1,13 @@
-import type { TaskWorkListItem } from '@lobechat/types';
+import type { RegisterTaskWorkParams, TaskWorkListItem, WorkItem } from '@lobechat/types';
 
 import { lambdaClient } from '@/libs/trpc/client';
 
 class WorkService {
+  registerTask = async (params: RegisterTaskWorkParams): Promise<WorkItem> => {
+    const result = await lambdaClient.work.registerTask.mutate(params);
+    return result.data;
+  };
+
   listByConversation = async (params: {
     limit?: number;
     threadId?: string | null;

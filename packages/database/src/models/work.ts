@@ -1,5 +1,5 @@
-import type { RegisterWorkParams, TaskWorkListItem } from '@lobechat/types';
-import { and, desc, eq, isNotNull, isNull } from 'drizzle-orm';
+import type { RegisterTaskWorkParams, RegisterWorkParams, TaskWorkListItem } from '@lobechat/types';
+import { and, desc, eq, isNotNull, isNull, or } from 'drizzle-orm';
 
 import { tasks, works } from '../schemas';
 import type { NewWork, WorkItem } from '../schemas/work';
@@ -81,6 +81,42 @@ export class WorkModel {
       .returning();
 
     return result;
+  };
+
+  registerTask = async (params: RegisterTaskWorkParams): Promise<WorkItem | null> => {
+    if (!params.taskId && !params.taskIdentifier) return null;
+
+    const taskFilters = [];
+    if (params.taskId) taskFilters.push(eq(tasks.id, params.taskId));
+    if (params.taskIdentifier) taskFilters.push(eq(tasks.identifier, params.taskIdentifier));
+
+    const [task] = await this.db
+      .select({
+        id: tasks.id,
+        identifier: tasks.identifier,
+        name: tasks.name,
+      })
+      .from(tasks)
+      .where(and(this.taskOwnership(), or(...taskFilters)))
+      .limit(1);
+
+    if (!task) return null;
+
+    return this.register({
+      agentId: params.agentId,
+      contentRefId: task.id,
+      contentRefIdentifier: task.identifier,
+      contentRefType: 'task',
+      messageId: params.messageId,
+      operationId: params.operationId,
+      sourceIdentifier: params.sourceIdentifier,
+      sourceType: 'tool',
+      threadId: params.threadId,
+      title: params.title || task.name || task.identifier,
+      toolCallId: params.toolCallId,
+      topicId: params.topicId,
+      type: 'task',
+    });
   };
 
   listByConversation = async (params: {

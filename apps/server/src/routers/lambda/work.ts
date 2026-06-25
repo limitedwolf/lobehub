@@ -1,4 +1,4 @@
-import type { TaskWorkListItem } from '@lobechat/types';
+import type { TaskWorkListItem, WorkItem } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
@@ -22,6 +22,23 @@ const conversationListSchema = z.object({
   topicId: z.string().nullish(),
 });
 
+const registerTaskSchema = z
+  .object({
+    agentId: z.string().optional(),
+    messageId: z.string().optional(),
+    operationId: z.string().optional(),
+    sourceIdentifier: z.string().min(1),
+    taskId: z.string().optional(),
+    taskIdentifier: z.string().optional(),
+    threadId: z.string().nullish(),
+    title: z.string().optional(),
+    toolCallId: z.string().optional(),
+    topicId: z.string().optional(),
+  })
+  .refine((value) => value.taskId || value.taskIdentifier, {
+    message: 'taskId or taskIdentifier is required',
+  });
+
 export const workRouter = router({
   listByConversation: workProcedure
     .input(conversationListSchema)
@@ -35,6 +52,27 @@ export const workRouter = router({
           cause: error,
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to list works',
+        });
+      }
+    }),
+
+  registerTask: workProcedure
+    .input(registerTaskSchema)
+    .mutation(async ({ input, ctx }): Promise<{ data: WorkItem; success: true }> => {
+      try {
+        const data = await ctx.workModel.registerTask(input);
+        if (!data) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Task not found' });
+        }
+
+        return { data, success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error('[work:registerTask]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to register task work',
         });
       }
     }),

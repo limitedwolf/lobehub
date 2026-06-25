@@ -144,6 +144,8 @@ export class ClientToolExecutionActionImpl {
           scope: operation?.context?.scope,
           signal: operation?.abortController?.signal,
           sourceMessageId: operation?.context?.messageId,
+          threadId: operation?.context?.threadId ?? undefined,
+          toolCallId,
           topicId: operation?.context?.topicId ?? undefined,
         };
 

@@ -106,6 +106,60 @@ describe('WorkModel', () => {
     expect(items[0].task).toMatchObject({ priority: 2, status: 'backlog' });
   });
 
+  it('registers task works through ownership-checked task lookup', async () => {
+    const agentId = await createAgent('work-agent-register-task');
+    const topicId = await createTopic('work-topic-register-task', agentId);
+    const task = await new TaskModel(serverDB, userId).create({
+      instruction: 'Create a daily summary',
+      name: 'Daily summary',
+      priority: 3,
+    });
+
+    const model = new WorkModel(serverDB, userId);
+    const work = await model.registerTask({
+      agentId,
+      messageId: 'message-register-task',
+      operationId: 'operation-register-task',
+      sourceIdentifier: 'createTask',
+      taskIdentifier: task.identifier,
+      threadId: null,
+      toolCallId: 'tool-call-register-task',
+      topicId,
+    });
+
+    expect(work).toMatchObject({
+      contentRefId: task.id,
+      contentRefIdentifier: task.identifier,
+      messageId: 'message-register-task',
+      operationId: 'operation-register-task',
+      sourceIdentifier: 'createTask',
+      title: 'Daily summary',
+      toolCallId: 'tool-call-register-task',
+      topicId,
+    });
+
+    const items = await model.listByConversation({ topicId });
+    expect(items.map((item) => item.contentRefIdentifier)).toEqual([task.identifier]);
+  });
+
+  it('does not register task works across users', async () => {
+    const agentId = await createAgent('work-agent-register-other-user');
+    const topicId = await createTopic('work-topic-register-other-user', agentId);
+    const task = await new TaskModel(serverDB, userId).create({
+      instruction: 'Private user task',
+      name: 'Private user task',
+    });
+
+    const work = await new WorkModel(serverDB, userId2).registerTask({
+      agentId,
+      sourceIdentifier: 'createTask',
+      taskId: task.id,
+      topicId,
+    });
+
+    expect(work).toBeNull();
+  });
+
   it('upserts by content ref within the same owner scope', async () => {
     const agentId = await createAgent('work-agent-2');
     const topicId = await createTopic('work-topic-2', agentId);
