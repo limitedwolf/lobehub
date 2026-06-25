@@ -214,8 +214,8 @@ export class TaskLifecycleService {
       await this.taskModel.updateStatus(taskId, 'paused');
     }
 
-    // Bridge the finished task's handoff back to the creator conversation
-    // (LOBE-10625). Runs HERE — after all status transitions above — so the
+    // Bridge the finished task's handoff back to the creator conversation.
+    // Runs HERE — after all status transitions above — so the
     // bridge reads the settled task status. Doing it as a separate webhook
     // racing `on-topic-complete` could observe the pre-transition status and
     // silently drop the only callback for automation tasks that become terminal

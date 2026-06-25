@@ -79,8 +79,8 @@ export interface DeliverTaskResultParams {
 }
 
 /**
- * Delivers a finished task's handoff back to the conversation that created it
- * (LOBE-10625). Fire-and-forget: appends a `role='taskCallback'` card into the
+ * Delivers a finished task's handoff back to the conversation that created it.
+ * Fire-and-forget: appends a `role='taskCallback'` card into the
  * creator topic and runs the creator agent off history so it reads the result
  * and continues — without impersonating a user turn.
  *

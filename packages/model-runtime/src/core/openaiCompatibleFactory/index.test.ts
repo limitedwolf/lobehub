@@ -133,8 +133,8 @@ describe('LobeOpenAICompatibleFactory', () => {
       expect(result).toBeInstanceOf(Response);
     });
 
-    // LOBE-10066: MCP tool schemas with `items: true` or array props missing
-    // `type` must be normalized before reaching the upstream validator.
+    // MCP tool schemas with `items: true` or array props missing `type`
+    // must be normalized before reaching the upstream validator.
     it('should normalize tool parameter schemas before sending to upstream', async () => {
       (instance['client'].chat.completions.create as Mock).mockResolvedValue(
         Promise.resolve(new ReadableStream()),
