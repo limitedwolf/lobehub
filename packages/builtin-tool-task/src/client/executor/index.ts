@@ -44,21 +44,30 @@ const registerTaskWork = async (
 ) => {
   if (!ctx?.topicId) return;
 
+  const registerParams = {
+    agentId: ctx.agentId,
+    messageId: ctx.messageId,
+    operationId: ctx.operationId,
+    sourceIdentifier,
+    taskId: task.id,
+    taskIdentifier: task.identifier,
+    threadId: ctx.threadId,
+    title: task.name || task.identifier,
+    toolCallId: ctx.toolCallId,
+    topicId: ctx.topicId,
+  };
+
+  try {
+    await workService.registerTask(registerParams);
+  } catch (error) {
+    log('[TaskExecutor] register task work failed:', error);
+    return;
+  }
+
   await workService
-    .registerTask({
-      agentId: ctx.agentId,
-      messageId: ctx.messageId,
-      operationId: ctx.operationId,
-      sourceIdentifier,
-      taskId: task.id,
-      taskIdentifier: task.identifier,
-      threadId: ctx.threadId,
-      title: task.name || task.identifier,
-      toolCallId: ctx.toolCallId,
-      topicId: ctx.topicId,
-    })
+    .refreshConversation({ threadId: ctx.threadId, topicId: ctx.topicId })
     .catch((error) => {
-      log('[TaskExecutor] register task work failed:', error);
+      log('[TaskExecutor] refresh conversation works failed:', error);
     });
 };
 
