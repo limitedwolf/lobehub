@@ -6,6 +6,7 @@ import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shallow } from 'zustand/shallow';
 
+import { message } from '@/components/AntdStaticMethods';
 import { useBriefStore } from '@/store/brief';
 import { useTaskStore } from '@/store/task';
 
@@ -114,32 +115,50 @@ const BriefCardActions = memo<BriefCardActionsProps>(
         try {
           await resolveBrief(briefId, key);
           await onAfterResolve?.();
+        } catch (error) {
+          // Without this, a failed resolve (e.g. a stale card whose brief was
+          // already resolved/removed → NOT_FOUND, or a permission denial) is
+          // swallowed and the click silently does nothing. Surface it, then
+          // reconcile with the server so a stale card drops instead of leaving
+          // a dead button.
+          console.error('[BriefCardActions] resolve failed:', error);
+          message.error(t('brief.resolveFailed'));
+          await onAfterResolve?.();
         } finally {
           setLoadingKey(null);
         }
       },
-      [briefId, resolveBrief, onAfterResolve],
+      [briefId, resolveBrief, onAfterResolve, t],
     );
 
     const handleCommentSubmit = useCallback(
       async (text: string) => {
         if (!commentMode) return;
 
-        if (commentMode.type === 'comment') {
-          setLoadingKey(commentMode.key);
-          try {
-            await resolveBrief(briefId, commentMode.key, text);
+        try {
+          if (commentMode.type === 'comment') {
+            setLoadingKey(commentMode.key);
+            try {
+              await resolveBrief(briefId, commentMode.key, text);
+              await onAfterResolve?.();
+            } finally {
+              setLoadingKey(null);
+            }
+          } else if (taskId) {
+            // Free-form feedback must resolve the brief (so the heartbeat
+            // re-arm gate stops blocking on this urgent brief) AND re-run
+            // the task so the agent picks up `resolvedComment` next turn.
+            await submitFeedback(briefId, taskId, text);
+            await onAfterAddComment?.();
             await onAfterResolve?.();
-          } finally {
-            setLoadingKey(null);
           }
-        } else if (taskId) {
-          // Free-form feedback must resolve the brief (so the heartbeat
-          // re-arm gate stops blocking on this urgent brief) AND re-run
-          // the task so the agent picks up `resolvedComment` next turn.
-          await submitFeedback(briefId, taskId, text);
-          await onAfterAddComment?.();
-          await onAfterResolve?.();
+        } catch (error) {
+          // Surface the failure instead of silently swallowing it; keep the
+          // comment editor open (don't clear commentMode) so the typed text
+          // isn't lost and the user can retry.
+          console.error('[BriefCardActions] submit feedback failed:', error);
+          message.error(t('brief.resolveFailed'));
+          return;
         }
 
         setCommentMode(null);
@@ -150,6 +169,7 @@ const BriefCardActions = memo<BriefCardActionsProps>(
         resolveBrief,
         submitFeedback,
         taskId,
+        t,
         onAfterResolve,
         onAfterAddComment,
       ],

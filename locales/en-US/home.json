@@ -34,6 +34,7 @@
   "brief.editResult": "Edit",
   "brief.expandAll": "Show more",
   "brief.feedbackSent": "Feedback shared",
+  "brief.resolveFailed": "Could not complete this action. It may have already been handled — please refresh and try again.",
   "brief.resolved": "Marked as resolved",
   "brief.title": "Brief",
   "brief.viewAllTasks": "View all tasks",

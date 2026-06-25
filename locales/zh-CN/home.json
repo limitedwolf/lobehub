@@ -34,6 +34,7 @@
   "brief.editResult": "编辑",
   "brief.expandAll": "展开全部",
   "brief.feedbackSent": "反馈已提交",
+  "brief.resolveFailed": "操作未能完成，可能已被处理，请刷新后重试。",
   "brief.resolved": "已标记为已解决",
   "brief.title": "简报",
   "brief.viewAllTasks": "查看全部任务",

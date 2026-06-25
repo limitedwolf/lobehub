@@ -1,3 +1,4 @@
+import { TRPCClientError } from '@trpc/client';
 import isEqual from 'fast-deep-equal';
 import { type SWRResponse } from 'swr';
 
@@ -11,6 +12,11 @@ import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 
 const n = setNamespace('briefList');
+
+/** True when a mutation targeted a brief that no longer exists server-side. */
+const isBriefGoneError = (error: unknown): boolean =>
+  error instanceof TRPCClientError &&
+  (error.data as { code?: string } | null | undefined)?.code === 'NOT_FOUND';
 
 type Setter = StoreSetter<BriefStore>;
 
@@ -37,6 +43,14 @@ export class BriefListActionImpl {
     this.#set({ briefs: updated }, false, n('internal_updateBrief'));
   };
 
+  /** Drop a brief from the home feed locally (no server call) — used to
+   * reconcile a stale card whose brief is already gone server-side. */
+  internal_dismissBrief = (id: string) => {
+    const briefs = this.#get().briefs;
+    if (!briefs.some((b) => b.id === id)) return;
+    this.#set({ briefs: briefs.filter((b) => b.id !== id) }, false, n('internal_dismissBrief'));
+  };
+
   deleteBrief = async (id: string) => {
     await briefService.delete(id);
     const briefs = this.#get().briefs.filter((b) => b.id !== id);
@@ -49,7 +63,16 @@ export class BriefListActionImpl {
   };
 
   resolveBrief = async (id: string, action?: string, comment?: string) => {
-    await briefService.resolve(id, { action, comment });
+    try {
+      await briefService.resolve(id, { action, comment });
+    } catch (error) {
+      // A stale card whose brief was already resolved/removed elsewhere yields
+      // NOT_FOUND. Drop it from the home feed so the card self-heals even on
+      // surfaces (the DailyBrief home list) that don't pass an onAfterResolve
+      // refetch. Re-throw so the caller still surfaces the failure toast.
+      if (isBriefGoneError(error)) this.internal_dismissBrief(id);
+      throw error;
+    }
     this.internal_updateBrief(id, {
       resolvedAction: action,
       resolvedAt: new Date().toISOString(),
