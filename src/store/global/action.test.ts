@@ -426,6 +426,19 @@ describe('createPreferenceSlice', () => {
     });
   });
 
+  describe('setWorkingSidebarTab', () => {
+    it('should set workingSidebarTab to works', () => {
+      const { result } = renderHook(() => useGlobalStore());
+
+      act(() => {
+        useGlobalStore.setState({ isStatusInit: true });
+        result.current.setWorkingSidebarTab('works');
+      });
+
+      expect(result.current.status.workingSidebarTab).toBe('works');
+    });
+  });
+
   describe('revealInFilesTab', () => {
     it('should set workingSidebarTab to files', () => {
       const { result } = renderHook(() => useGlobalStore());

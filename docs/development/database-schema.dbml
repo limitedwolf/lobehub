@@ -461,7 +461,8 @@ table ai_models {
   updated_at "timestamp with time zone" [not null, default: `now()`]
 
   indexes {
-    (id, provider_id, user_id) [pk]
+    (id, provider_id, user_id) [name: 'ai_models_id_provider_id_user_id_unique', unique]
+    (id, provider_id, user_id, workspace_id) [name: 'ai_models_id_provider_id_user_id_workspace_id_unique', unique]
     user_id [name: 'ai_models_user_id_idx']
     workspace_id [name: 'ai_models_workspace_id_idx']
   }
@@ -488,7 +489,8 @@ table ai_providers {
   updated_at "timestamp with time zone" [not null, default: `now()`]
 
   indexes {
-    (id, user_id) [pk]
+    (id, user_id) [name: 'ai_providers_id_user_id_unique', unique]
+    (id, user_id, workspace_id) [name: 'ai_providers_id_user_id_workspace_id_unique', unique]
     user_id [name: 'ai_providers_user_id_idx']
     workspace_id [name: 'ai_providers_workspace_id_idx']
   }
@@ -2616,6 +2618,43 @@ table verify_runs {
     workspace_id [name: 'verify_runs_workspace_id_idx']
     operation_id [name: 'verify_runs_operation_id_unique', unique]
     source [name: 'verify_runs_source_idx']
+  }
+}
+
+table works {
+  id text [pk, not null]
+  title text [not null]
+  type text [not null]
+  status text [not null, default: 'draft']
+  content_ref_id text [not null]
+  content_ref_identifier text
+  content_ref_type text [not null]
+  source_type text [not null]
+  source_identifier text [not null]
+  agent_id text
+  topic_id text
+  thread_id text
+  message_id text
+  operation_id text
+  tool_call_id text
+  user_id text [not null]
+  workspace_id text
+  accessed_at "timestamp with time zone" [not null, default: `now()`]
+  created_at "timestamp with time zone" [not null, default: `now()`]
+  updated_at "timestamp with time zone" [not null, default: `now()`]
+
+  indexes {
+    (user_id, content_ref_type, content_ref_id) [name: 'works_content_ref_user_unique', unique]
+    (workspace_id, content_ref_type, content_ref_id) [name: 'works_content_ref_workspace_unique', unique]
+    (tool_call_id, content_ref_id) [name: 'works_tool_call_content_ref_idx']
+    user_id [name: 'works_user_id_idx']
+    workspace_id [name: 'works_workspace_id_idx']
+    agent_id [name: 'works_agent_id_idx']
+    topic_id [name: 'works_topic_id_idx']
+    thread_id [name: 'works_thread_id_idx']
+    (content_ref_type, content_ref_id) [name: 'works_content_ref_idx']
+    (source_type, source_identifier) [name: 'works_source_idx']
+    updated_at [name: 'works_updated_at_idx']
   }
 }
 

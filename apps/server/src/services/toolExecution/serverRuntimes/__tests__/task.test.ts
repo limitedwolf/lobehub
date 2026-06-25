@@ -136,7 +136,10 @@ describe('createTaskRuntime', () => {
         createTask: vi.fn().mockResolvedValue(fakeTask),
       };
       const taskCaller = {} as any;
-      return { agentModel, taskCaller, taskModel, taskService };
+      const workModel = {
+        register: vi.fn().mockResolvedValue({ id: 'work-1' }),
+      };
+      return { agentModel, taskCaller, taskModel, taskService, workModel };
     };
 
     it('passes createdByAgentId when invoked by an agent (activity should attribute the agent)', async () => {
@@ -162,6 +165,52 @@ describe('createTaskRuntime', () => {
           createdByAgentId: 'agt-xyz',
         }),
       );
+    });
+
+    it('registers the created task as a work with conversation origin pointers', async () => {
+      const deps = makeDeps();
+
+      const runtime = createTaskRuntime({
+        agentModel: deps.agentModel as any,
+        agentId: 'agt-xyz',
+        assistantMessageId: 'msg-assistant',
+        operationId: 'op-1',
+        taskCaller: deps.taskCaller,
+        taskModel: deps.taskModel as any,
+        taskService: deps.taskService as any,
+        threadId: 'thread-1',
+        toolCallId: 'call-1',
+        topicId: 'topic-1',
+        workModel: deps.workModel as any,
+      });
+
+      const result = await runtime.createTask({
+        instruction: 'Do something',
+        name: 'Test',
+      });
+
+      expect(result.state).toMatchObject({
+        identifier: 'T-1',
+        name: 'Test',
+        priority: 0,
+        status: 'backlog',
+        success: true,
+      });
+      expect(deps.workModel.register).toHaveBeenCalledWith({
+        agentId: 'agt-xyz',
+        contentRefId: 'task-1',
+        contentRefIdentifier: 'T-1',
+        contentRefType: 'task',
+        messageId: 'msg-assistant',
+        operationId: 'op-1',
+        sourceIdentifier: 'createTask',
+        sourceType: 'tool',
+        threadId: 'thread-1',
+        title: 'Test',
+        toolCallId: 'call-1',
+        topicId: 'topic-1',
+        type: 'task',
+      });
     });
 
     it('leaves createdByAgentId undefined when no agentId in context', async () => {
@@ -462,6 +511,7 @@ describe('createTaskRuntime', () => {
         taskCaller: {} as any,
         taskModel,
         taskService,
+        workModel: { register: vi.fn().mockResolvedValue({ id: 'work-1' }) },
       };
     };
 
@@ -473,6 +523,7 @@ describe('createTaskRuntime', () => {
         taskCaller: deps.taskCaller,
         taskModel: deps.taskModel as any,
         taskService: deps.taskService as any,
+        workModel: deps.workModel as any,
       });
 
       const result = await runtime.createTasks({
@@ -487,6 +538,24 @@ describe('createTaskRuntime', () => {
       expect(result.content).toContain('Created 2 tasks');
       expect(result.content).toContain('T-A');
       expect(result.content).toContain('T-B');
+      expect(result.state).toEqual({
+        failed: 0,
+        results: [
+          { identifier: 'T-A', name: 'A', success: true },
+          { identifier: 'T-B', name: 'B', success: true },
+        ],
+        succeeded: 2,
+      });
+      expect(deps.workModel.register).toHaveBeenCalledTimes(2);
+      expect(deps.workModel.register).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          contentRefId: 'db-A',
+          contentRefIdentifier: 'T-A',
+          sourceIdentifier: 'createTasks',
+          title: 'A',
+        }),
+      );
     });
 
     it('continues past per-item failures and reports them in the summary', async () => {

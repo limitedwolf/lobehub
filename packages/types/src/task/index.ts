@@ -154,6 +154,8 @@ export interface TaskOriginContext {
   toolCallId?: string;
   // The topic the creator conversation lives in — the default delivery target.
   topicId?: string;
+  // The thread the creator conversation lives in when the task was created from a thread.
+  threadId?: string | null;
 }
 
 export interface TaskContext {

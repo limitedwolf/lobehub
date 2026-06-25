@@ -1,4 +1,4 @@
-import { normalizeListTasksParams, TaskIdentifier } from '@lobechat/builtin-tool-task';
+import { normalizeListTasksParams, TaskApiName, TaskIdentifier } from '@lobechat/builtin-tool-task';
 import type { LobeChatDatabase } from '@lobechat/database';
 import {
   formatDependencyAdded,
@@ -15,6 +15,7 @@ import { eq } from 'drizzle-orm';
 
 import { AgentModel } from '@/database/models/agent';
 import { TaskModel } from '@/database/models/task';
+import { WorkModel } from '@/database/models/work';
 import { tasks } from '@/database/schemas';
 import { taskRouter } from '@/server/routers/lambda/task';
 import { TaskService } from '@/server/services/task';
@@ -54,18 +55,30 @@ export interface TaskRuntimeDeps {
   taskId?: string;
   taskModel: TaskModel;
   taskService: TaskService;
+  threadId?: string | null;
   toolCallId?: string;
   topicId?: string;
+  workModel?: WorkModel;
 }
 
 export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
-  const { agentId, assistantMessageId, operationId, scope, taskId, toolCallId, topicId } = deps;
+  const {
+    agentId,
+    assistantMessageId,
+    operationId,
+    scope,
+    taskId,
+    threadId,
+    toolCallId,
+    topicId,
+  } = deps;
   // Models are read through `deps` (not destructured) so callers can swap them
   // in lazily — e.g. after async workspace resolution in the runtime factory.
   const agentModel = () => deps.agentModel;
   const taskModel = () => deps.taskModel;
   const taskService = () => deps.taskService;
   const taskCaller = () => deps.taskCaller;
+  const workModel = () => deps.workModel;
 
   const resolveAssigneeAgent = async (assigneeAgentId?: string | null) => {
     if (!assigneeAgentId) return { success: true } as const;
@@ -90,7 +103,16 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
 
   const createTaskImpl = async (
     args: CreateTaskArgs,
-  ): Promise<{ content: string; identifier?: string; success: boolean }> => {
+    sourceIdentifier: string,
+  ): Promise<{
+    content: string;
+    identifier?: string;
+    priority?: number | null;
+    status?: TaskStatus;
+    success: boolean;
+    taskId?: string;
+    title?: string | null;
+  }> => {
     let parentLabel: string | undefined;
 
     // Pre-resolve parent identifier so we can surface a tool-friendly error
@@ -113,7 +135,7 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
     // tasks created outside an agent turn (e.g. via API) have no origin.
     const origin =
       agentId && topicId
-        ? { agentId, messageId: assistantMessageId, operationId, toolCallId, topicId }
+        ? { agentId, messageId: assistantMessageId, operationId, threadId, toolCallId, topicId }
         : undefined;
 
     const task = await taskService().createTask({
@@ -127,6 +149,22 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
       sortOrder: args.sortOrder,
     });
 
+    await workModel()?.register({
+      agentId,
+      contentRefId: task.id,
+      contentRefIdentifier: task.identifier,
+      contentRefType: 'task',
+      messageId: assistantMessageId,
+      operationId,
+      sourceIdentifier,
+      sourceType: 'tool',
+      threadId,
+      title: task.name || task.identifier,
+      toolCallId,
+      topicId,
+      type: 'task',
+    });
+
     return {
       content: formatTaskCreated({
         identifier: task.identifier,
@@ -137,7 +175,11 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
         status: task.status,
       }),
       identifier: task.identifier,
+      priority: task.priority,
+      status: task.status as TaskStatus,
       success: true,
+      taskId: task.id,
+      title: task.name,
     };
   };
 
@@ -170,12 +212,17 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
     },
 
     createTask: async (args: CreateTaskArgs) => {
-      const { identifier, ...rest } = await createTaskImpl(args);
+      const { identifier, priority, status, title, ...rest } = await createTaskImpl(
+        args,
+        TaskApiName.createTask,
+      );
       // Surface the created task identifier as plugin state (mirrors the client
       // executor's `{ identifier, success }`) so the inline render can link to
       // the task detail. Without this the tool message persists no state and the
       // card has nothing to open.
-      return identifier ? { ...rest, state: { identifier, success: rest.success } } : rest;
+      return identifier
+        ? { ...rest, state: { identifier, name: title, priority, status, success: rest.success } }
+        : rest;
     },
 
     createTasks: async (args: { tasks: CreateTaskArgs[] }) => {
@@ -185,25 +232,38 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
       }
 
       const lines: string[] = [];
+      const results: Array<{
+        error?: string;
+        identifier?: string;
+        name: string;
+        success: boolean;
+      }> = [];
       let succeeded = 0;
       let failed = 0;
 
       for (const [index, item] of items.entries()) {
         try {
-          const result = await createTaskImpl(item);
+          const result = await createTaskImpl(item, TaskApiName.createTasks);
           if (result.success) {
             succeeded += 1;
             lines.push(
               `${index + 1}. ${result.identifier ?? '(unknown id)'} "${item.name}" — created`,
             );
+            results.push({
+              identifier: result.identifier,
+              name: item.name,
+              success: true,
+            });
           } else {
             failed += 1;
             lines.push(`${index + 1}. "${item.name}" — failed: ${result.content}`);
+            results.push({ error: result.content, name: item.name, success: false });
           }
         } catch (error) {
           failed += 1;
           const message = error instanceof Error ? error.message : 'Unknown error';
           lines.push(`${index + 1}. "${item.name}" — failed: ${message}`);
+          results.push({ error: message, name: item.name, success: false });
         }
       }
 
@@ -214,6 +274,7 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
 
       return {
         content: [header, ...lines].join('\n'),
+        state: { failed, results, succeeded },
         success: failed === 0,
       };
     },
@@ -604,7 +665,7 @@ export const taskRuntime: ServerRuntimeRegistration = {
 
     const db = context.serverDB;
     const userId = context.userId;
-    const { agentId, assistantMessageId, operationId, taskId, toolCallId, topicId, scope } =
+    const { agentId, assistantMessageId, operationId, taskId, threadId, toolCallId, topicId, scope } =
       context;
 
     // Models are wired in lazily after the workspaceId is resolved from the
@@ -617,6 +678,7 @@ export const taskRuntime: ServerRuntimeRegistration = {
       operationId,
       scope,
       taskId,
+      threadId,
       toolCallId,
       topicId,
       // Initial personal-mode models cover the no-task-context case. Replaced
@@ -625,6 +687,7 @@ export const taskRuntime: ServerRuntimeRegistration = {
       taskModel: new TaskModel(db, userId),
       taskService: new TaskService(db, userId),
       taskCaller: taskRouter.createCaller({ userId }),
+      workModel: new WorkModel(db, userId),
     } as TaskRuntimeDeps;
 
     let resolved = false;
@@ -639,6 +702,7 @@ export const taskRuntime: ServerRuntimeRegistration = {
       deps.taskModel = new TaskModel(db, userId, wsId);
       deps.taskService = new TaskService(db, userId, wsId);
       deps.taskCaller = taskRouter.createCaller({ userId, workspaceId: wsId });
+      deps.workModel = new WorkModel(db, userId, wsId);
     };
 
     const baseRuntime = createTaskRuntime(deps);

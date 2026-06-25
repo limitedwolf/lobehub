@@ -3,10 +3,14 @@
 import type { BuiltinRenderProps } from '@lobechat/types';
 import { Block, Text } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
-import { memo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useGlobalStore } from '@/store/global';
+
 import type { CreateTaskParams, CreateTasksParams, CreateTasksState } from '../../../types';
+
+const autoRevealedBatchKeys = new Set<string>();
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   failedBadge: css`
@@ -104,9 +108,30 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 export const CreateTasksRender = memo<BuiltinRenderProps<CreateTasksParams, CreateTasksState>>(
   ({ args, pluginState }) => {
     const { t } = useTranslation('plugin');
+    const [setWorkingSidebarTab, toggleRightPanel] = useGlobalStore((s) => [
+      s.setWorkingSidebarTab,
+      s.toggleRightPanel,
+    ]);
 
     const items: CreateTaskParams[] = args?.tasks ?? [];
     const results = pluginState?.results ?? [];
+    const successKey = useMemo(
+      () =>
+        results
+          .filter((result) => result.success && result.identifier)
+          .map((result) => result.identifier)
+          .join('|'),
+      [results],
+    );
+    const successKeyAtMount = useRef(successKey);
+
+    useEffect(() => {
+      if (!successKey || successKeyAtMount.current === successKey) return;
+      if (autoRevealedBatchKeys.has(successKey)) return;
+      autoRevealedBatchKeys.add(successKey);
+      setWorkingSidebarTab('works');
+      toggleRightPanel(true);
+    }, [setWorkingSidebarTab, successKey, toggleRightPanel]);
 
     if (items.length === 0 && results.length === 0) return null;
 

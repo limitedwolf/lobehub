@@ -130,6 +130,18 @@ export const taskKeys = {
   list: def('task:list', (agentKey: string | undefined) => ['task:list', agentKey]),
 };
 
+// ---- work ---------------------------------------------------------------
+export const workKeys = {
+  conversation: def(
+    'work:conversation',
+    (topicId: string | null | undefined, threadId: string | null | undefined) => [
+      'work:conversation',
+      topicId,
+      threadId ?? null,
+    ],
+  ),
+};
+
 // ---- brief --------------------------------------------------------------
 export const briefKeys = {
   list: def('brief:list', (isLogin: boolean) => ['brief:list', isLogin]),

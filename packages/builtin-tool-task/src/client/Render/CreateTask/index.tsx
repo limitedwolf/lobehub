@@ -11,12 +11,13 @@ import TaskPriorityTag from '@/features/AgentTasks/features/TaskPriorityTag';
 import TaskStatusTag from '@/features/AgentTasks/features/TaskStatusTag';
 import { useChatStore } from '@/store/chat';
 import { chatPortalSelectors } from '@/store/chat/selectors';
+import { useGlobalStore } from '@/store/global';
 
 import type { CreateTaskParams, CreateTaskState } from '../../../types';
 
-// Tracks task identifiers we've already auto-expanded so re-mounting the card
-// (scrolling the message back into view) doesn't reopen a portal the user closed.
-const autoOpened = new Set<string>();
+// Tracks task identifiers we've already revealed so re-mounting the card
+// (scrolling the message back into view) doesn't reopen the working sidebar.
+const autoRevealed = new Set<string>();
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   description: css`
@@ -91,6 +92,10 @@ export const CreateTaskRender = memo<BuiltinRenderProps<CreateTaskParams, Create
         s.closeTaskDetail,
       ],
     );
+    const [setWorkingSidebarTab, toggleRightPanel] = useGlobalStore((s) => [
+      s.setWorkingSidebarTab,
+      s.toggleRightPanel,
+    ]);
 
     const identifier = pluginState?.identifier;
     // Identifier present at first render means this card mounted already-resolved
@@ -98,14 +103,15 @@ export const CreateTaskRender = memo<BuiltinRenderProps<CreateTaskParams, Create
     // undefined → defined transition counts as "just created".
     const identifierAtMount = useRef(identifier);
 
-    // Once the task is freshly created, auto-expand its detail in the right-side
-    // portal so the user can review it without leaving the conversation.
+    // Once the task is freshly created, reveal it in the right-side Works tab
+    // instead of leaving the produced task hidden inside the message flow.
     useEffect(() => {
       if (!identifier || identifierAtMount.current === identifier) return;
-      if (autoOpened.has(identifier)) return;
-      autoOpened.add(identifier);
-      openTaskDetail(identifier);
-    }, [identifier, openTaskDetail]);
+      if (autoRevealed.has(identifier)) return;
+      autoRevealed.add(identifier);
+      setWorkingSidebarTab('works');
+      toggleRightPanel(true);
+    }, [identifier, setWorkingSidebarTab, toggleRightPanel]);
 
     // Prefer the resolved task (`pluginState`); fall back to `args` while the
     // call is still streaming and no result has landed yet.
