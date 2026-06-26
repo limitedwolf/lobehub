@@ -7,6 +7,7 @@ import {
   GitHubDownloadError,
   GitHubNotFoundError,
   GitHubParseError,
+  stripSlashes,
 } from './index';
 
 describe('GitHub', () => {
@@ -613,6 +614,26 @@ describe('GitHub', () => {
       await expect(
         gh.downloadRepoZip({ branch: 'main', owner: 'lobehub', repo: 'big' }, { maxBytes: 100 }),
       ).rejects.toThrow(GitHubDownloadError);
+    });
+  });
+
+  describe('stripSlashes', () => {
+    it('should strip leading and trailing slashes', () => {
+      expect(stripSlashes('/skills/foo/')).toBe('skills/foo');
+      expect(stripSlashes('skills/foo')).toBe('skills/foo');
+      expect(stripSlashes('///skills/foo///')).toBe('skills/foo');
+      expect(stripSlashes('')).toBe('');
+      expect(stripSlashes('/')).toBe('');
+      expect(stripSlashes('////')).toBe('');
+    });
+
+    it('should not preserve interior slashes incorrectly', () => {
+      expect(stripSlashes('/a//b/')).toBe('a//b');
+    });
+
+    it('should handle adversarial all-slash input quickly (no ReDoS)', () => {
+      const input = '/'.repeat(200_000);
+      expect(stripSlashes(input)).toBe('');
     });
   });
 

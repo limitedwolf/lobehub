@@ -12,6 +12,18 @@ import { sha256 } from 'js-sha256';
 
 import { SkillManifestError, SkillParseError } from './errors';
 
+/**
+ * Strip leading and trailing slashes from a path segment via a linear scan.
+ * Avoids the polynomial-time `/^\/+|\/+$/g` regex on user-supplied paths (ReDoS).
+ */
+const stripSlashes = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value.charCodeAt(start) === 47 /* '/' */) start += 1;
+  while (end > start && value.charCodeAt(end - 1) === 47 /* '/' */) end -= 1;
+  return value.slice(start, end);
+};
+
 export interface ParseZipOptions {
   /**
    * Base path within the ZIP to look for SKILL.md
@@ -155,7 +167,7 @@ export class SkillParser {
     stream: ReadableStream<Uint8Array>,
     basePath: string,
   ): Promise<ParsedZipSkill> {
-    const normalized = basePath.replaceAll(/^\/+|\/+$/g, '');
+    const normalized = stripSlashes(basePath);
     const decoder = new TextDecoder();
 
     let rootPrefix: string | null = null;

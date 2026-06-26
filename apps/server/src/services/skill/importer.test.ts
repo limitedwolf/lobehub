@@ -48,6 +48,13 @@ vi.mock('@/server/modules/GitHub', () => ({
       this.name = 'GitHubParseError';
     }
   },
+  stripSlashes: (value: string) => {
+    let s = 0;
+    let e = value.length;
+    while (s < e && value[s] === '/') s += 1;
+    while (e > s && value[e - 1] === '/') e -= 1;
+    return value.slice(s, e);
+  },
 }));
 
 const mockParserInstance = {

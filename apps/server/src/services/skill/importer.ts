@@ -20,6 +20,7 @@ import {
   GitHubParseError,
   type GitHubRepoInfo,
   type GitHubTreeFile,
+  stripSlashes,
 } from '@/server/modules/GitHub';
 import { FileService } from '@/server/services/file';
 
@@ -227,7 +228,7 @@ export class SkillImporter {
       // imports keep working without a token — just without the size-routing
       // and raw-per-file bandwidth optimizations a successful probe enables.
       log('importFromGitHub: unknown size, streaming subdirectory extract');
-      parsed = await this.fetchSkillViaStream(repoInfo, repoInfo.path.replaceAll(/^\/+|\/+$/g, ''));
+      parsed = await this.fetchSkillViaStream(repoInfo, stripSlashes(repoInfo.path));
     } else if (isLarge && repoInfo.path) {
       parsed = await this.fetchSkillFromLargeRepo(repoInfo);
     } else if (isLarge) {
@@ -250,7 +251,7 @@ export class SkillImporter {
    * memory-bounded fetch strategy based on how many files it has.
    */
   private async fetchSkillFromLargeRepo(repoInfo: GitHubRepoInfo): Promise<ParsedZipSkill> {
-    const basePath = (repoInfo.path ?? '').replaceAll(/^\/+|\/+$/g, '');
+    const basePath = stripSlashes(repoInfo.path ?? '');
 
     let files;
     try {

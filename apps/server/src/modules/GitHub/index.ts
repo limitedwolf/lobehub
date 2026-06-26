@@ -26,6 +26,21 @@ export interface GitHubTreeFile {
   size?: number;
 }
 
+/**
+ * Strip leading and trailing slashes from a path segment.
+ *
+ * Linear scan instead of a regex like `/^\/+|\/+$/g`: the path originates from a
+ * user-supplied GitHub URL, and the regex variant is polynomial-time on inputs
+ * with many repeated slashes (ReDoS, flagged by CodeQL).
+ */
+export const stripSlashes = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value.charCodeAt(start) === 47 /* '/' */) start += 1;
+  while (end > start && value.charCodeAt(end - 1) === 47 /* '/' */) end -= 1;
+  return value.slice(start, end);
+};
+
 export class GitHub {
   private readonly userAgent: string;
   private readonly token?: string;
@@ -316,7 +331,7 @@ export class GitHub {
    * @returns File entries whose `path` is repository-relative.
    */
   async listSubtree(info: GitHubRepoInfo, subPath: string): Promise<GitHubTreeFile[]> {
-    const normalized = subPath.replaceAll(/^\/+|\/+$/g, '');
+    const normalized = stripSlashes(subPath);
     const url = `https://api.github.com/repos/${info.owner}/${info.repo}/git/trees/${info.branch}?recursive=1`;
     log('listSubtree: fetching url=%s, subPath=%s', url, normalized);
 
