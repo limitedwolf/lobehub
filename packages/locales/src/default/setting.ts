@@ -1998,7 +1998,7 @@ When I am ___, I need ___
   'workspace.invitePage.invitedEmail': 'Invited email',
   'workspace.invitePage.invitedTo': '{{inviter}} invited you to join the workspace',
   'workspace.invitePage.memberLimitSubtitle':
-    'This workspace already has {{limit}} members. Ask an owner to adjust seats in Billing or remove a member before joining.',
+    'This workspace is full. Ask an owner to adjust seats in Billing or remove a member before joining.',
   'workspace.invitePage.memberLimitTitle': 'Workspace Is Full',
   'workspace.invitePage.notFoundSubtitle':
     'This invitation link is invalid. Double-check the URL or ask the team owner to send a new one.',

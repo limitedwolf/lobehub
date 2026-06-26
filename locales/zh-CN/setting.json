@@ -1847,7 +1847,7 @@
   "workspace.invitePage.invitedBy": "邀请者",
   "workspace.invitePage.invitedEmail": "邀请邮箱",
   "workspace.invitePage.invitedTo": "{{inviter}} 邀请您加入工作区",
-  "workspace.invitePage.memberLimitSubtitle": "此工作区已有 {{limit}} 名成员。请请求所有者在计费中调整席位或移除一名成员后再加入。",
+  "workspace.invitePage.memberLimitSubtitle": "此工作区成员已满。请请求所有者在计费中调整席位或移除一名成员后再加入。",
   "workspace.invitePage.memberLimitTitle": "工作区已满",
   "workspace.invitePage.notFoundSubtitle": "此邀请链接无效。请检查 URL 或请求团队所有者发送一个新的邀请。",
   "workspace.invitePage.notFoundTitle": "邀请未找到",
