@@ -830,6 +830,7 @@ describe('GatewayConnectionCtr', () => {
 
     beforeEach(() => {
       vi.mocked(mockHeterogeneousAgentCtr.spawnLhHeteroExec).mockClear();
+      vi.unstubAllGlobals();
     });
 
     it.each(['openclaw', 'hermes', 'codex', 'claude-code'] as const)(
@@ -894,6 +895,49 @@ describe('GatewayConnectionCtr', () => {
           topicId: 'topic-1',
         }),
       );
+    });
+
+    it('mints an operation JWT from the device session when the dispatch carries no jwt', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ result: { data: { json: { token: 'minted-op-jwt' } } } }),
+        ok: true,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const client = await connectAndOpen();
+      client.simulateAgentRunRequest('claude-code', 'op-mint', 'hi', '');
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://server.example.com/trpc/lambda/aiAgent.mintHeteroOperationToken',
+        expect.objectContaining({
+          body: JSON.stringify({ json: { topicId: 'topic-1' } }),
+          headers: expect.objectContaining({ 'Oidc-Auth': 'mock-access-token' }),
+          method: 'POST',
+        }),
+      );
+      expect(mockHeterogeneousAgentCtr.spawnLhHeteroExec).toHaveBeenCalledWith(
+        expect.objectContaining({ jwt: 'minted-op-jwt', operationId: 'op-mint' }),
+      );
+    });
+
+    it('still spawns with the original jwt when minting is unavailable (progressive, no reject)', async () => {
+      // No dispatched jwt AND device not logged in -> mint yields nothing. The
+      // run must still spawn with the original (empty) jwt rather than being
+      // rejected, preserving the pre-fallback behavior.
+      const client = await connectAndOpen();
+      vi.mocked(mockRemoteServerConfigCtr.getAccessToken).mockResolvedValue(null);
+      client.simulateAgentRunRequest('claude-code', 'op-fallback', 'hi', '');
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(client.sendAgentRunAck).toHaveBeenCalledWith({
+        operationId: 'op-fallback',
+        status: 'accepted',
+      });
+      expect(mockHeterogeneousAgentCtr.spawnLhHeteroExec).toHaveBeenCalledWith(
+        expect.objectContaining({ jwt: '', operationId: 'op-fallback' }),
+      );
+      vi.mocked(mockRemoteServerConfigCtr.getAccessToken).mockResolvedValue('mock-access-token');
     });
 
     it('sends rejected ack when remote server URL is not configured', async () => {

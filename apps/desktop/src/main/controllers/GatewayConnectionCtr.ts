@@ -292,6 +292,21 @@ export default class GatewayConnectionCtr extends ControllerModule {
         return { reason: 'Remote server URL not configured', status: 'rejected' };
       }
 
+      // The dispatch is supposed to carry an operation-scoped JWT, but some
+      // dispatch paths arrive without one (e.g. the gateway not forwarding it).
+      // Best-effort fallback: mint a fresh operation JWT from this device's own
+      // logged-in session so the spawned `lh hetero exec` can authenticate
+      // heteroIngest/heteroFinish without a separate `lh login`. `heteroIngest`
+      // rejects normal user tokens, so we must exchange for a `hetero-operation`
+      // token rather than injecting the desktop access token directly.
+      //
+      // This is purely additive: when `request.jwt` is present we behave exactly
+      // as before, and if minting yields nothing we still spawn with the
+      // original (possibly empty) jwt rather than rejecting the run — so the
+      // change can roll out progressively without regressing the existing path.
+      const jwt =
+        request.jwt || (await this.mintOperationJwt(serverUrl, request.topicId)) || request.jwt;
+
       // Fire-and-forget: lh hetero exec handles spawn -> adapt ->
       // BatchIngester -> heteroIngest/heteroFinish -> server -> Gateway -> clients.
       // Same command as spawnHeteroSandbox() on the server side.
@@ -300,7 +315,7 @@ export default class GatewayConnectionCtr extends ControllerModule {
         args: request.args,
         cwd: request.cwd,
         imageList: request.imageList,
-        jwt: request.jwt,
+        jwt,
         operationId: request.operationId,
         prompt: request.prompt,
         resumeSessionId: request.resumeSessionId,
@@ -313,6 +328,46 @@ export default class GatewayConnectionCtr extends ControllerModule {
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
       return { reason, status: 'rejected' };
+    }
+  }
+
+  /**
+   * Exchange this device's logged-in user session for a short-scoped
+   * `hetero-operation` JWT via `aiAgent.mintHeteroOperationToken`. Returns
+   * undefined when the device isn't logged in or the server rejects the
+   * request, so the caller rejects the run rather than spawning a CLI that
+   * would then prompt for login.
+   */
+  private async mintOperationJwt(serverUrl: string, topicId: string): Promise<string | undefined> {
+    const token = await this.remoteServerConfigCtr.getAccessToken();
+    if (!token) {
+      logger.error('mintOperationJwt: device is not logged in (no access token)');
+      return undefined;
+    }
+
+    try {
+      const res = await fetch(`${serverUrl}/trpc/lambda/aiAgent.mintHeteroOperationToken`, {
+        body: JSON.stringify({ json: { topicId } }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Oidc-Auth': token,
+        },
+        method: 'POST',
+      });
+      if (!res.ok) {
+        logger.error('mintOperationJwt: server returned %d', res.status);
+        return undefined;
+      }
+      const payload = (await res.json()) as {
+        result?: { data?: { json?: { token?: string } } };
+      };
+      return payload.result?.data?.json?.token;
+    } catch (err) {
+      logger.error(
+        'mintOperationJwt: request failed — %s',
+        err instanceof Error ? err.message : String(err),
+      );
+      return undefined;
     }
   }
 

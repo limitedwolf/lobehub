@@ -46,6 +46,12 @@ vi.mock('@/server/modules/Mecha', () => ({
   ]),
 }));
 
+// Mock JWT signing — signing needs JWKS_KEY which isn't set in the test env.
+vi.mock('@/libs/trpc/utils/internalJwt', () => ({
+  signOperationJwt: vi.fn().mockResolvedValue('mock-operation-jwt'),
+  signUserJWT: vi.fn().mockResolvedValue('mock-user-jwt'),
+}));
+
 // Mock AiChatService to avoid S3 dependency
 vi.mock('@/server/services/aiChat', () => ({
   AiChatService: vi.fn().mockImplementation(() => ({
@@ -431,6 +437,49 @@ describe('AI Agent Router Integration Tests', () => {
       // Should have 1 assistant message with parentId pointing to the user message
       expect(assistantMessages).toHaveLength(1);
       expect(assistantMessages[0].parentId).toBe(userMsg.id);
+    });
+  });
+
+  describe('mintHeteroOperationToken', () => {
+    it('mints a hetero-operation token when the topic has a running operation', async () => {
+      const [topic] = await serverDB
+        .insert(topics)
+        .values({
+          title: 'Running Topic',
+          agentId: testAgentId,
+          metadata: {
+            runningOperation: { assistantMessageId: 'msg-running', operationId: 'op-running' },
+          },
+          sessionId: testSessionId,
+          userId,
+        })
+        .returning();
+
+      const { signOperationJwt } = await import('@/libs/trpc/utils/internalJwt');
+      const caller = aiAgentRouter.createCaller(createTestContext());
+
+      const result = await caller.mintHeteroOperationToken({ topicId: topic.id });
+
+      expect(result.token).toBe('mock-operation-jwt');
+      expect(signOperationJwt).toHaveBeenCalledWith(userId);
+    });
+
+    it('throws NOT_FOUND when the topic has no running operation', async () => {
+      const [topic] = await serverDB
+        .insert(topics)
+        .values({
+          title: 'Idle Topic',
+          agentId: testAgentId,
+          sessionId: testSessionId,
+          userId,
+        })
+        .returning();
+
+      const caller = aiAgentRouter.createCaller(createTestContext());
+
+      await expect(caller.mintHeteroOperationToken({ topicId: topic.id })).rejects.toThrow(
+        'No running operation found on this topic',
+      );
     });
   });
 });

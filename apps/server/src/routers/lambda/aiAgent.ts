@@ -21,7 +21,7 @@ import { TopicModel } from '@/database/models/topic';
 import { topics } from '@/database/schemas';
 import { heteroAuthedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { signUserJWT } from '@/libs/trpc/utils/internalJwt';
+import { signOperationJwt, signUserJWT } from '@/libs/trpc/utils/internalJwt';
 import { AgentRuntimeService } from '@/server/services/agentRuntime';
 import { AiAgentService } from '@/server/services/aiAgent';
 import { AiChatService } from '@/server/services/aiChat';
@@ -1495,6 +1495,35 @@ export const aiAgentRouter = router({
       }
 
       const token = await signUserJWT(ctx.userId);
+
+      return { token };
+    }),
+
+  /**
+   * Mint a fresh operation-scoped JWT for a device that received a remote
+   * agent-run dispatch (remote Claude Code / Codex). The device authenticates
+   * with its own logged-in user session (a normal OIDC token) and exchanges it
+   * for a `hetero-operation` JWT — the only token `heteroIngest` /
+   * `heteroFinish` accept — so the spawned `lh hetero exec` can stream results
+   * back without requiring a separate `lh login` on the device.
+   *
+   * Used by the desktop gateway path as a fallback when the dispatch did not
+   * carry a usable `jwt`. Gated on the topic belonging to the caller and having
+   * a running operation, mirroring `refreshGatewayToken`.
+   */
+  mintHeteroOperationToken: aiAgentProcedure
+    .input(z.object({ topicId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const topic = await ctx.topicModel.findById(input.topicId);
+
+      if (!topic?.metadata?.runningOperation) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No running operation found on this topic',
+        });
+      }
+
+      const token = await signOperationJwt(ctx.userId);
 
       return { token };
     }),
