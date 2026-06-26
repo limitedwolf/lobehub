@@ -24,6 +24,7 @@ import Files from './Files';
 import ProgressSection from './ProgressSection';
 import ResourcesSection from './ResourcesSection';
 import Review from './Review';
+import WorksSection from './WorksSection';
 
 const ParamsSection = lazy(() => import('./ParamsSection'));
 
@@ -76,7 +77,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
 }));
 
-type Tab = 'files' | 'params' | 'review' | 'resources';
+type Tab = 'files' | 'params' | 'review' | 'resources' | 'works';
 
 const AgentWorkingSidebar = memo(() => {
   const { t } = useTranslation(['chat', 'setting']);
@@ -124,6 +125,7 @@ const AgentWorkingSidebar = memo(() => {
     if (storedTab === 'review' && reviewAvailable) return 'review';
     if (storedTab === 'files' && filesAvailable) return 'files';
     if (storedTab === 'resources') return 'resources';
+    if (storedTab === 'works') return 'works';
     if (isHetero) return 'resources';
     if (reviewAvailable) return 'review';
     if (filesAvailable) return 'files';
@@ -149,6 +151,13 @@ const AgentWorkingSidebar = memo(() => {
               onClick={() => setWorkingSidebarTab('resources')}
             >
               {t('workingPanel.space')}
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'works' ? styles.tabActive : ''}`}
+              type="button"
+              onClick={() => setWorkingSidebarTab('works')}
+            >
+              {t('workingPanel.works.title')}
             </button>
             {reviewAvailable && (
               <button
@@ -207,6 +216,9 @@ const AgentWorkingSidebar = memo(() => {
           >
             <ProgressSection />
             <ResourcesSection deviceId={remoteDeviceId} />
+          </Flexbox>
+          <Flexbox className={activeTab === 'works' ? styles.pane : styles.paneHidden}>
+            <WorksSection />
           </Flexbox>
         </Flexbox>
       </Flexbox>
