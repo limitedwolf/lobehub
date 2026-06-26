@@ -178,6 +178,9 @@ export class SkillImporter {
    *     (one download, but never materializes the whole repo in memory).
    * - Large repos imported at the root → cannot be bounded, rejected with a
    *   clear error instead of OOM-ing.
+   * - Unknown size (no GITHUB_TOKEN + rate-limited, or any probe error) with a
+   *   subdirectory path → stream-extract the subdir (memory-safe, no REST API).
+   *   GITHUB_TOKEN is therefore an optimization, never required for correctness.
    *
    * @param input - GitHub repository info
    * @returns SkillImportResult with status: 'created' | 'updated' | 'unchanged'
@@ -199,8 +202,10 @@ export class SkillImporter {
     }
 
     // 2. Probe repo size to decide between archive vs selective fetch.
-    // A probe failure (e.g. API rate limit) is non-fatal: fall back to the
-    // archive path, which carries its own size cap as a backstop.
+    // GITHUB_TOKEN is optional: it only authenticates the (rate-limited) REST
+    // API probe and lifts the 60/h unauthenticated limit. A probe failure
+    // (no token + rate-limited, or any API error) is non-fatal — `sizeKb`
+    // stays null and we fall back to a path that needs no REST API.
     let sizeKb: number | null = null;
     try {
       sizeKb = await this.github.getRepoSizeKb(repoInfo);
@@ -216,7 +221,14 @@ export class SkillImporter {
 
     // 3. Acquire the parsed skill via the appropriate path.
     let parsed: ParsedZipSkill;
-    if (isLarge && repoInfo.path) {
+    if (sizeKb == null && repoInfo.path) {
+      // Unknown size (e.g. no token / rate-limited): stream-extract the subdir.
+      // This is memory-safe regardless of repo size and needs no REST API, so
+      // imports keep working without a token — just without the size-routing
+      // and raw-per-file bandwidth optimizations a successful probe enables.
+      log('importFromGitHub: unknown size, streaming subdirectory extract');
+      parsed = await this.fetchSkillViaStream(repoInfo, repoInfo.path.replaceAll(/^\/+|\/+$/g, ''));
+    } else if (isLarge && repoInfo.path) {
       parsed = await this.fetchSkillFromLargeRepo(repoInfo);
     } else if (isLarge) {
       throw new SkillImportError(
@@ -226,6 +238,7 @@ export class SkillImporter {
         'DOWNLOAD_FAILED',
       );
     } else {
+      // Known-small repo, or root import with unknown size (best-effort, capped).
       parsed = await this.fetchSkillViaArchive(repoInfo);
     }
 
@@ -246,10 +259,14 @@ export class SkillImporter {
       if (error instanceof GitHubNotFoundError) {
         throw new SkillImportError(error.message, 'NOT_FOUND');
       }
-      throw new SkillImportError(
-        `Failed to list GitHub repository: ${(error as Error).message}`,
-        'DOWNLOAD_FAILED',
+      // Listing needs the REST API (rate-limited / token-gated). If it fails,
+      // fall back to streaming the archive — slower, but needs no API and stays
+      // memory-bounded, so a large import still succeeds without a token.
+      log(
+        'importFromGitHub: listSubtree failed (%s), falling back to streaming extract',
+        (error as Error).message,
       );
+      return this.fetchSkillViaStream(repoInfo, basePath);
     }
 
     const skillMdPath = `${basePath}/SKILL.md`;

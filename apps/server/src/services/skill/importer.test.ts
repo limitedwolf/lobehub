@@ -357,6 +357,12 @@ describe('SkillImporter', () => {
   });
 
   describe('importFromGitHub', () => {
+    beforeEach(() => {
+      // Default: a small, known-size repo -> archive path. Large-repo and
+      // unknown-size routing is covered in the dedicated describe below.
+      mockGitHubInstance.getRepoSizeKb.mockResolvedValue(100);
+    });
+
     it('should import skill from GitHub repository', async () => {
       mockGitHubInstance.parseRepoUrl.mockReturnValue({
         branch: 'main',
@@ -933,7 +939,7 @@ describe('SkillImporter', () => {
       ).rejects.toThrow(/SKILL\.md not found/i);
     });
 
-    it('should fall back to the archive path when the size probe fails', async () => {
+    it('should fall back to the archive path for a root import when the size probe fails', async () => {
       mockGitHubInstance.parseRepoUrl.mockReturnValue({
         branch: 'main',
         owner: 'lobehub',
@@ -955,6 +961,63 @@ describe('SkillImporter', () => {
 
       expect(result.status).toBe('created');
       expect(mockGitHubInstance.downloadRepoZip).toHaveBeenCalled();
+    });
+
+    it('should stream-extract a subdir import when the size probe fails (no token)', async () => {
+      mockGitHubInstance.parseRepoUrl.mockReturnValue({
+        branch: 'main',
+        owner: 'lobehub',
+        path: 'skills/x',
+        repo: 'no-token',
+      });
+      mockGitHubInstance.getRepoSizeKb.mockRejectedValue(new Error('rate limited'));
+      mockGitHubInstance.openRepoZipStream.mockResolvedValue('mock-stream' as any);
+      mockParserInstance.extractSkillFromZipStream.mockResolvedValue({
+        content: '# X',
+        manifest: { name: 'X Skill', description: 'no token' },
+        resources: new Map(),
+        skillZipBuffer: Buffer.from('skill-zip'),
+        zipHash: 'x-hash',
+      });
+
+      const result = await importer.importFromGitHub({
+        gitUrl: 'https://github.com/lobehub/no-token/tree/main/skills/x',
+      });
+
+      expect(result.status).toBe('created');
+      // Streamed without ever calling the REST API listing.
+      expect(mockGitHubInstance.openRepoZipStream).toHaveBeenCalled();
+      expect(mockGitHubInstance.listSubtree).not.toHaveBeenCalled();
+      expect(mockGitHubInstance.downloadRepoZip).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to streaming when listing a large repo fails', async () => {
+      mockGitHubInstance.parseRepoUrl.mockReturnValue({
+        branch: 'main',
+        owner: 'lobehub',
+        path: 'skills/y',
+        repo: 'list-fail',
+      });
+      mockGitHubInstance.getRepoSizeKb.mockResolvedValue(LARGE_SIZE_KB);
+      mockGitHubInstance.listSubtree.mockRejectedValue(new Error('rate limited'));
+      mockGitHubInstance.openRepoZipStream.mockResolvedValue('mock-stream' as any);
+      mockParserInstance.extractSkillFromZipStream.mockResolvedValue({
+        content: '# Y',
+        manifest: { name: 'Y Skill', description: 'list failed' },
+        resources: new Map(),
+        skillZipBuffer: Buffer.from('skill-zip'),
+        zipHash: 'y-hash',
+      });
+
+      const result = await importer.importFromGitHub({
+        gitUrl: 'https://github.com/lobehub/list-fail/tree/main/skills/y',
+      });
+
+      expect(result.status).toBe('created');
+      expect(mockParserInstance.extractSkillFromZipStream).toHaveBeenCalledWith(
+        'mock-stream',
+        'skills/y',
+      );
     });
   });
 
