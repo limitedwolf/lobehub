@@ -1,4 +1,9 @@
-import type { RegisterTaskWorkParams, TaskWorkListItem, WorkItem } from '@lobechat/types';
+import type {
+  RegisterTaskWorkParams,
+  TaskWorkListItem,
+  WorkItem,
+  WorkVersionItem,
+} from '@lobechat/types';
 
 import { mutate } from '@/libs/swr';
 import { workKeys } from '@/libs/swr/keys';
@@ -14,6 +19,12 @@ class WorkService {
     await mutate(workKeys.conversation(params.topicId, params.threadId));
   };
 
+  refreshVersions = async (workId?: string | null): Promise<void> => {
+    if (!workId) return;
+
+    await mutate(workKeys.versions(workId));
+  };
+
   registerTask = async (params: RegisterTaskWorkParams): Promise<WorkItem> => {
     const result = await lambdaClient.work.registerTask.mutate(params);
     return result.data;
@@ -25,6 +36,11 @@ class WorkService {
     topicId?: string | null;
   }): Promise<TaskWorkListItem[]> => {
     const result = await lambdaClient.work.listByConversation.query(params);
+    return result.data;
+  };
+
+  listVersions = async (workId: string): Promise<WorkVersionItem[]> => {
+    const result = await lambdaClient.work.listVersions.query({ workId });
     return result.data;
   };
 }

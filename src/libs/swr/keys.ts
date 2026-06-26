@@ -140,6 +140,7 @@ export const workKeys = {
       threadId ?? null,
     ],
   ),
+  versions: def('work:versions', (workId: string) => ['work:versions', workId]),
 };
 
 // ---- brief --------------------------------------------------------------

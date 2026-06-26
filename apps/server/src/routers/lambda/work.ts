@@ -1,4 +1,4 @@
-import type { TaskWorkListItem, WorkItem } from '@lobechat/types';
+import type { TaskWorkListItem, WorkItem, WorkVersionItem } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
@@ -20,6 +20,10 @@ const conversationListSchema = z.object({
   limit: z.number().min(1).max(100).default(50),
   threadId: z.string().nullish(),
   topicId: z.string().nullish(),
+});
+
+const versionListSchema = z.object({
+  workId: z.string().min(1),
 });
 
 const registerTaskSchema = z
@@ -52,6 +56,22 @@ export const workRouter = router({
           cause: error,
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to list works',
+        });
+      }
+    }),
+
+  listVersions: workProcedure
+    .input(versionListSchema)
+    .query(async ({ input, ctx }): Promise<{ data: WorkVersionItem[]; success: true }> => {
+      try {
+        const data = await ctx.workModel.listVersions(input.workId);
+        return { data, success: true };
+      } catch (error) {
+        console.error('[work:listVersions]', error);
+        throw new TRPCError({
+          cause: error,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to list work versions',
         });
       }
     }),

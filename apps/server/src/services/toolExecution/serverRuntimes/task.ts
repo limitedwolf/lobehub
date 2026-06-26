@@ -640,11 +640,6 @@ export const createTaskRuntime = (deps: TaskRuntimeDeps) => {
           id,
           status: args.status,
         });
-        await registerTaskWork({
-          sourceIdentifier: TaskApiName.updateTaskStatus,
-          taskId: result.data.id,
-          title: result.data.name || result.data.identifier,
-        });
 
         return {
           content:

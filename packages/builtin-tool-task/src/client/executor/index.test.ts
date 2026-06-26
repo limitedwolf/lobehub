@@ -7,6 +7,7 @@ const {
   createTaskMock,
   internalRefreshTaskDetailMock,
   refreshConversationMock,
+  refreshVersionsMock,
   registerTaskMock,
   removeDependencyMock,
   updateTaskMock,
@@ -16,6 +17,7 @@ const {
   createTaskMock: vi.fn(),
   internalRefreshTaskDetailMock: vi.fn(),
   refreshConversationMock: vi.fn(),
+  refreshVersionsMock: vi.fn(),
   registerTaskMock: vi.fn(),
   removeDependencyMock: vi.fn(),
   updateTaskMock: vi.fn(),
@@ -25,6 +27,7 @@ const {
 vi.mock('@/services/work', () => ({
   workService: {
     refreshConversation: refreshConversationMock,
+    refreshVersions: refreshVersionsMock,
     registerTask: registerTaskMock,
   },
 }));
@@ -59,6 +62,7 @@ describe('taskExecutor', () => {
     createTaskMock.mockReset();
     internalRefreshTaskDetailMock.mockReset();
     refreshConversationMock.mockReset();
+    refreshVersionsMock.mockReset();
     registerTaskMock.mockReset();
     removeDependencyMock.mockReset();
     updateTaskMock.mockReset();
@@ -100,6 +104,7 @@ describe('taskExecutor', () => {
         threadId: 'thread-1',
         topicId: 'topic-1',
       });
+      expect(refreshVersionsMock).toHaveBeenCalledWith('work-1');
     });
   });
 
@@ -125,13 +130,13 @@ describe('taskExecutor', () => {
         threadId: 'thread-1',
         topicId: 'topic-1',
       });
+      expect(refreshVersionsMock).toHaveBeenCalledWith('work-1');
     });
   });
 
   describe('updateTaskStatus', () => {
-    it('registers raw task ids as taskId when status changes', async () => {
+    it('refreshes conversation works without creating a work version when status changes', async () => {
       updateTaskStatusMock.mockResolvedValue('task_1');
-      registerTaskMock.mockResolvedValue({ id: 'work-1' });
       refreshConversationMock.mockResolvedValue(undefined);
 
       const result = await taskExecutor.updateTaskStatus(
@@ -140,14 +145,12 @@ describe('taskExecutor', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(registerTaskMock).toHaveBeenCalledTimes(1);
-      const [registerParams] = registerTaskMock.mock.calls[0];
-      expect(registerParams).toMatchObject({
-        sourceIdentifier: 'updateTaskStatus',
-        taskId: 'task_1',
+      expect(registerTaskMock).not.toHaveBeenCalled();
+      expect(refreshConversationMock).toHaveBeenCalledWith({
+        threadId: 'thread-1',
         topicId: 'topic-1',
       });
-      expect(registerParams.taskIdentifier).toBeUndefined();
+      expect(refreshVersionsMock).not.toHaveBeenCalled();
     });
   });
 });

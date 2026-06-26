@@ -37,6 +37,20 @@ import { TaskApiName } from '../../types';
 
 const log = debug('lobe-task:executor');
 
+const refreshConversationWorks = async (ctx: BuiltinToolContext) => {
+  await workService
+    .refreshConversation({ threadId: ctx.threadId, topicId: ctx.topicId })
+    .catch((error) => {
+      log('[TaskExecutor] refresh conversation works failed:', error);
+    });
+};
+
+const refreshWorkVersions = async (workId?: string | null) => {
+  await workService.refreshVersions(workId).catch((error) => {
+    log('[TaskExecutor] refresh work versions failed:', error);
+  });
+};
+
 const registerTaskWork = async (
   task: { id?: string; identifier?: string; name?: string | null },
   ctx: BuiltinToolContext | undefined,
@@ -61,18 +75,15 @@ const registerTaskWork = async (
     topicId: ctx.topicId,
   };
 
+  let work: Awaited<ReturnType<typeof workService.registerTask>>;
   try {
-    await workService.registerTask(registerParams);
+    work = await workService.registerTask(registerParams);
   } catch (error) {
     log('[TaskExecutor] register task work failed:', error);
     return;
   }
 
-  await workService
-    .refreshConversation({ threadId: ctx.threadId, topicId: ctx.topicId })
-    .catch((error) => {
-      log('[TaskExecutor] refresh conversation works failed:', error);
-    });
+  await Promise.all([refreshConversationWorks(ctx), refreshWorkVersions(work.id)]);
 };
 
 // APIs whose execution mutates state that's surfaced in the renderer's task
@@ -750,7 +761,7 @@ class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
       const id = await getTaskStoreState().updateTaskStatus(identifier, params.status, {
         error: params.error,
       });
-      await registerTaskWork({ identifier: id }, ctx, TaskApiName.updateTaskStatus);
+      if (ctx?.topicId) await refreshConversationWorks(ctx);
 
       return {
         content:
