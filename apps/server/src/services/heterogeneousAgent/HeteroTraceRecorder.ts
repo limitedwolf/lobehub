@@ -2,7 +2,7 @@ import type { AgentStreamEvent } from '@lobechat/agent-gateway-client';
 import type { ExecutionSnapshot, ISnapshotStore, StepSnapshot } from '@lobechat/agent-tracing';
 import debug from 'debug';
 
-import { buildFinalSnapshotKey } from '@/server/modules/AgentTracing';
+import { buildFinalSnapshotKey } from '~server/modules/AgentTracing';
 
 const log = debug('lobe-server:hetero-trace-recorder');
 

@@ -105,7 +105,7 @@ import {
   resolveAgentSelfIterationCapability,
 } from '~server/services/agentSignal/featureGate';
 import { shouldSuppressSignal } from '~server/services/agentSignal/suppressSignal';
-import { ComposioService } from '@/server/services/composio';
+import { ComposioService } from '~server/services/composio';
 import { deviceGateway } from '~server/services/deviceGateway';
 import { getScopedOnlineDevices } from '~server/services/deviceGateway/scopedDevices';
 import { DocumentService } from '~server/services/document';

@@ -3,7 +3,7 @@ import { type ChatToolPayload } from '@lobechat/types';
 import { detectTruncatedJSON, safeParseJSON } from '@lobechat/utils';
 import debug from 'debug';
 
-import { ComposioService } from '@/server/services/composio';
+import { ComposioService } from '~server/services/composio';
 import { MarketService } from '~server/services/market';
 
 import { getServerRuntime, hasServerRuntime } from './serverRuntimes';

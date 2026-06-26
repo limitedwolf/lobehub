@@ -8,7 +8,7 @@ import { AgentOperationModel } from '@/database/models/agentOperation';
 import { BriefModel } from '@/database/models/brief';
 import { UserModel } from '@/database/models/user';
 import type { LobeChatDatabase } from '@/database/type';
-import { translation } from '@/server/translation';
+import { translation } from '~server/translation';
 import { readAgentSignalMarker } from '~server/services/agentSignal/operationMarker';
 import { createServerSelfReviewBriefWriter } from '~server/services/agentSignal/services/selfIteration/review/brief';
 import { createReviewRuntimePrimitives } from '~server/services/agentSignal/services/selfIteration/review/server';

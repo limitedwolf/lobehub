@@ -1,4 +1,4 @@
-import type { VideoProcessResult } from '@/server/services/generation/video';
+import type { VideoProcessResult } from '~server/services/generation/video';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
 
 interface BuildVideoGenerationFilePayloadParams {

@@ -6,8 +6,8 @@ import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
 import { VerifyRunModel } from '@/database/models/verifyRun';
 import type { LobeChatDatabase } from '@/database/type';
-import { TaskService } from '@/server/services/task';
-import { TaskResultBridgeService } from '@/server/services/taskResultBridge';
+import { TaskService } from '~server/services/task';
+import { TaskResultBridgeService } from '~server/services/taskResultBridge';
 
 import { maybeAutoRepair } from './repairService';
 import { VerifyReporterService } from './reporter';
