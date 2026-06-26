@@ -35,7 +35,7 @@ export enum GroupSettingsTabs {
   Settings = 'settings',
 }
 
-export type WorkingSidebarTab = 'files' | 'params' | 'resources' | 'review';
+export type WorkingSidebarTab = 'files' | 'params' | 'resources' | 'review' | 'works';
 
 export enum SettingsTabs {
   About = 'about',
