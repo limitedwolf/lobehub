@@ -17,11 +17,35 @@ export interface GitHubRawFileInfo extends GitHubRepoInfo {
   filePath: string;
 }
 
+/**
+ * A single blob (file) entry within a repository subtree.
+ * `path` is repository-relative (e.g. `skills/ppt-master/SKILL.md`).
+ */
+export interface GitHubTreeFile {
+  path: string;
+  size?: number;
+}
+
 export class GitHub {
   private readonly userAgent: string;
+  private readonly token?: string;
 
-  constructor(options?: { userAgent?: string }) {
+  constructor(options?: { token?: string; userAgent?: string }) {
     this.userAgent = options?.userAgent || 'LobeHub';
+    this.token = options?.token;
+  }
+
+  /**
+   * Build request headers, attaching the GitHub token when available.
+   * An authenticated token lifts the REST API rate limit from 60/h to 5000/h,
+   * which matters because all Vercel instances share an egress IP.
+   */
+  private buildHeaders(extra?: Record<string, string>): Record<string, string> {
+    return {
+      'User-Agent': this.userAgent,
+      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      ...extra,
+    };
   }
 
   /**
@@ -142,16 +166,20 @@ export class GitHub {
   }
 
   /**
-   * Download repository as ZIP buffer
+   * Download repository as ZIP buffer.
+   *
+   * @param options.maxBytes - Optional hard cap. The body is read as a stream
+   *   and aborted once the cap is exceeded, so an unexpectedly large archive
+   *   fails fast with a clear error instead of buffering until the function
+   *   runs out of memory. Acts as a backstop for the size-based routing in the
+   *   importer (e.g. when the repo-size probe is unavailable due to rate limits).
    */
-  async downloadRepoZip(info: GitHubRepoInfo): Promise<Buffer> {
+  async downloadRepoZip(info: GitHubRepoInfo, options?: { maxBytes?: number }): Promise<Buffer> {
     const zipUrl = this.buildRepoZipUrl(info);
     log('downloadRepoZip: fetching url=%s', zipUrl);
 
     const response = await fetch(zipUrl, {
-      headers: {
-        'User-Agent': this.userAgent,
-      },
+      headers: this.buildHeaders(),
     });
 
     log('downloadRepoZip: response status=%d, ok=%s', response.status, response.ok);
@@ -169,10 +197,199 @@ export class GitHub {
       );
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const { maxBytes } = options ?? {};
+
+    // No cap requested, or no readable stream available (e.g. mocked responses):
+    // fall back to buffering the whole body at once.
+    if (!maxBytes || !response.body) {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (maxBytes && buffer.length > maxBytes) {
+        throw new GitHubDownloadError(
+          `Repository archive exceeds size limit (${buffer.length} > ${maxBytes} bytes)`,
+        );
+      }
+      log('downloadRepoZip: downloaded %d bytes', buffer.length);
+      return buffer;
+    }
+
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        total += value.byteLength;
+        if (total > maxBytes) {
+          await reader.cancel();
+          throw new GitHubDownloadError(
+            `Repository archive exceeds size limit (> ${maxBytes} bytes)`,
+          );
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock?.();
+    }
+
+    const buffer = Buffer.concat(chunks);
     log('downloadRepoZip: downloaded %d bytes', buffer.length);
     return buffer;
+  }
+
+  /**
+   * Open the repository archive as a readable byte stream (does not buffer).
+   *
+   * Used to stream-extract only the skill subdirectory from a large repository
+   * without holding the whole archive in memory. The caller is responsible for
+   * consuming/cancelling the stream.
+   */
+  async openRepoZipStream(info: GitHubRepoInfo): Promise<ReadableStream<Uint8Array>> {
+    const zipUrl = this.buildRepoZipUrl(info);
+    log('openRepoZipStream: fetching url=%s', zipUrl);
+
+    const response = await fetch(zipUrl, {
+      headers: this.buildHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new GitHubNotFoundError(
+          `Repository not found: ${info.owner}/${info.repo}@${info.branch}`,
+        );
+      }
+      throw new GitHubDownloadError(
+        `Failed to download repository: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    if (!response.body) {
+      throw new GitHubDownloadError('Repository archive response has no body stream');
+    }
+
+    return response.body;
+  }
+
+  /**
+   * Probe the repository working-tree size (in KB) via the REST API.
+   *
+   * Used to decide between the cheap "download whole archive" path (small repos)
+   * and the memory-bounded "fetch only the skill subdirectory" path (large
+   * repos / monorepos). One lightweight JSON call — much cheaper than committing
+   * to a full archive download just to discover it is huge.
+   */
+  async getRepoSizeKb(info: Pick<GitHubRepoInfo, 'owner' | 'repo'>): Promise<number> {
+    const url = `https://api.github.com/repos/${info.owner}/${info.repo}`;
+    log('getRepoSizeKb: fetching url=%s', url);
+
+    const response = await fetch(url, {
+      headers: this.buildHeaders({ Accept: 'application/vnd.github+json' }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new GitHubNotFoundError(`Repository not found: ${info.owner}/${info.repo}`);
+      }
+      throw new GitHubDownloadError(
+        `Failed to fetch repository metadata: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const data = (await response.json()) as { size?: number };
+    const sizeKb = typeof data.size === 'number' ? data.size : 0;
+    log('getRepoSizeKb: size=%d KB', sizeKb);
+    return sizeKb;
+  }
+
+  /**
+   * List blob (file) entries under a subdirectory of the repository.
+   *
+   * Primary strategy: the Git Trees API with `recursive=1` — a single call
+   * returns the whole tree, which is then filtered to the requested subpath.
+   * For very large repos the Trees response can be `truncated`, in which case
+   * we fall back to walking only the target subdirectory via the Contents API
+   * (bounded by the subdirectory size, not the whole repo).
+   *
+   * @param subPath - Repository-relative directory, normalized (no leading or
+   *   trailing slash). Empty string lists the repository root.
+   * @returns File entries whose `path` is repository-relative.
+   */
+  async listSubtree(info: GitHubRepoInfo, subPath: string): Promise<GitHubTreeFile[]> {
+    const normalized = subPath.replaceAll(/^\/+|\/+$/g, '');
+    const url = `https://api.github.com/repos/${info.owner}/${info.repo}/git/trees/${info.branch}?recursive=1`;
+    log('listSubtree: fetching url=%s, subPath=%s', url, normalized);
+
+    const response = await fetch(url, {
+      headers: this.buildHeaders({ Accept: 'application/vnd.github+json' }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new GitHubNotFoundError(
+          `Repository tree not found: ${info.owner}/${info.repo}@${info.branch}`,
+        );
+      }
+      throw new GitHubDownloadError(
+        `Failed to fetch repository tree: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      tree?: Array<{ path: string; size?: number; type: string }>;
+      truncated?: boolean;
+    };
+
+    if (data.truncated) {
+      log('listSubtree: tree truncated, falling back to Contents API for subPath=%s', normalized);
+      return this.listSubtreeViaContents(info, normalized);
+    }
+
+    const prefix = normalized ? `${normalized}/` : '';
+    const files = (data.tree ?? [])
+      .filter((entry) => entry.type === 'blob' && (!prefix || entry.path.startsWith(prefix)))
+      .map((entry) => ({ path: entry.path, size: entry.size }));
+
+    log('listSubtree: found %d files under %s', files.length, normalized || '<root>');
+    return files;
+  }
+
+  /**
+   * Recursively list files under a subdirectory using the Contents API.
+   * Fallback for when the Trees API response is truncated. Scoped to the target
+   * subdirectory, so the number of calls is bounded by the subdir, not the repo.
+   */
+  private async listSubtreeViaContents(
+    info: GitHubRepoInfo,
+    dirPath: string,
+  ): Promise<GitHubTreeFile[]> {
+    const url = `https://api.github.com/repos/${info.owner}/${info.repo}/contents/${dirPath}?ref=${info.branch}`;
+    const response = await fetch(url, {
+      headers: this.buildHeaders({ Accept: 'application/vnd.github+json' }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new GitHubNotFoundError(
+          `Path not found: ${info.owner}/${info.repo}@${info.branch}/${dirPath}`,
+        );
+      }
+      throw new GitHubDownloadError(
+        `Failed to list directory: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const entries = (await response.json()) as Array<{ path: string; size?: number; type: string }>;
+    const files: GitHubTreeFile[] = [];
+    for (const entry of entries) {
+      if (entry.type === 'file') {
+        files.push({ path: entry.path, size: entry.size });
+      } else if (entry.type === 'dir') {
+        const nested = await this.listSubtreeViaContents(info, entry.path);
+        files.push(...nested);
+      }
+    }
+    return files;
   }
 
   /**
@@ -182,9 +399,7 @@ export class GitHub {
     const rawUrl = this.buildRawFileUrl(info);
 
     const response = await fetch(rawUrl, {
-      headers: {
-        'User-Agent': this.userAgent,
-      },
+      headers: this.buildHeaders(),
     });
 
     if (!response.ok) {
@@ -208,9 +423,7 @@ export class GitHub {
     const rawUrl = this.buildRawFileUrl(info);
 
     const response = await fetch(rawUrl, {
-      headers: {
-        'User-Agent': this.userAgent,
-      },
+      headers: this.buildHeaders(),
     });
 
     if (!response.ok) {

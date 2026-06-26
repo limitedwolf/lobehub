@@ -6,7 +6,7 @@ import {
   type SkillManifest,
   skillManifestSchema,
 } from '@lobechat/types';
-import { unzip as fflateUnzip, zip as fflateZip } from 'fflate';
+import { Unzip as FflateUnzip, unzip as fflateUnzip, UnzipInflate, zip as fflateZip } from 'fflate';
 import matter from 'gray-matter';
 import { sha256 } from 'js-sha256';
 
@@ -107,6 +107,123 @@ export class SkillParser {
       }
       throw new SkillParseError('Failed to parse ZIP package', error as Error);
     }
+  }
+
+  /**
+   * Build a parsed skill from already-fetched files (no ZIP involved).
+   *
+   * Used by the GitHub "selective" import path, which fetches SKILL.md and
+   * resource files individually (via raw.githubusercontent.com) for large
+   * repositories instead of downloading and decompressing the whole archive.
+   *
+   * Reuses {@link repackSkillZip} so the resulting `skillZipBuffer`/`zipHash`
+   * are byte-identical to the archive path for the same files, keeping the
+   * deduplication based on `zipHash` consistent across both import paths.
+   */
+  async packSkillFiles(
+    skillMdContent: string,
+    resources: Map<string, Buffer>,
+  ): Promise<ParsedZipSkill> {
+    try {
+      const { content, manifest } = this.parseSkillMd(skillMdContent);
+      const skillZipBuffer = await this.repackSkillZip(skillMdContent, resources);
+      const zipHash = sha256(skillZipBuffer);
+      return { content, manifest, resources, skillZipBuffer, zipHash };
+    } catch (error) {
+      if (error instanceof SkillParseError || error instanceof SkillManifestError) {
+        throw error;
+      }
+      throw new SkillParseError('Failed to pack skill files', error as Error);
+    }
+  }
+
+  /**
+   * Stream a (potentially huge) repository ZIP and decompress ONLY the files
+   * under `basePath`, discarding everything else as it streams by.
+   *
+   * Used by the GitHub import path for repositories whose skill subdirectory
+   * has too many files to fetch one-by-one over raw, but where downloading and
+   * fully decompressing the whole archive into memory would OOM. Peak memory is
+   * proportional to the skill subdirectory, not the whole repository.
+   *
+   * @param stream - The archive body stream (e.g. `response.body`).
+   * @param basePath - Repository-relative skill directory (the ZIP wraps the
+   *   whole repo under a `{repo}-{branch}/` prefix which is detected and
+   *   stripped automatically).
+   */
+  async extractSkillFromZipStream(
+    stream: ReadableStream<Uint8Array>,
+    basePath: string,
+  ): Promise<ParsedZipSkill> {
+    const normalized = basePath.replaceAll(/^\/+|\/+$/g, '');
+    const decoder = new TextDecoder();
+
+    let rootPrefix: string | null = null;
+    let targetPrefix: string | null = null;
+    let skillMdContent: string | null = null;
+    const resources = new Map<string, Buffer>();
+    let fileError: Error | null = null;
+
+    const unzipper = new FflateUnzip();
+    unzipper.register(UnzipInflate);
+    unzipper.onfile = (file) => {
+      const name = file.name;
+
+      // The archive wraps everything under "{repo}-{branch}/"; capture it from
+      // the first entry so we can target "{rootPrefix}{basePath}/" exactly.
+      if (rootPrefix === null) {
+        const slash = name.indexOf('/');
+        rootPrefix = slash > 0 ? name.slice(0, slash + 1) : '';
+        targetPrefix = `${rootPrefix}${normalized}/`;
+      }
+
+      if (name.endsWith('/') || name.includes('__MACOSX')) return;
+      if (!targetPrefix || !name.startsWith(targetPrefix)) return; // skip: not decompressed/retained
+
+      const relativePath = name.slice(targetPrefix.length);
+      if (!relativePath) return;
+
+      const chunks: Uint8Array[] = [];
+      file.ondata = (err, chunk, final) => {
+        if (err) {
+          fileError = err;
+          return;
+        }
+        // Copy: fflate may reuse the underlying buffer across ondata calls.
+        if (chunk.length > 0) chunks.push(chunk.slice());
+        if (final) {
+          const buffer = Buffer.concat(chunks);
+          if (relativePath === 'SKILL.md') {
+            skillMdContent = decoder.decode(buffer);
+          } else {
+            resources.set(relativePath, buffer);
+          }
+        }
+      };
+      file.start();
+    };
+
+    const reader = stream.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) unzipper.push(value, false);
+        if (fileError) break;
+      }
+    } finally {
+      reader.releaseLock?.();
+    }
+    unzipper.push(new Uint8Array(0), true);
+
+    if (fileError) {
+      throw new SkillParseError('Failed to extract skill from ZIP stream', fileError);
+    }
+    if (skillMdContent === null) {
+      throw new SkillParseError(`SKILL.md not found at ${normalized || '<root>'}`);
+    }
+
+    return this.packSkillFiles(skillMdContent, resources);
   }
 
   /**

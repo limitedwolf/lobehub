@@ -390,6 +390,232 @@ describe('GitHub', () => {
     });
   });
 
+  describe('auth headers', () => {
+    const mockFetch = vi.fn();
+
+    beforeEach(() => {
+      vi.stubGlobal('fetch', mockFetch);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('should attach Authorization header when a token is provided', async () => {
+      const gh = new GitHub({ token: 'ghp_secret' });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve('content'),
+      });
+
+      await gh.downloadRawFile({
+        branch: 'main',
+        filePath: 'README.md',
+        owner: 'lobehub',
+        repo: 'lobe-chat',
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(expect.any(String), {
+        headers: {
+          'Authorization': 'Bearer ghp_secret',
+          'User-Agent': 'LobeHub',
+        },
+      });
+    });
+
+    it('should omit Authorization header when no token is provided', async () => {
+      const gh = new GitHub();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve('content'),
+      });
+
+      await gh.downloadRawFile({
+        branch: 'main',
+        filePath: 'README.md',
+        owner: 'lobehub',
+        repo: 'lobe-chat',
+      });
+
+      const headers = mockFetch.mock.calls.at(-1)![1].headers;
+      expect(headers).not.toHaveProperty('Authorization');
+    });
+  });
+
+  describe('getRepoSizeKb', () => {
+    const gh = new GitHub();
+    const mockFetch = vi.fn();
+
+    beforeEach(() => {
+      vi.stubGlobal('fetch', mockFetch);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('should return the repo size in KB', async () => {
+      mockFetch.mockResolvedValueOnce({
+        json: () => Promise.resolve({ size: 12_345 }),
+        ok: true,
+      });
+
+      const size = await gh.getRepoSizeKb({ owner: 'lobehub', repo: 'lobe-chat' });
+      expect(size).toBe(12_345);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.github.com/repos/lobehub/lobe-chat',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Accept: 'application/vnd.github+json' }),
+        }),
+      );
+    });
+
+    it('should default to 0 when size is missing', async () => {
+      mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({}), ok: true });
+      const size = await gh.getRepoSizeKb({ owner: 'lobehub', repo: 'lobe-chat' });
+      expect(size).toBe(0);
+    });
+
+    it('should throw GitHubNotFoundError for 404', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' });
+      await expect(gh.getRepoSizeKb({ owner: 'lobehub', repo: 'nope' })).rejects.toThrow(
+        GitHubNotFoundError,
+      );
+    });
+  });
+
+  describe('listSubtree', () => {
+    const gh = new GitHub();
+    const mockFetch = vi.fn();
+    const repoInfo = { branch: 'main', owner: 'lobehub', repo: 'skills' };
+
+    beforeEach(() => {
+      vi.stubGlobal('fetch', mockFetch);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('should list blob files under the subpath via the Trees API', async () => {
+      mockFetch.mockResolvedValueOnce({
+        json: () =>
+          Promise.resolve({
+            tree: [
+              { path: 'skills/foo', type: 'tree' },
+              { path: 'skills/foo/SKILL.md', size: 10, type: 'blob' },
+              { path: 'skills/foo/assets/a.png', size: 20, type: 'blob' },
+              { path: 'skills/other/SKILL.md', size: 5, type: 'blob' },
+              { path: 'README.md', size: 3, type: 'blob' },
+            ],
+            truncated: false,
+          }),
+        ok: true,
+      });
+
+      const files = await gh.listSubtree(repoInfo, 'skills/foo');
+      expect(files.map((f) => f.path)).toEqual(['skills/foo/SKILL.md', 'skills/foo/assets/a.png']);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.github.com/repos/lobehub/skills/git/trees/main?recursive=1',
+        expect.any(Object),
+      );
+    });
+
+    it('should fall back to the Contents API when the tree is truncated', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({ tree: [], truncated: true }),
+          ok: true,
+        })
+        // contents of skills/foo
+        .mockResolvedValueOnce({
+          json: () =>
+            Promise.resolve([
+              { path: 'skills/foo/SKILL.md', size: 10, type: 'file' },
+              { path: 'skills/foo/assets', type: 'dir' },
+            ]),
+          ok: true,
+        })
+        // contents of skills/foo/assets
+        .mockResolvedValueOnce({
+          json: () =>
+            Promise.resolve([{ path: 'skills/foo/assets/a.png', size: 20, type: 'file' }]),
+          ok: true,
+        });
+
+      const files = await gh.listSubtree(repoInfo, 'skills/foo');
+      expect(files.map((f) => f.path).sort()).toEqual([
+        'skills/foo/SKILL.md',
+        'skills/foo/assets/a.png',
+      ]);
+    });
+
+    it('should throw GitHubNotFoundError for 404', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' });
+      await expect(gh.listSubtree(repoInfo, 'skills/foo')).rejects.toThrow(GitHubNotFoundError);
+    });
+  });
+
+  describe('downloadRepoZip with size cap', () => {
+    const gh = new GitHub();
+    const mockFetch = vi.fn();
+
+    beforeEach(() => {
+      vi.stubGlobal('fetch', mockFetch);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const makeStreamResponse = (chunks: Uint8Array[]) => {
+      let i = 0;
+      return {
+        body: {
+          getReader: () => ({
+            cancel: () => Promise.resolve(),
+            read: () =>
+              i < chunks.length
+                ? Promise.resolve({ done: false, value: chunks[i++] })
+                : Promise.resolve({ done: true, value: undefined }),
+            releaseLock: () => {},
+          }),
+        },
+        ok: true,
+      };
+    };
+
+    it('should throw when the streamed archive exceeds maxBytes', async () => {
+      mockFetch.mockResolvedValueOnce(makeStreamResponse([new Uint8Array(60), new Uint8Array(60)]));
+
+      await expect(
+        gh.downloadRepoZip({ branch: 'main', owner: 'lobehub', repo: 'big' }, { maxBytes: 100 }),
+      ).rejects.toThrow(GitHubDownloadError);
+    });
+
+    it('should return the buffer when under maxBytes', async () => {
+      mockFetch.mockResolvedValueOnce(makeStreamResponse([new Uint8Array(10), new Uint8Array(10)]));
+
+      const result = await gh.downloadRepoZip(
+        { branch: 'main', owner: 'lobehub', repo: 'small' },
+        { maxBytes: 100 },
+      );
+      expect(result).toBeInstanceOf(Buffer);
+      expect(result.length).toBe(20);
+    });
+
+    it('should enforce maxBytes even without a streamable body', async () => {
+      mockFetch.mockResolvedValueOnce({
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(200)),
+        ok: true,
+      });
+
+      await expect(
+        gh.downloadRepoZip({ branch: 'main', owner: 'lobehub', repo: 'big' }, { maxBytes: 100 }),
+      ).rejects.toThrow(GitHubDownloadError);
+    });
+  });
+
   describe('github singleton', () => {
     it('should be an instance of GitHub', () => {
       expect(github).toBeInstanceOf(GitHub);

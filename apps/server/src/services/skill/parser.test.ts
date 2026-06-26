@@ -723,4 +723,135 @@ Content from file`;
       await expect(parser.parseZipFile(invalidZipPath)).rejects.toThrow(SkillParseError);
     });
   });
+
+  describe('packSkillFiles', () => {
+    it('should build a parsed skill from individual files', async () => {
+      const skillMd = `---
+name: packed-skill
+description: Built from files
+---
+Packed content`;
+      const resources = new Map<string, Buffer>([
+        ['ref.md', Buffer.from('reference')],
+        ['assets/logo.png', Buffer.from('png-bytes')],
+      ]);
+
+      const result = await parser.packSkillFiles(skillMd, resources);
+
+      expect(result.manifest.name).toBe('packed-skill');
+      expect(result.content).toBe('Packed content');
+      expect(result.resources.size).toBe(2);
+      expect(result.skillZipBuffer).toBeDefined();
+      expect(result.zipHash).toBe(sha256(result.skillZipBuffer!));
+    });
+
+    it('should produce a hash identical to the archive repack for the same files', async () => {
+      const skillMd = `---
+name: stable-skill
+description: Stable content
+---
+Body`;
+      const resourceBytes = new TextEncoder().encode('Resource');
+
+      // Archive path: parse a GitHub-style repo zip with repack
+      const archive = await parser.parseZipPackage(
+        Buffer.from(
+          await createZip({
+            'repo-main/README.md': new TextEncoder().encode('# Big repo'),
+            'repo-main/skills/my-skill/SKILL.md': new TextEncoder().encode(skillMd),
+            'repo-main/skills/my-skill/resource.txt': resourceBytes,
+          }),
+        ),
+        { basePath: 'skills/my-skill', repackSkillZip: true },
+      );
+
+      // Selective path: same files fed directly
+      const selective = await parser.packSkillFiles(
+        skillMd,
+        new Map<string, Buffer>([['resource.txt', Buffer.from(resourceBytes)]]),
+      );
+
+      expect(selective.zipHash).toBe(archive.zipHash);
+      expect(selective.content).toBe(archive.content);
+    });
+
+    it('should throw SkillManifestError for invalid manifest', async () => {
+      await expect(parser.packSkillFiles('no frontmatter here', new Map())).rejects.toThrow(
+        SkillManifestError,
+      );
+    });
+  });
+
+  describe('extractSkillFromZipStream', () => {
+    const toStream = (data: Uint8Array): ReadableStream<Uint8Array> => {
+      // Emit in small chunks to exercise the streaming reader.
+      const chunkSize = 64;
+      let offset = 0;
+      return new ReadableStream({
+        pull(controller) {
+          if (offset >= data.length) {
+            controller.close();
+            return;
+          }
+          controller.enqueue(data.slice(offset, offset + chunkSize));
+          offset += chunkSize;
+        },
+      });
+    };
+
+    it('should extract only the subdirectory from a streamed repo zip', async () => {
+      const skillMd = `---
+name: streamed-skill
+description: From a stream
+---
+Streamed body`;
+      const zipped = await createZip({
+        'repo-main/README.md': new TextEncoder().encode('# Repo'),
+        'repo-main/other/big.bin': new TextEncoder().encode('x'.repeat(5000)),
+        'repo-main/skills/my-skill/SKILL.md': new TextEncoder().encode(skillMd),
+        'repo-main/skills/my-skill/refs/a.md': new TextEncoder().encode('alpha'),
+        'repo-main/skills/my-skill/refs/b.md': new TextEncoder().encode('beta'),
+      });
+
+      const result = await parser.extractSkillFromZipStream(toStream(zipped), 'skills/my-skill');
+
+      expect(result.manifest.name).toBe('streamed-skill');
+      expect(result.content).toBe('Streamed body');
+      // Only the subdir resources, README/other excluded
+      expect([...result.resources.keys()].sort()).toEqual(['refs/a.md', 'refs/b.md']);
+      expect(result.skillZipBuffer).toBeDefined();
+    });
+
+    it('should match the archive repack hash for identical subdir content', async () => {
+      const skillMd = `---
+name: parity-skill
+description: parity
+---
+Parity body`;
+      const files = {
+        'repo-main/README.md': new TextEncoder().encode('# Repo'),
+        'repo-main/skills/my-skill/SKILL.md': new TextEncoder().encode(skillMd),
+        'repo-main/skills/my-skill/resource.txt': new TextEncoder().encode('Resource'),
+      };
+      const zipped = Buffer.from(await createZip(files));
+
+      const archive = await parser.parseZipPackage(zipped, {
+        basePath: 'skills/my-skill',
+        repackSkillZip: true,
+      });
+      const streamed = await parser.extractSkillFromZipStream(toStream(zipped), 'skills/my-skill');
+
+      expect(streamed.zipHash).toBe(archive.zipHash);
+    });
+
+    it('should throw when SKILL.md is missing in the subdirectory', async () => {
+      const zipped = await createZip({
+        'repo-main/skills/my-skill/notes.md': new TextEncoder().encode('no manifest'),
+      });
+
+      await expect(
+        parser.extractSkillFromZipStream(toStream(zipped), 'skills/my-skill'),
+      ).rejects.toThrow(SkillParseError);
+    });
+  });
 });
