@@ -305,7 +305,9 @@ export default class GatewayConnectionCtr extends ControllerModule {
       // original (possibly empty) jwt rather than rejecting the run — so the
       // change can roll out progressively without regressing the existing path.
       const jwt =
-        request.jwt || (await this.mintOperationJwt(serverUrl, request.topicId)) || request.jwt;
+        request.jwt ||
+        (await this.mintOperationJwt(serverUrl, request.topicId, request.workspaceId)) ||
+        request.jwt;
 
       // Fire-and-forget: lh hetero exec handles spawn -> adapt ->
       // BatchIngester -> heteroIngest/heteroFinish -> server -> Gateway -> clients.
@@ -335,10 +337,17 @@ export default class GatewayConnectionCtr extends ControllerModule {
    * Exchange this device's logged-in user session for a short-scoped
    * `hetero-operation` JWT via `aiAgent.mintHeteroOperationToken`. Returns
    * undefined when the device isn't logged in or the server rejects the
-   * request, so the caller rejects the run rather than spawning a CLI that
-   * would then prompt for login.
+   * request, in which case the caller falls back to the dispatched jwt.
+   *
+   * For workspace devices the dispatch carries the owning `workspaceId`, which
+   * we forward as `X-Workspace-Id` so the server resolves the workspace-owned
+   * topic instead of falling back to personal mode (which would 404 the lookup).
    */
-  private async mintOperationJwt(serverUrl: string, topicId: string): Promise<string | undefined> {
+  private async mintOperationJwt(
+    serverUrl: string,
+    topicId: string,
+    workspaceId?: string,
+  ): Promise<string | undefined> {
     const token = await this.remoteServerConfigCtr.getAccessToken();
     if (!token) {
       logger.error('mintOperationJwt: device is not logged in (no access token)');
@@ -346,12 +355,15 @@ export default class GatewayConnectionCtr extends ControllerModule {
     }
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Oidc-Auth': token,
+      };
+      if (workspaceId) headers['X-Workspace-Id'] = workspaceId;
+
       const res = await fetch(`${serverUrl}/trpc/lambda/aiAgent.mintHeteroOperationToken`, {
         body: JSON.stringify({ json: { topicId } }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Oidc-Auth': token,
-        },
+        headers,
         method: 'POST',
       });
       if (!res.ok) {

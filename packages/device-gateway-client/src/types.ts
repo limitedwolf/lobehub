@@ -222,6 +222,14 @@ export interface AgentRunRequestMessage {
   systemContext?: string;
   topicId: string;
   type: 'agent_run_request';
+  /**
+   * Workspace that owns the dispatched topic, when the run targets a workspace
+   * device. The device forwards it as `X-Workspace-Id` when calling back to the
+   * server (e.g. minting a fallback operation JWT) so workspace-owned topics
+   * resolve instead of falling back to personal mode. Omitted for personal runs
+   * and by older servers.
+   */
+  workspaceId?: string;
 }
 
 /** Client → Server: acknowledgement for an agent_run_request. */

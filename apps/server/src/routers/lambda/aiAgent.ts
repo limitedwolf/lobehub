@@ -1508,10 +1508,14 @@ export const aiAgentRouter = router({
    * back without requiring a separate `lh login` on the device.
    *
    * Used by the desktop gateway path as a fallback when the dispatch did not
-   * carry a usable `jwt`. Gated on the topic belonging to the caller and having
-   * a running operation, mirroring `refreshGatewayToken`.
+   * carry a usable `jwt`. Uses `aiAgentWriteProcedure` so the caller must hold
+   * the same `message:create` scope that `execAgent` requires — the minted
+   * token can write to / finalize the run via heteroIngest/heteroFinish, so a
+   * read-only workspace member must not be able to obtain one. Also gated on the
+   * topic belonging to the caller and having a running operation, mirroring
+   * `refreshGatewayToken`.
    */
-  mintHeteroOperationToken: aiAgentProcedure
+  mintHeteroOperationToken: aiAgentWriteProcedure
     .input(z.object({ topicId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const topic = await ctx.topicModel.findById(input.topicId);

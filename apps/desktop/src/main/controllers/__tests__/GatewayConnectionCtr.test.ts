@@ -921,6 +921,25 @@ describe('GatewayConnectionCtr', () => {
       );
     });
 
+    it('forwards the dispatch workspaceId as X-Workspace-Id when minting', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ result: { data: { json: { token: 'minted-op-jwt' } } } }),
+        ok: true,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const client = await connectAndOpen();
+      client.simulateAgentRunRequest('claude-code', 'op-ws', 'hi', '', { workspaceId: 'ws-1' });
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://server.example.com/trpc/lambda/aiAgent.mintHeteroOperationToken',
+        expect.objectContaining({
+          headers: expect.objectContaining({ 'X-Workspace-Id': 'ws-1' }),
+        }),
+      );
+    });
+
     it('still spawns with the original jwt when minting is unavailable (progressive, no reject)', async () => {
       // No dispatched jwt AND device not logged in -> mint yields nothing. The
       // run must still spawn with the original (empty) jwt rather than being
