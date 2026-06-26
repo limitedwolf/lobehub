@@ -234,7 +234,12 @@ export const runMemoryActionAgent = async (
   const manifestMap = toolsEngine.getEnabledPluginManifests([MemoryIdentifier]);
   const operationId = `agent-signal-memory-${nanoid()}`;
   const initialContext = createInitialContext(operationId);
-  const { AgentRuntimeService } = await import('~server/services/agentRuntime/AgentRuntimeService');
+  // Lazy-loaded on purpose: `AgentRuntimeService` pulls the model-runtime core
+  // (eagerly touches server-only env at module init). This policy action sits on
+  // the light agentSignal request path imported by aiAgent, so a static import
+  // would couple that whole subsystem into every aiAgent import.
+  const { AgentRuntimeService } =
+    await import('~server/services/agentRuntime/AgentRuntimeService');
 
   // Create a child thread under the triggering assistant message so that
   // memory-agent messages are isolated from the main topic conversation

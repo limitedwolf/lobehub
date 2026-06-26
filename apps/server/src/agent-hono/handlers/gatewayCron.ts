@@ -11,6 +11,7 @@ import {
   resolveBotProviderConfig,
   resolveConnectionMode,
 } from '~server/services/bot/platforms';
+import { GatewayService } from '~server/services/gateway';
 import { BotConnectQueue } from '~server/services/gateway/botConnectQueue';
 import { scheduleAfterResponse } from '~server/utils/scheduleAfterResponse';
 
@@ -139,7 +140,6 @@ async function processConnectQueue(remainingMs: number): Promise<number> {
 export async function gatewayCron(c: Context): Promise<Response> {
   // When the external message gateway is enabled, sync connections via gateway.
   if (process.env.MESSAGE_GATEWAY_URL && process.env.MESSAGE_GATEWAY_SERVICE_TOKEN) {
-    const { GatewayService } = await import('~server/services/gateway');
     const service = new GatewayService();
 
     if (service.useMessageGateway) {
