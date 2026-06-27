@@ -56,7 +56,7 @@ export interface ScheduleToolCallReportParams {
 
 /**
  * Schedule a tool call report to be sent after the response.
- * Uses Next.js after() to avoid blocking the response.
+ * Uses the shared post-response scheduler to avoid blocking the response.
  */
 export function scheduleToolCallReport(params: ScheduleToolCallReportParams): void {
   const {
@@ -77,7 +77,7 @@ export function scheduleToolCallReport(params: ScheduleToolCallReportParams): vo
   // Only report when telemetry is enabled and marketAccessToken exists
   if (!telemetryEnabled || !marketAccessToken) return;
 
-  // Use Next.js after() to report after response is sent
+  // Report after the response is sent.
   scheduleAfterResponse(async () => {
     try {
       const callDurationMs = Date.now() - startTime;

@@ -275,9 +275,7 @@ export const videoRouter = router({
           });
         } else if (response) {
           // Polling-based provider (e.g. OpenAI Sora): use background polling
-          log(
-            'Polling-based provider detected (inferenceId only), using after() for background polling',
-          );
+          log('Polling-based provider detected (inferenceId only), scheduling background polling');
 
           await asyncTaskModel.update(asyncTaskId, {
             inferenceId: response.inferenceId,
@@ -285,7 +283,10 @@ export const videoRouter = router({
           });
 
           scheduleAfterResponse(async () => {
-            log('After() hook executing background video polling for task: %s', asyncTaskId);
+            log(
+              'Post-response scheduler executing background video polling for task: %s',
+              asyncTaskId,
+            );
 
             try {
               const db = await getServerDB();
@@ -310,7 +311,7 @@ export const videoRouter = router({
             }
           }, 'video:background-polling');
 
-          log('After() hook registered for background video polling: %s', asyncTaskId);
+          log('Post-response scheduler registered background video polling: %s', asyncTaskId);
         }
       } catch (e) {
         console.error('Failed to submit video generation task:', e);

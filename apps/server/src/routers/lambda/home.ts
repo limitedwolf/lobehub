@@ -41,7 +41,7 @@ export const homeRouter = router({
       }
     };
 
-    // Use Next.js after() for non-blocking execution
+    // Use post-response scheduling for non-blocking execution.
     scheduleAfterResponse(runMigration, 'AgentMigration');
 
     return result;

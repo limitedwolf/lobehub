@@ -375,7 +375,7 @@ export const topicRouter = router({
         }
       };
 
-      // Use Next.js after() for non-blocking execution
+      // Use post-response scheduling for non-blocking execution.
       scheduleAfterResponse(runMigration, 'AgentMigration:list');
 
       return { items: result.items, total: result.total };
@@ -504,7 +504,7 @@ export const topicRouter = router({
         }
       };
 
-      // Use Next.js after() for non-blocking execution
+      // Use post-response scheduling for non-blocking execution.
       scheduleAfterResponse(runMigration, 'AgentMigration:recentTopics');
 
       // Assemble final result

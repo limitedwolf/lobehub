@@ -10,13 +10,14 @@ vi.mock('./index', () => ({
   getLLMGenerationTracingService: () => ({ isEnabled, record }),
 }));
 
-// next/server is optional at runtime; default to "not available" so the hook
-// falls back to its microtask path which is straightforward to test.
+// next/server is optional at runtime; default to "not available" so the shared
+// post-response scheduler falls back to its detached timer path.
 vi.mock('next/server', () => ({}));
 
 const { createLLMGenerationTracingHook } = await import('./hook');
 
 const flushMicrotasks = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 0));
   await new Promise((resolve) => setImmediate(resolve));
 };
 
