@@ -170,6 +170,7 @@ const CustomConnectorModal = memo<CustomConnectorModalProps>(
 
       return {
         customParams: {
+          avatar: connector.metadata?.avatar as string | undefined,
           description: connector.metadata?.description as string | undefined,
           mcp: {
             args: mcpStdioConfig?.args,
@@ -241,6 +242,11 @@ const CustomConnectorModal = memo<CustomConnectorModalProps>(
       const isHttp = mcp.type !== 'stdio';
       const authType = mcp.auth?.type;
 
+      // Non-sensitive display metadata. The MCP form binds these to
+      // `customParams.{description,avatar}`; they live on `connector.metadata`.
+      const description = value.customParams?.description?.trim() || undefined;
+      const avatar = value.customParams?.avatar?.trim() || undefined;
+
       // ── Edit mode ─────────────────────────────────────────────────────────
       if (isEditMode && connectorId) {
         const newUrl = isHttp ? mcp.url?.trim() : undefined;
@@ -276,6 +282,16 @@ const CustomConnectorModal = memo<CustomConnectorModalProps>(
           };
         }
 
+        // The model replaces the metadata column wholesale, so merge onto the
+        // existing record and drop keys the user cleared — never blow away
+        // other metadata (e.g. `migratedFromCustomPlugin`).
+        const metadata: Record<string, unknown> = { ...(connector?.metadata ?? {}) };
+        if (description) metadata.description = description;
+        else delete metadata.description;
+        if (avatar) metadata.avatar = avatar;
+        else delete metadata.avatar;
+        patch.metadata = metadata;
+
         await updateConnector(connectorId, patch);
 
         if (authType === 'oauth2' && isHttp) {
@@ -307,6 +323,7 @@ const CustomConnectorModal = memo<CustomConnectorModalProps>(
         mcpStdioConfig: isHttp
           ? undefined
           : { args: mcp.args ?? [], command: (mcp.command ?? '').trim(), env: cleanRecord(mcp.env) },
+        metadata: description || avatar ? { avatar, description } : undefined,
         name: identifier,
         sourceType: ConnectorSourceType.custom,
       };
