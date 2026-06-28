@@ -25,6 +25,7 @@ import { type RuntimeExecutorContext } from '../context';
 import { dispatchClientTool } from '../dispatchClientTool';
 import {
   archiveRuntimeToolResult,
+  attachWorkSourceMessage,
   buildPostProcessUrl,
   buildServerAgentMemberRunner,
   buildServerVirtualSubAgentRunner,
@@ -235,9 +236,19 @@ export const callToolsBatch =
                 manifest: batchManifestMap[chatToolPayload.identifier],
               });
               const dispatchResult = await dispatchClientTool(chatToolPayload, {
+                agentId: state.metadata?.agentId,
+                assistantMessageId: payload.parentMessageId,
+                documentId: state.metadata?.documentId,
+                groupId: state.metadata?.groupId,
                 operationId,
+                rootOperationId: operationId,
+                scope: state.metadata?.scope,
+                sourceMessageId: state.metadata?.sourceMessageId,
                 streamManager,
+                taskId: state.metadata?.taskId,
+                threadId: state.metadata?.threadId,
                 timeoutMs,
+                topicId: state.metadata?.topicId ?? ctx.topicId,
               });
               execution = { attempts: 1, result: dispatchResult };
             } else {
@@ -268,6 +279,7 @@ export const callToolsBatch =
                       payload.parentMessageId,
                     ),
                     // Assistant message owning this tool call (≠ source user message).
+                    anchorMessageId: payload.parentMessageId,
                     assistantMessageId: payload.parentMessageId,
                     documentId: state.metadata?.documentId,
                     execSubAgent: ctx.execSubAgent,
@@ -277,6 +289,7 @@ export const callToolsBatch =
                     memoryToolPermission: batchAgentConfig?.chatConfig?.memory?.toolPermission,
                     messageId: state.metadata?.sourceMessageId,
                     operationId,
+                    rootOperationId: operationId,
                     scope: state.metadata?.scope,
                     serverDB: ctx.serverDB,
                     skipResultTruncation: true,
@@ -289,6 +302,7 @@ export const callToolsBatch =
                     taskId: state.metadata?.taskId,
                     threadId: state.metadata?.threadId,
                     toolCallId: chatToolPayload.id,
+                    toolMessageId: undefined,
                     toolManifestMap: batchManifestMap,
                     toolResultMaxLength: batchAgentConfig?.chatConfig?.toolResultMaxLength,
                     topicId: ctx.topicId,
@@ -386,6 +400,14 @@ export const callToolsBatch =
                 topicId: state.metadata?.topicId,
               });
               toolMessageIds.push(toolMessage.id);
+              await attachWorkSourceMessage({
+                rootOperationId: operationId,
+                serverDB: ctx.serverDB,
+                sourceMessageId: toolMessage.id,
+                sourceToolCallId: chatToolPayload.id,
+                userId: ctx.userId,
+                workspaceId: state.metadata?.workspaceId ?? ctx.workspaceId,
+              });
               log(`[${operationLogId}] Created tool message ${toolMessage.id} for ${toolName}`);
             } catch (error) {
               console.error(

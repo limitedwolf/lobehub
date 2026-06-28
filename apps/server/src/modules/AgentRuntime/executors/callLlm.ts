@@ -85,6 +85,7 @@ import { nanoid } from '@/utils/uuid';
 
 import { type RuntimeExecutorContext } from '../context';
 import {
+  attachWorkDisplayAnchorAssistantMessage,
   buildPostProcessUrl,
   buildToolDiscoveryConfig,
   getLLMRetryDelayMs,
@@ -1543,6 +1544,13 @@ export const callLlm =
                   reasoning: finalReasoning,
                   search: grounding,
                   tools: persistedTools,
+                });
+                await attachWorkDisplayAnchorAssistantMessage({
+                  displayAnchorAssistantMessageId: assistantMessageItem.id,
+                  rootOperationId: operationId,
+                  serverDB: ctx.serverDB,
+                  userId: ctx.userId,
+                  workspaceId: state.metadata?.workspaceId ?? ctx.workspaceId,
                 });
               } catch (error) {
                 console.error('[call_llm] Failed to update message:', error);
