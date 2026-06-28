@@ -91,8 +91,17 @@ const TraceIdError = dynamic(() => import('./TraceIdError'), { loading, ssr: fal
 const HETEROGENEOUS_AGENT_STATUS_GUIDE_ERROR_CODES = new Set<string>([
   HeterogeneousAgentSessionErrorCode.AuthRequired,
   HeterogeneousAgentSessionErrorCode.CliNotFound,
+  HeterogeneousAgentSessionErrorCode.Interrupted,
   HeterogeneousAgentSessionErrorCode.Overloaded,
   HeterogeneousAgentSessionErrorCode.RateLimit,
+]);
+
+// Transient codes that get the auto-retry + resume-continue recovery (vs.
+// auth/cli-not-found which need the user to act, and rate-limit which has a real
+// reset window).
+const AUTO_RETRYABLE_HETERO_ERROR_CODES = new Set<string>([
+  HeterogeneousAgentSessionErrorCode.Interrupted,
+  HeterogeneousAgentSessionErrorCode.Overloaded,
 ]);
 
 // `UnknownChatFetchError` is excluded: its localized copy is a generic
@@ -271,12 +280,20 @@ const ErrorMessageExtra = memo<ErrorExtraProps>(
     const rawErrorMessage = getRawErrorMessage(error) || alertError?.message;
 
     const delAndRegenerateMessage = useConversationStore((s) => s.delAndRegenerateMessage);
+    const continueHeteroAfterError = useConversationStore((s) => s.continueHeteroAfterError);
     const resetHeteroOverloadRetry = useConversationStore((s) => s.resetHeteroOverloadRetry);
-    // Standalone surface: data.id is the top-level assistant message, so its
-    // parentId is the user message. Group surface passes retryScopeId directly.
+    // Anchor the auto-retry budget on the owning user message (walked up the
+    // parentId chain). The overload recovery chains a fresh turn off the failed
+    // block, so the immediate parentId shifts every retry — anchoring keeps one
+    // capped budget across the whole continue chain. Group surface passes
+    // retryScopeId directly (already the user message).
     const resolvedScopeId = useConversationStore(
-      (s) => retryScopeId ?? dataSelectors.getDisplayMessageById(data.id)(s)?.parentId,
+      (s) => retryScopeId ?? dataSelectors.getRetryScopeId(data.id)(s),
     );
+
+    const isAutoRetryableHeteroError =
+      isHeterogeneousAgentStatusGuideError(sessionErrorBody) &&
+      AUTO_RETRYABLE_HETERO_ERROR_CODES.has(sessionErrorBody.code as string);
 
     const handleRetryAgentMessage = useCallback(() => {
       if (!canCreate) return;
@@ -284,12 +301,26 @@ const ErrorMessageExtra = memo<ErrorExtraProps>(
         onRegenerate();
         return;
       }
-      // Replace the failed attempt in place (delete-first, then regenerate) so
-      // a transient overload/auto-retry doesn't pollute history with sibling
-      // branches. Regenerate-first would switch the branch away before the
-      // delete, leaving the failed attempt behind on each retry.
+      // Transient overload / interrupt: resume the session and continue from
+      // where it stopped, keeping the work already streamed, instead of deleting
+      // the whole turn and regenerating from scratch.
+      if (isAutoRetryableHeteroError) {
+        void continueHeteroAfterError(data.id);
+        return;
+      }
+      // Other errors: replace the failed attempt in place (delete-first, then
+      // regenerate) so a retry doesn't pollute history with sibling branches.
+      // Regenerate-first would switch the branch away before the delete, leaving
+      // the failed attempt behind on each retry.
       void delAndRegenerateMessage(data.id);
-    }, [canCreate, data.id, delAndRegenerateMessage, onRegenerate]);
+    }, [
+      canCreate,
+      data.id,
+      delAndRegenerateMessage,
+      onRegenerate,
+      isAutoRetryableHeteroError,
+      continueHeteroAfterError,
+    ]);
 
     // A human-initiated retry restarts the auto-retry budget so the user isn't
     // stuck on the manual card after the cap was reached automatically.
@@ -299,15 +330,11 @@ const ErrorMessageExtra = memo<ErrorExtraProps>(
     }, [handleRetryAgentMessage, resetHeteroOverloadRetry, resolvedScopeId]);
 
     const autoRetry = useHeterogeneousAutoRetry({
-      // Must be an actual heterogeneous-agent (CC / Codex) overloaded error —
-      // not just any ChatMessageError whose body happens to carry
-      // `code: 'overloaded'`. This guard runs before the same predicate gates
-      // the guide render below, so without it a provider/tool error rendering
-      // the normal card could be silently retried.
-      enabled:
-        canCreate &&
-        isHeterogeneousAgentStatusGuideError(sessionErrorBody) &&
-        sessionErrorBody.code === HeterogeneousAgentSessionErrorCode.Overloaded,
+      // `isAutoRetryableHeteroError` already verifies this is an actual
+      // heterogeneous-agent (CC / Codex) overloaded/interrupted error — not just
+      // any ChatMessageError whose body happens to carry such a code — so a
+      // provider/tool error rendering the normal card can't be silently retried.
+      enabled: canCreate && isAutoRetryableHeteroError,
       onRetry: handleRetryAgentMessage,
       scopeId: resolvedScopeId,
     });

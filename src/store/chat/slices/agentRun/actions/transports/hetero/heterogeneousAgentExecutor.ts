@@ -145,12 +145,19 @@ const toHeterogeneousAgentMessageError = (error: unknown, agentType?: string): C
     };
   }
 
+  // Pull a human message off a plain error object (e.g. the adapter's terminal
+  // `{ error, message }` for an unclassified result error) so the card shows the
+  // real "Connection closed mid-response…" text instead of the bare fallback.
+  const objectMessage =
+    error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
+      ? error.message
+      : undefined;
   const message =
     error instanceof Error
       ? error.message
       : typeof error === 'string'
         ? error
-        : 'Agent execution failed';
+        : (objectMessage ?? 'Agent execution failed');
 
   // Surface the underlying `cause` (e.g. undici's `ENOTFOUND` / `ECONNREFUSED`
   // hidden under a generic `TypeError: fetch failed`). The desktop IPC layer
@@ -167,11 +174,35 @@ const toHeterogeneousAgentMessageError = (error: unknown, agentType?: string): C
         }
       : rawCause;
 
+  // An unclassified terminal failure (connection drop, unexpected CLI exit, …)
+  // is treated as a transient `interrupted` error: stamp the agentType + code so
+  // the UI renders the heterogeneous retry guide and the same auto-retry +
+  // resume-continue recovery as `overloaded`, instead of a dead-end error card.
   return {
-    body: cause === undefined || cause === null ? { message } : { cause, message },
+    body: {
+      agentType,
+      code: HeterogeneousAgentSessionErrorCode.Interrupted,
+      ...(cause === undefined || cause === null ? {} : { cause }),
+      message,
+    },
     message,
     type: AgentRuntimeErrorType.AgentRuntimeError,
   };
+};
+
+/**
+ * A transient terminal error the UI offers a RESUME-based "continue" recovery
+ * for — `overloaded` (CC/Codex 529 etc.) or `interrupted` (connection drop /
+ * unexpected CLI exit). That recovery only works if this turn's session id was
+ * persisted, so the executor saves it on these errors specifically (auth /
+ * cli-not-found keep the fresh-start regenerate).
+ */
+const isRetryableHeteroMessageError = (error: ChatMessageError): boolean => {
+  const code = (error.body as HeterogeneousAgentSessionError | undefined)?.code;
+  return (
+    code === HeterogeneousAgentSessionErrorCode.Overloaded ||
+    code === HeterogeneousAgentSessionErrorCode.Interrupted
+  );
 };
 
 const isRecoverableResumeError = (
@@ -387,6 +418,14 @@ export const executeHeterogeneousAgent = async (
     get().internal_toggleToolCallingStreaming(mainState.currentAssistantId, undefined);
     get().completeOperation(operationId);
 
+    // Transient (overloaded / interrupted): keep this turn resumable so the retry
+    // guide's "continue" recovery can `--resume` and pick up where it stopped
+    // (preserving the work already streamed). Auth / cli-not-found deliberately
+    // don't, so a regenerate after them starts a clean session.
+    if (isRetryableHeteroMessageError(messageError)) {
+      await persistResumeSessionId();
+    }
+
     if (options?.clearContent) {
       await messageService
         .updateMessage(
@@ -523,6 +562,27 @@ export const executeHeterogeneousAgent = async (
       heteroSessionId: undefined,
       workingDirectory: workingDirectory ?? '',
     });
+  };
+  /**
+   * Persist this turn's CC session id (+ the cwd it ran under) to topic metadata
+   * so the next turn — including a hidden "continue" recovery after an overload
+   * error — can `--resume` it instead of starting a fresh session that has lost
+   * all prior context. Best-effort: a rejected save must never escalate.
+   */
+  const persistResumeSessionId = async () => {
+    if (!agentSessionId || !context.topicId) return;
+    // Source of truth shifted from the renderer's adapter to main's pipeline;
+    // pull the freshest CC `agentSessionId` back through `getSessionInfo`.
+    const sessionInfo = await heterogeneousAgentService
+      .getSessionInfo(agentSessionId)
+      .catch(() => undefined);
+    if (!sessionInfo?.agentSessionId) return;
+    await updateTopicMetadata?.(context.topicId, {
+      heteroSessionId: sessionInfo.agentSessionId,
+      workingDirectory: workingDirectory ?? '',
+    }).catch((err) =>
+      console.error('[HeterogeneousAgent] Failed to persist resume session id:', err),
+    );
   };
   const writeTopicStatus = (status: ChatTopicStatus): void => {
     if (!context.topicId) return;
@@ -1427,33 +1487,14 @@ export const executeHeterogeneousAgent = async (
     // Send the prompt — blocks until process exits
     await heterogeneousAgentService.sendPrompt(agentSessionId, message, operationId, imageList);
 
-    // Persist heterogeneous-agent session id + the cwd it was created under,
-    // for multi-turn resume. CC stores sessions per-cwd
-    // (`~/.claude/projects/<encoded-cwd>/`), so the next turn must verify the
-    // cwd hasn't changed before `--resume`. Reuses `workingDirectory` as the
-    // topic-level binding — pinning the topic to this cwd once the agent has
-    // executed here.
-    //
-    // Source of truth shifted from renderer's adapter to main's pipeline as of
-    // phase 0; pull it back through the existing `getSessionInfo`
-    // IPC, which already returns the freshest `agentSessionId` main has
-    // mirrored from `pipeline.sessionId`.
-    const sessionInfo = await heterogeneousAgentService
-      .getSessionInfo(agentSessionId)
-      .catch(() => undefined);
-    if (sessionInfo?.agentSessionId && context.topicId) {
-      // Best-effort: a rejected
-      // metadata save must NOT throw past the queue drain below — guarding the
-      // await here keeps the resume-id persistence from blocking the follow-up
-      // send. The save still runs BEFORE the drain so the next turn's
-      // `resolveHeteroResume` reads the just-finished session id.
-      await updateTopicMetadata?.(context.topicId, {
-        heteroSessionId: sessionInfo.agentSessionId,
-        workingDirectory: workingDirectory ?? '',
-      }).catch((err) =>
-        console.error('[HeterogeneousAgent] Failed to persist resume session id:', err),
-      );
-    }
+    // Persist heterogeneous-agent session id + the cwd it was created under, for
+    // multi-turn resume. CC stores sessions per-cwd
+    // (`~/.claude/projects/<encoded-cwd>/`), so the next turn must verify the cwd
+    // hasn't changed before `--resume` (see `resolveHeteroResume`). The await
+    // keeps persistence from blocking the follow-up send below, and runs BEFORE
+    // the drain so the next `sendMessage` reads the just-finished session id
+    // instead of starting a fresh CLI session and breaking continuity.
+    await persistResumeSessionId();
 
     // ━━━ Drain queued messages after a successful CC turn ━━━
     // Mirrors the client-mode drain in streamingExecutor.ts. With Plan A we

@@ -1294,6 +1294,119 @@ describe('Generation Actions', () => {
     });
   });
 
+  describe('continueHeteroAfterError', () => {
+    const heterogeneousProvider = { type: 'claude-code' } as any;
+
+    beforeEach(() => {
+      vi.spyOn(agentDispatcher, 'selectRuntimeType').mockReturnValue('hetero');
+      vi.spyOn(agentSelectors, 'getAgentConfigById').mockReturnValue(
+        () => ({ agencyConfig: { heterogeneousProvider } }) as any,
+      );
+      vi.spyOn(messageService, 'createMessage').mockResolvedValue({
+        id: 'continue-assistant-msg',
+        messages: [],
+      } as any);
+      // updateMessageError (clearing the error) persists via messageService.updateMessage.
+      vi.spyOn(messageService, 'updateMessage').mockResolvedValue({
+        success: true,
+        messages: [],
+      } as any);
+      vi.spyOn(heterogeneousAgentExecutor, 'executeHeterogeneousAgent').mockResolvedValue(undefined);
+    });
+
+    const setupChatStore = async () => {
+      const { useChatStore } = await import('@/store/chat');
+      vi.mocked(useChatStore.getState).mockReturnValue({
+        messagesMap: {},
+        operations: {},
+        operationsByMessage: {},
+        topicDataMap: {},
+        startOperation: vi
+          .fn()
+          .mockReturnValueOnce({ operationId: 'continue-op-id' }) // outer continue op
+          .mockReturnValueOnce({ operationId: 'hetero-op-id' }), // child execHeterogeneousAgent op
+        completeOperation: mockCompleteOperation,
+        failOperation: mockFailOperation,
+        isGatewayModeEnabled: vi.fn(() => false),
+        refreshMessages: vi.fn().mockResolvedValue(undefined),
+        internal_updateTopicLoading: vi.fn(),
+        associateMessageWithOperation: vi.fn(),
+        executeClientAgent: mockExecuteClientAgent,
+        executeGatewayAgent: mockExecuteGatewayAgent,
+        deleteMessage: mockDeleteMessage,
+        switchMessageBranch: mockSwitchMessageBranch,
+      } as any);
+    };
+
+    it('clears the error and resumes a new turn chained off the failed block (no user bubble)', async () => {
+      await setupChatStore();
+
+      const context: ConversationContext = {
+        agentId: 'session-1',
+        topicId: 'topic-1',
+        threadId: null,
+      };
+      const store = createStore({ context });
+
+      await act(async () => {
+        await store.getState().continueHeteroAfterError('block-1');
+      });
+
+      // Error is cleared off the failed block (kept in history), not deleted.
+      expect(messageService.updateMessage).toHaveBeenCalledWith(
+        'block-1',
+        { error: null },
+        expect.objectContaining({ agentId: 'session-1', topicId: 'topic-1' }),
+      );
+      expect(mockDeleteMessage).not.toHaveBeenCalled();
+
+      // The continuation chains off the failed block, not the user message.
+      expect(messageService.createMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ parentId: 'block-1', role: 'assistant' }),
+      );
+
+      // The resumed turn runs with the internal "Continue" prompt.
+      expect(heterogeneousAgentExecutor.executeHeterogeneousAgent).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.objectContaining({
+          assistantMessageId: 'continue-assistant-msg',
+          heterogeneousProvider,
+          message: 'Continue',
+        }),
+      );
+    });
+
+    it('falls back to delete+regenerate when the agent is not heterogeneous', async () => {
+      vi.spyOn(agentSelectors, 'getAgentConfigById').mockReturnValue(
+        () => ({ agencyConfig: {} }) as any,
+      );
+      await setupChatStore();
+
+      const context: ConversationContext = {
+        agentId: 'session-1',
+        topicId: 'topic-1',
+        threadId: null,
+      };
+      const store = createStore({ context });
+      act(() => {
+        store.setState({
+          displayMessages: [
+            { id: 'msg-1', role: 'user', content: 'Hello' },
+            { id: 'block-1', role: 'assistant', content: 'partial', parentId: 'msg-1' },
+          ],
+        } as any);
+      });
+
+      await act(async () => {
+        await store.getState().continueHeteroAfterError('block-1');
+      });
+
+      // No resume continuation — the historical delete-first regenerate runs.
+      expect(heterogeneousAgentExecutor.executeHeterogeneousAgent).not.toHaveBeenCalled();
+      expect(mockDeleteMessage).toHaveBeenCalledWith('block-1', expect.anything());
+    });
+  });
+
   describe('heterogeneous overloaded auto-retry counter', () => {
     const context: ConversationContext = {
       agentId: 'session-1',

@@ -17,6 +17,13 @@ export const CODEX_CLI_INSTALL_COMMANDS = [
 export const HeterogeneousAgentSessionErrorCode = {
   AuthRequired: 'auth_required',
   CliNotFound: 'cli_not_found',
+  /**
+   * The run ended mid-response on a transient infra fault — connection dropped,
+   * the CLI exited unexpectedly, or any otherwise-unclassified failure. Like
+   * `Overloaded`, this is momentary and safe to auto-retry by resuming the
+   * session and continuing from where it stopped.
+   */
+  Interrupted: 'interrupted',
   Overloaded: 'overloaded',
   RateLimit: 'rate_limit',
   ResumeCwdMismatch: 'resume_cwd_mismatch',

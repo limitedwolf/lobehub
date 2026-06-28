@@ -31,7 +31,7 @@ import {
 import { getElectronStoreState } from '@/store/electron';
 
 import { type Store as ConversationStore } from '../../action';
-import { MAX_HETERO_AUTO_RETRIES } from './heteroRetryConfig';
+import { HETERO_CONTINUE_PROMPT, MAX_HETERO_AUTO_RETRIES } from './heteroRetryConfig';
 
 const buildRetryInitialContext = (editorData: Record<string, any> | null | undefined) => {
   const normalizedEditorData = editorData ?? undefined;
@@ -203,6 +203,16 @@ export interface GenerationAction {
    * @deprecated Temporary bridge to ChatStore
    */
   clearTTS: (messageId: string) => Promise<void>;
+
+  /**
+   * Recover a heterogeneous (Claude Code / Codex) turn that died with a transient
+   * error (overloaded / interrupted) WITHOUT discarding the work already
+   * streamed: clear the error off the failed block, then `--resume` the same
+   * session and continue from where it stopped. The continuation chains a fresh
+   * assistant turn off the failed block (no synthetic user bubble). `messageId`
+   * is the failed block id.
+   */
+  continueHeteroAfterError: (messageId: string) => Promise<void>;
 
   /**
    * Continue generation from a message
@@ -432,6 +442,53 @@ export const generationSlice: StateCreator<
       settleGenerationEntry(chatStore, operationId, () =>
         hooks.onContinueComplete?.(displayMessageId),
       );
+    } catch (error) {
+      chatStore.failOperation(operationId, {
+        message: error instanceof Error ? error.message : String(error),
+        type: 'ContinueError',
+      });
+      throw error;
+    }
+  },
+
+  continueHeteroAfterError: async (messageId: string) => {
+    const { context } = get();
+    const chatStore = useChatStore.getState();
+
+    const agentConfig = agentSelectors.getAgentConfigById(context.agentId)(getAgentStoreState());
+    const heterogeneousProvider = agentConfig?.agencyConfig?.heterogeneousProvider;
+
+    // Not a heterogeneous agent (shouldn't happen — the overloaded guide that
+    // triggers this only renders for CC / Codex). Fall back to the historical
+    // delete-first regenerate so the user still gets a retry.
+    if (!heterogeneousProvider) {
+      await get().delAndRegenerateMessage(messageId);
+      return;
+    }
+
+    // Keep the already-streamed work (rebase / skill / tool calls) in history —
+    // just drop the error card off the failed block...
+    await get().updateMessageError(messageId, null);
+
+    // ...then resume the CC session and continue from where it stopped. The new
+    // assistant turn chains off the failed block (no synthetic user bubble);
+    // `runHeterogeneousFromExistingMessage` resolves the saved heteroSessionId
+    // (persisted on the overload error) so CC continues with full prior context
+    // instead of starting fresh.
+    const { operationId } = chatStore.startOperation({
+      context: { ...context, messageId },
+      type: 'continue',
+    });
+
+    try {
+      await runHeterogeneousFromExistingMessage(chatStore, {
+        context,
+        heterogeneousProvider,
+        parentMessageId: messageId,
+        parentOperationId: operationId,
+        prompt: HETERO_CONTINUE_PROMPT,
+      });
+      settleGenerationEntry(chatStore, operationId);
     } catch (error) {
       chatStore.failOperation(operationId, {
         message: error instanceof Error ? error.message : String(error),

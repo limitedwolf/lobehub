@@ -115,9 +115,11 @@ vi.mock('@/store/serverConfig', () => ({
 vi.mock('@/features/Conversation/store', () => ({
   dataSelectors: {
     getDisplayMessageById: () => () => undefined,
+    getRetryScopeId: () => () => undefined,
   },
   useConversationStore: (selector: (state: unknown) => unknown) =>
     selector({
+      continueHeteroAfterError: vi.fn(),
       delAndRegenerateMessage: vi.fn(),
       deleteMessage: vi.fn(),
       heteroOverloadRetryAttempts: {},

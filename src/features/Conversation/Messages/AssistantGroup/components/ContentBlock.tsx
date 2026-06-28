@@ -1,3 +1,4 @@
+import { HeterogeneousAgentSessionErrorCode } from '@lobechat/electron-client-ipc';
 import { Flexbox } from '@lobehub/ui';
 import { memo, useCallback } from 'react';
 
@@ -37,19 +38,30 @@ const ContentBlock = memo<ContentBlockProps>(
   }) => {
     const errorContent = useErrorContent(error);
     const showImageItems = !!imageList && imageList.length > 0;
-    const [isReasoning, deleteMessage, continueGeneration, delAndRegenerateMessage] =
-      useConversationStore((s) => [
-        messageStateSelectors.isMessageInReasoning(id)(s),
-        s.deleteDBMessage,
-        s.continueGeneration,
-        s.delAndRegenerateMessage,
-      ]);
-    // The group's parent user message id — the stable scope key for auto-retry
-    // (survives the delete+recreate a retry performs) and the regenerate target.
-    const groupParentId = useConversationStore(
-      (s) => dataSelectors.getDisplayMessageById(assistantId)(s)?.parentId,
-    );
+    const [
+      isReasoning,
+      deleteMessage,
+      continueGeneration,
+      delAndRegenerateMessage,
+      continueHeteroAfterError,
+    ] = useConversationStore((s) => [
+      messageStateSelectors.isMessageInReasoning(id)(s),
+      s.deleteDBMessage,
+      s.continueGeneration,
+      s.delAndRegenerateMessage,
+      s.continueHeteroAfterError,
+    ]);
+    // Stable scope key for the auto-retry budget: the owning user message, walked
+    // up the parentId chain from this block so it stays fixed across the continue
+    // chain the overload recovery builds (each continuation chains off the prior
+    // block, shifting the immediate parentId).
+    const groupParentId = useConversationStore((s) => dataSelectors.getRetryScopeId(id)(s));
     const isHeteroError = isHeterogeneousAgentStatusGuideError(error?.body);
+    const heteroErrorCode = (error?.body as { code?: string } | undefined)?.code;
+    const isAutoRetryableHeteroError =
+      isHeteroError &&
+      (heteroErrorCode === HeterogeneousAgentSessionErrorCode.Overloaded ||
+        heteroErrorCode === HeterogeneousAgentSessionErrorCode.Interrupted);
     const hasTools = !!tools?.length;
     const showReasoning =
       (!!reasoning && reasoning.content?.trim() !== '') || (!reasoning && isReasoning);
@@ -57,13 +69,18 @@ const ContentBlock = memo<ContentBlockProps>(
     const showMessageContent = hasContent || content === LOADING_FLAT || hasTools;
 
     const handleRegenerate = useCallback(async () => {
-      // Hetero CLIs (CC / Codex) have no "continue a cut-off response"
-      // primitive, so `continueGeneration` is a silent no-op for them and the
-      // retry button does nothing. An errored hetero turn must instead be
-      // regenerated from the user message — routed through the GROUP id (the
-      // child block id isn't a top-level displayMessage). Use the delete-first
+      // Transient overload / interrupt: resume the session and continue from this
+      // block, keeping the work already streamed, instead of discarding the turn.
+      if (isAutoRetryableHeteroError) {
+        void continueHeteroAfterError(id);
+        return;
+      }
+      // Other hetero (CC / Codex) errors have no "continue a cut-off response"
+      // primitive, so `continueGeneration` is a silent no-op for them. Regenerate
+      // from the user message — routed through the GROUP id (the child block id
+      // isn't a top-level displayMessage). Use the delete-first
       // `delAndRegenerateMessage` so the failed turn is replaced in place rather
-      // than accumulating a sibling branch on every (auto-)retry.
+      // than accumulating a sibling branch on every retry.
       if (isHeteroError) {
         void delAndRegenerateMessage(assistantId);
         return;
@@ -73,10 +90,12 @@ const ContentBlock = memo<ContentBlockProps>(
     }, [
       assistantId,
       continueGeneration,
+      continueHeteroAfterError,
       delAndRegenerateMessage,
       deleteMessage,
       id,
       isHeteroError,
+      isAutoRetryableHeteroError,
     ]);
 
     const errorBlock = error ? (

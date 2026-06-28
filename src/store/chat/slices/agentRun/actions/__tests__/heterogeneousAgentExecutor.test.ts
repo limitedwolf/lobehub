@@ -906,6 +906,113 @@ describe('heterogeneousAgentExecutor DB persistence', () => {
       expect(contentWrite).toBeDefined();
     });
 
+    it('persists the resume session id when sendPrompt rejects with an overloaded error', async () => {
+      // CC exited non-zero on an upstream overload. The session id must still be
+      // saved so the overloaded card's "continue" recovery can `--resume` it.
+      const store = createMockStore();
+      const get = vi.fn(() => store);
+
+      let rejectSendPrompt: (e: unknown) => void;
+      mockSendPrompt.mockReturnValue(
+        new Promise<void>((_, reject) => {
+          rejectSendPrompt = reject;
+        }),
+      );
+
+      const executorPromise = executeHeterogeneousAgent(get, defaultParams);
+      await flush();
+
+      // Init sets the adapter session id (cc-sess-1) that getSessionInfo mirrors.
+      ipc.emitRawLine('ipc-sess-1', ccInit());
+      await flush();
+
+      rejectSendPrompt!({
+        agentType: 'claude-code',
+        code: HeterogeneousAgentSessionErrorCode.Overloaded,
+        message: 'API Error: 529 overloaded_error',
+      });
+      await executorPromise.catch(() => {});
+      await flush();
+
+      expect(store.updateTopicMetadata).toHaveBeenCalledWith(
+        'topic-1',
+        expect.objectContaining({ heteroSessionId: 'cc-sess-1' }),
+      );
+    });
+
+    it('classifies an unclassified mid-response failure as interrupted (so it gets the retry guide) and persists for resume', async () => {
+      const store = createMockStore();
+      const get = vi.fn(() => store);
+
+      let rejectSendPrompt: (e: unknown) => void;
+      mockSendPrompt.mockReturnValue(
+        new Promise<void>((_, reject) => {
+          rejectSendPrompt = reject;
+        }),
+      );
+
+      const executorPromise = executeHeterogeneousAgent(get, defaultParams);
+      await flush();
+
+      ipc.emitRawLine('ipc-sess-1', ccInit());
+      await flush();
+
+      // A bare connection drop carries no structured code — it must still be
+      // stamped agentType + interrupted so the UI renders the retry guide.
+      rejectSendPrompt!(new Error('Connection closed mid-response'));
+      await executorPromise.catch(() => {});
+      await flush();
+
+      expect(mockUpdateMessageError).toHaveBeenCalledWith(
+        'ast-initial',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            agentType: 'claude-code',
+            code: HeterogeneousAgentSessionErrorCode.Interrupted,
+            message: 'Connection closed mid-response',
+          }),
+        }),
+        expect.any(Object),
+      );
+      // And it's resumable so the continue recovery works.
+      expect(store.updateTopicMetadata).toHaveBeenCalledWith(
+        'topic-1',
+        expect.objectContaining({ heteroSessionId: 'cc-sess-1' }),
+      );
+    });
+
+    it('does NOT persist a resume session id when sendPrompt rejects with an auth-required error', async () => {
+      const store = createMockStore();
+      const get = vi.fn(() => store);
+
+      let rejectSendPrompt: (e: unknown) => void;
+      mockSendPrompt.mockReturnValue(
+        new Promise<void>((_, reject) => {
+          rejectSendPrompt = reject;
+        }),
+      );
+
+      const executorPromise = executeHeterogeneousAgent(get, defaultParams);
+      await flush();
+
+      ipc.emitRawLine('ipc-sess-1', ccInit());
+      await flush();
+
+      // Auth needs a human — not transient, so the turn is NOT kept resumable.
+      rejectSendPrompt!({
+        agentType: 'claude-code',
+        code: HeterogeneousAgentSessionErrorCode.AuthRequired,
+        message: 'Claude Code could not authenticate',
+      });
+      await executorPromise.catch(() => {});
+      await flush();
+
+      const persistedSessionId = (store.updateTopicMetadata as any).mock.calls.some(
+        ([, meta]: any) => meta && meta.heteroSessionId,
+      );
+      expect(persistedSessionId).toBe(false);
+    });
+
     it('should not persist streamed auth error echoes as assistant content when the session errors', async () => {
       const rawAuthError =
         'Failed to authenticate. API Error: 401 {"type":"error","error":{"type":"authentication_error","message":"Invalid authentication credentials"}}';

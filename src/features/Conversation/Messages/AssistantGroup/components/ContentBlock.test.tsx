@@ -11,6 +11,7 @@ import ContentBlock from './ContentBlock';
 const continueGenerationMock = vi.fn();
 const deleteDBMessageMock = vi.fn();
 const delAndRegenerateMessageMock = vi.fn();
+const continueHeteroAfterErrorMock = vi.fn();
 const navigateMock = vi.fn();
 
 vi.mock('@lobehub/ui', () => ({
@@ -119,6 +120,7 @@ vi.mock('./MessageContent', () => ({
 vi.mock('../../../store', () => ({
   dataSelectors: {
     getDisplayMessageById: () => () => ({ parentId: 'user-1' }),
+    getRetryScopeId: () => () => 'user-1',
   },
   messageStateSelectors: {
     isMessageInReasoning: () => () => false,
@@ -126,6 +128,7 @@ vi.mock('../../../store', () => ({
   useConversationStore: (selector: (state: unknown) => unknown) =>
     selector({
       continueGeneration: continueGenerationMock,
+      continueHeteroAfterError: continueHeteroAfterErrorMock,
       delAndRegenerateMessage: delAndRegenerateMessageMock,
       deleteDBMessage: deleteDBMessageMock,
       heteroOverloadRetryAttempts: {},
@@ -143,10 +146,11 @@ describe('AssistantGroup ContentBlock', () => {
     continueGenerationMock.mockClear();
     deleteDBMessageMock.mockClear();
     delAndRegenerateMessageMock.mockClear();
+    continueHeteroAfterErrorMock.mockClear();
     navigateMock.mockClear();
   });
 
-  it('regenerates the whole turn (not continue) when retrying a heterogeneous error in a group', () => {
+  it('resumes + continues (keeps prior work) when retrying an overloaded group turn', () => {
     render(
       <ContentBlock
         assistantId="assistant-1"
@@ -169,10 +173,66 @@ describe('AssistantGroup ContentBlock', () => {
 
     screen.getByRole('button', { name: 'guide-retry' }).click();
 
-    // The fix: a grouped hetero turn is replaced in place from the GROUP id via
-    // the delete-first delAndRegenerateMessage (no sibling branch), instead of
-    // the no-op continueGeneration.
+    // The fix: an overloaded turn resumes from the failed BLOCK id and continues
+    // (preserving the already-streamed work), instead of deleting the whole turn.
+    expect(continueHeteroAfterErrorMock).toHaveBeenCalledWith('block-1');
+    expect(delAndRegenerateMessageMock).not.toHaveBeenCalled();
+    expect(continueGenerationMock).not.toHaveBeenCalled();
+  });
+
+  it('resumes + continues when retrying an interrupted (connection closed) group turn', () => {
+    render(
+      <ContentBlock
+        assistantId="assistant-1"
+        content="API Error: Connection closed mid-response."
+        id="block-1"
+        error={
+          {
+            body: {
+              agentType: 'claude-code',
+              code: HeterogeneousAgentSessionErrorCode.Interrupted,
+              message: 'Connection closed mid-response',
+            },
+            message: 'Connection closed mid-response',
+            type: 'AgentRuntimeError',
+          } as any
+        }
+      />,
+    );
+
+    screen.getByRole('button', { name: 'guide-retry' }).click();
+
+    expect(continueHeteroAfterErrorMock).toHaveBeenCalledWith('block-1');
+    expect(delAndRegenerateMessageMock).not.toHaveBeenCalled();
+  });
+
+  it('regenerates the whole turn for non-overload hetero errors (e.g. rate limit)', () => {
+    render(
+      <ContentBlock
+        assistantId="assistant-1"
+        content=""
+        id="block-1"
+        error={
+          {
+            body: {
+              agentType: 'claude-code',
+              code: HeterogeneousAgentSessionErrorCode.RateLimit,
+              message: "You've hit your limit",
+              stderr: "You've hit your limit",
+            },
+            message: "You've hit your limit",
+            type: 'AgentRuntimeError',
+          } as any
+        }
+      />,
+    );
+
+    screen.getByRole('button', { name: 'guide-retry' }).click();
+
+    // A rate limit needs a clean restart once the window resets — replace the
+    // turn in place from the GROUP id, NOT a resume-continue.
     expect(delAndRegenerateMessageMock).toHaveBeenCalledWith('assistant-1');
+    expect(continueHeteroAfterErrorMock).not.toHaveBeenCalled();
     expect(continueGenerationMock).not.toHaveBeenCalled();
   });
 

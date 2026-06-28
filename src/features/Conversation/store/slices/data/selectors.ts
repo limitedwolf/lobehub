@@ -36,6 +36,28 @@ const getDbMessageByToolCallId = (id: string) => (s: State) =>
   s.dbMessages.find((m) => m.tool_call_id === id);
 
 /**
+ * Walk the flat `dbMessages` parentId chain up from `messageId` to the nearest
+ * user-role ancestor. Used as the stable scope key for the heterogeneous
+ * "overloaded" auto-retry budget: its recovery chains a fresh assistant turn off
+ * the failed block, so the immediate parentId shifts every retry. Anchoring on
+ * the owning user message keeps ONE capped budget across the whole continue
+ * chain (otherwise each continuation would reset the counter and retry forever).
+ */
+const getRetryScopeId =
+  (messageId: string) =>
+  (s: State): string | undefined => {
+    const byId = new Map(s.dbMessages.map((m) => [m.id, m]));
+    const seen = new Set<string>();
+    let cursor = byId.get(messageId);
+    while (cursor && cursor.role !== 'user') {
+      if (seen.has(cursor.id) || !cursor.parentId) return undefined;
+      seen.add(cursor.id);
+      cursor = byId.get(cursor.parentId);
+    }
+    return cursor?.role === 'user' ? cursor.id : undefined;
+  };
+
+/**
  * Helper to find last message ID in an AssistantContentBlock
  */
 const findLastBlockId = (block: AssistantContentBlock | undefined): string | undefined => {
@@ -233,6 +255,7 @@ export const dataSelectors = {
   getBlockHasTools,
   getDisplayMessageById,
   getGroupLatestMessageWithoutTools,
+  getRetryScopeId,
   getToolInBlock,
   getToolsInBlock,
   isSecondLastMessageFromUser,
