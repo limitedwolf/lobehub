@@ -88,6 +88,7 @@ import { PluginModel } from '@/database/models/plugin';
 import { TopicModel } from '@/database/models/topic';
 import { UserModel } from '@/database/models/user';
 import { UserPersonaModel } from '@/database/models/userMemory/persona';
+import { WorkModel } from '@/database/models/work';
 import { type LobeChatDatabase } from '@/database/type';
 import { fileEnv } from '@/envs/file';
 import { type ExecutionPlan, isDeviceCapablePlan } from '@/helpers/executionTarget';
@@ -288,6 +289,64 @@ const archiveRuntimeToolResult = async (
   });
 
   return archive.content === result.content ? result : { ...result, content: archive.content };
+};
+
+const attachWorkSourceMessage = async ({
+  rootOperationId,
+  serverDB,
+  sourceMessageId,
+  sourceToolCallId,
+  userId,
+  workspaceId,
+}: {
+  rootOperationId?: string;
+  serverDB: LobeChatDatabase;
+  sourceMessageId?: string;
+  sourceToolCallId?: string;
+  userId?: string;
+  workspaceId?: string;
+}) => {
+  if (!sourceMessageId || !sourceToolCallId || !userId) return;
+
+  try {
+    await new WorkModel(serverDB, userId, workspaceId).attachSourceMessage({
+      rootOperationId,
+      sourceMessageId,
+      sourceToolCallId,
+    });
+  } catch (error) {
+    log('attachWorkSourceMessage failed for toolCallId=%s: %O', sourceToolCallId, error);
+  }
+};
+
+const attachWorkDisplayAnchorAssistantMessage = async ({
+  displayAnchorAssistantMessageId,
+  rootOperationId,
+  serverDB,
+  userId,
+  workspaceId,
+}: {
+  displayAnchorAssistantMessageId?: string;
+  rootOperationId?: string;
+  serverDB: LobeChatDatabase;
+  userId?: string;
+  workspaceId?: string;
+}) => {
+  if (!displayAnchorAssistantMessageId || !rootOperationId || !userId) return;
+
+  try {
+    await new WorkModel(serverDB, userId, workspaceId).attachDisplayAnchorAssistantMessage({
+      displayAnchorAssistantMessageId,
+      rootOperationId,
+    });
+  } catch (error) {
+    log(
+      'attachWorkDisplayAnchorAssistantMessage failed for rootOperationId=%s messageId=%s: %O',
+      rootOperationId,
+      displayAnchorAssistantMessageId,
+      error,
+    );
+  }
 };
 
 // Builds a postProcessUrl callback that resolves keys in file-backed fields
@@ -2117,6 +2176,13 @@ export const createRuntimeExecutors = (
                   search: grounding,
                   tools: persistedTools,
                 });
+                await attachWorkDisplayAnchorAssistantMessage({
+                  displayAnchorAssistantMessageId: assistantMessageItem.id,
+                  rootOperationId: operationId,
+                  serverDB: ctx.serverDB,
+                  userId: ctx.userId,
+                  workspaceId: state.metadata?.workspaceId ?? ctx.workspaceId,
+                });
               } catch (error) {
                 console.error('[call_llm] Failed to update message:', error);
               }
@@ -2818,9 +2884,19 @@ export const createRuntimeExecutors = (
             manifest: effectiveManifestMap[chatToolPayload.identifier],
           });
           const dispatchResult = await dispatchClientTool(chatToolPayload, {
+            agentId: state.metadata?.agentId,
+            assistantMessageId: payload.parentMessageId,
+            documentId: state.metadata?.documentId,
+            groupId: state.metadata?.groupId,
             operationId,
+            rootOperationId: operationId,
+            scope: state.metadata?.scope,
+            sourceMessageId: state.metadata?.sourceMessageId,
             streamManager,
+            taskId: state.metadata?.taskId,
+            threadId: state.metadata?.threadId,
             timeoutMs,
+            topicId: state.metadata?.topicId ?? ctx.topicId,
           });
           execution = { attempts: 1, result: dispatchResult };
         } else {
@@ -2849,6 +2925,7 @@ export const createRuntimeExecutors = (
                   payload.parentMessageId,
                 ),
                 // Assistant message owning this tool call (≠ source user message).
+                anchorMessageId: payload.parentMessageId,
                 assistantMessageId: payload.parentMessageId,
                 documentId: state.metadata?.documentId,
                 editingAgentId: state.metadata?.editingAgentId,
@@ -2880,6 +2957,7 @@ export const createRuntimeExecutors = (
                 taskId: state.metadata?.taskId,
                 threadId: state.metadata?.threadId,
                 toolCallId: chatToolPayload.id,
+                toolMessageId: payload.skipCreateToolMessage ? payload.parentMessageId : undefined,
                 toolManifestMap: effectiveManifestMap,
                 toolResultMaxLength,
                 topicId: ctx.topicId,
@@ -3045,6 +3123,15 @@ export const createRuntimeExecutors = (
           // into event records and returns the unchanged state) re-throws.
           throw markPersistFatal(fatal);
         }
+
+        await attachWorkSourceMessage({
+          rootOperationId: operationId,
+          serverDB: ctx.serverDB,
+          sourceMessageId: toolMessageId,
+          sourceToolCallId: chatToolPayload.id,
+          userId: ctx.userId,
+          workspaceId: state.metadata?.workspaceId ?? ctx.workspaceId,
+        });
 
         const newState = structuredClone(state);
 
@@ -3412,9 +3499,19 @@ export const createRuntimeExecutors = (
                 manifest: batchManifestMap[chatToolPayload.identifier],
               });
               const dispatchResult = await dispatchClientTool(chatToolPayload, {
+                agentId: state.metadata?.agentId,
+                assistantMessageId: payload.parentMessageId,
+                documentId: state.metadata?.documentId,
+                groupId: state.metadata?.groupId,
                 operationId,
+                rootOperationId: operationId,
+                scope: state.metadata?.scope,
+                sourceMessageId: state.metadata?.sourceMessageId,
                 streamManager,
+                taskId: state.metadata?.taskId,
+                threadId: state.metadata?.threadId,
                 timeoutMs,
+                topicId: state.metadata?.topicId ?? ctx.topicId,
               });
               execution = { attempts: 1, result: dispatchResult };
             } else {
@@ -3445,6 +3542,7 @@ export const createRuntimeExecutors = (
                       payload.parentMessageId,
                     ),
                     // Assistant message owning this tool call (≠ source user message).
+                    anchorMessageId: payload.parentMessageId,
                     assistantMessageId: payload.parentMessageId,
                     documentId: state.metadata?.documentId,
                     execSubAgent: ctx.execSubAgent,
@@ -3466,6 +3564,7 @@ export const createRuntimeExecutors = (
                     taskId: state.metadata?.taskId,
                     threadId: state.metadata?.threadId,
                     toolCallId: chatToolPayload.id,
+                    toolMessageId: undefined,
                     toolManifestMap: batchManifestMap,
                     toolResultMaxLength: batchAgentConfig?.chatConfig?.toolResultMaxLength,
                     topicId: ctx.topicId,
@@ -3563,6 +3662,14 @@ export const createRuntimeExecutors = (
                 topicId: state.metadata?.topicId,
               });
               toolMessageIds.push(toolMessage.id);
+              await attachWorkSourceMessage({
+                rootOperationId: operationId,
+                serverDB: ctx.serverDB,
+                sourceMessageId: toolMessage.id,
+                sourceToolCallId: chatToolPayload.id,
+                userId: ctx.userId,
+                workspaceId: state.metadata?.workspaceId ?? ctx.workspaceId,
+              });
               log(`[${operationLogId}] Created tool message ${toolMessage.id} for ${toolName}`);
             } catch (error) {
               console.error(

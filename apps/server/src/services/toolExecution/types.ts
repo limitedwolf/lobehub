@@ -126,6 +126,8 @@ export interface ToolExecutionContext {
    * result; the member barrier backfills + resumes/finishes the parked supervisor.
    */
   agentMember?: ServerAgentMemberRunner;
+  /** Assistant message that owns this tool call. */
+  anchorMessageId?: string;
   /**
    * The assistant message that carries this tool call (the runtime's
    * `payload.parentMessageId`). Distinct from `messageId`, which is the source
@@ -172,6 +174,8 @@ export interface ToolExecutionContext {
    * the device gateway. Derived from the operation's skill set.
    */
   projectSkills?: { location: string; name: string }[];
+  /** Root AI runtime operation ID used to aggregate artifacts produced by one run. */
+  rootOperationId?: string;
   /** Conversation scope captured when the operation was created */
   scope?: string | null;
   /** Server database for LobeHub Skills execution */
@@ -192,6 +196,8 @@ export interface ToolExecutionContext {
   /** Stable LLM tool call ID for structured tool outcome identity. */
   toolCallId?: string;
   toolManifestMap: Record<string, LobeToolManifest>;
+  /** Source tool result message ID, when it already exists. */
+  toolMessageId?: string;
   /**
    * Maximum length for tool execution result content (in characters)
    * @default 6000
