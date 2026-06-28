@@ -79,6 +79,11 @@ vi.mock('react-i18next', () => ({
         return `Upstream is temporarily overloaded (not your usage limit) · retry ${o?.attempt ?? 0}/${o?.max ?? 0} in ${o?.seconds ?? 0}s`;
       }
 
+      if (key === 'cliInterruptedGuide.autoRetry.status') {
+        const o = options as { attempt?: number; max?: number; seconds?: number };
+        return `Connection interrupted · retry ${o?.attempt ?? 0}/${o?.max ?? 0} in ${o?.seconds ?? 0}s`;
+      }
+
       return (
         (
           {
@@ -99,6 +104,15 @@ vi.mock('react-i18next', () => ({
             'cliOverloadedGuide.retryHint':
               'Wait a few seconds and retry. If it keeps failing, the provider may be having a wider incident.',
             'cliOverloadedGuide.title': `${options?.name ?? ''} is temporarily overloaded`,
+            'cliInterruptedGuide.actions.retry': 'Retry',
+            'cliInterruptedGuide.autoRetry.actions.cancel': 'Stop auto-retry',
+            'cliInterruptedGuide.autoRetry.actions.retryNow': 'Retry now',
+            'cliInterruptedGuide.autoRetry.title': `${options?.name ?? ''} connection interrupted — retrying automatically…`,
+            'cliInterruptedGuide.desc': `${options?.name ?? ''}'s connection dropped mid-response. Retrying usually picks up where it left off.`,
+            'cliInterruptedGuide.errorDetails': 'Error details',
+            'cliInterruptedGuide.retryHint':
+              'Wait a moment and retry. If it keeps failing, check your network or the provider status.',
+            'cliInterruptedGuide.title': `${options?.name ?? ''} connection was interrupted`,
             'cliRateLimitGuide.actions.openSystemTools': 'Open System Tools',
             'cliRateLimitGuide.afterReset':
               'Wait until the reset time, then retry your message. If you are using API authorization, you can also check your provider quota and billing status.',
@@ -344,6 +358,58 @@ describe('HeterogeneousAgentStatusGuide', () => {
     screen.getByRole('button', { name: 'Retry now' }).click();
     expect(onRetryNow).toHaveBeenCalledTimes(1);
 
+    screen.getByRole('button', { name: 'Stop auto-retry' }).click();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders interrupted guidance with retry action', () => {
+    const onRetry = vi.fn();
+    render(
+      <HeterogeneousAgentStatusGuide
+        agentType={'claude-code'}
+        error={{
+          agentType: 'claude-code',
+          code: HeterogeneousAgentSessionErrorCode.Interrupted,
+          message: 'API Error: Connection closed mid-response.',
+        }}
+        onRetry={onRetry}
+      />,
+    );
+
+    expect(screen.getByText('Claude Code connection was interrupted')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Claude Code's connection dropped mid-response. Retrying usually picks up where it left off.",
+      ),
+    ).toBeInTheDocument();
+
+    screen.getByRole('button', { name: 'Retry' }).click();
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the interrupted auto-retry progress state', () => {
+    const onRetryNow = vi.fn();
+    const onCancel = vi.fn();
+    render(
+      <HeterogeneousAgentStatusGuide
+        agentType={'claude-code'}
+        autoRetry={{ attempt: 1, maxAttempts: 5, onCancel, onRetryNow, secondsLeft: 3 }}
+        error={{
+          agentType: 'claude-code',
+          code: HeterogeneousAgentSessionErrorCode.Interrupted,
+          message: 'API Error: Connection closed mid-response.',
+        }}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText('Claude Code connection interrupted — retrying automatically…'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Connection interrupted · retry 1/5 in 3s')).toBeInTheDocument();
+
+    screen.getByRole('button', { name: 'Retry now' }).click();
+    expect(onRetryNow).toHaveBeenCalledTimes(1);
     screen.getByRole('button', { name: 'Stop auto-retry' }).click();
     expect(onCancel).toHaveBeenCalledTimes(1);
   });

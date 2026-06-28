@@ -6,6 +6,7 @@ import { memo } from 'react';
 import { resolveHeterogeneousAgentGuideConfig } from './config';
 import AuthRequiredState from './states/AuthRequiredState';
 import CliInstallState from './states/CliInstallState';
+import InterruptedState from './states/InterruptedState';
 import OverloadedState from './states/OverloadedState';
 import RateLimitState from './states/RateLimitState';
 import type { HeterogeneousAgentStatusGuideProps } from './types';
@@ -36,6 +37,10 @@ const HeterogeneousAgentStatusGuide = memo<HeterogeneousAgentStatusGuideProps>(
 
       case HeterogeneousAgentSessionErrorCode.Overloaded: {
         return <OverloadedState {...stateProps} />;
+      }
+
+      case HeterogeneousAgentSessionErrorCode.Interrupted: {
+        return <InterruptedState {...stateProps} />;
       }
 
       default: {
