@@ -1,10 +1,10 @@
 import { createTRPCClient, httpLink } from '@trpc/client';
-import superjson from 'superjson';
 import urlJoin from 'url-join';
 
 import { appEnv } from '@/envs/app';
 import { LOBE_CHAT_AUTH_HEADER } from '@/envs/auth';
 import { createAsyncCallerFactory } from '@/libs/trpc/async';
+import { transformer } from '@/libs/trpc/transformer';
 import { signInternalJWT } from '@/libs/trpc/utils/internalJwt';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 
@@ -27,7 +27,7 @@ export const createAsyncServerClient = async (userId: string) => {
     links: [
       httpLink({
         headers,
-        transformer: superjson,
+        transformer,
         // Use INTERNAL_APP_URL for server-to-server calls to bypass CDN/proxy
         url: urlJoin(appEnv.INTERNAL_APP_URL!, '/trpc/async'),
       }),

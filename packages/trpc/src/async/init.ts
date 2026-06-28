@@ -1,7 +1,7 @@
 import { initTRPC } from '@trpc/server';
 import debug from 'debug';
-import superjson from 'superjson';
 
+import { transformer } from '../transformer';
 import { type AsyncContext } from './context';
 
 const log = debug('lobe-async:init');
@@ -13,7 +13,7 @@ export const asyncTrpc = initTRPC.context<AsyncContext>().create({
     log('tRPC error formatter called: %O', shape);
     return shape;
   },
-  transformer: superjson,
+  transformer,
 });
 
 log('Async tRPC initialized successfully');

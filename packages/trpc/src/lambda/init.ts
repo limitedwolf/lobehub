@@ -8,8 +8,8 @@
  * @link https://trpc.io/docs/v11/procedures
  */
 import { initTRPC } from '@trpc/server';
-import superjson from 'superjson';
 
+import { transformer } from '../transformer';
 import { type LambdaContext } from './context';
 
 export const trpc = initTRPC.context<LambdaContext>().create({
@@ -29,5 +29,5 @@ export const trpc = initTRPC.context<LambdaContext>().create({
   /**
    * @link https://trpc.io/docs/v11/data-transformers
    */
-  transformer: superjson,
+  transformer,
 });

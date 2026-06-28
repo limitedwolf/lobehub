@@ -4,10 +4,11 @@ import { createTRPCReact } from '@trpc/react-query';
 import { observable } from '@trpc/server/observable';
 import debug from 'debug';
 import { type ModelProvider } from 'model-bank';
-import superjson from 'superjson';
 
 import { isDesktop } from '@/const/version';
 import { type LambdaRouter } from '@/server/routers/lambda';
+
+import { transformer } from '../transformer';
 
 const log = debug('lobe-image:lambda-client');
 
@@ -133,7 +134,7 @@ const linkOptions = {
     log('Headers: %O', headers);
     return headers;
   },
-  transformer: superjson,
+  transformer,
   url: '/trpc/lambda',
 };
 

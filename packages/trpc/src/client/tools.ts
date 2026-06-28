@@ -1,8 +1,9 @@
 import { createTRPCClient, httpBatchLink, type TRPCLink } from '@trpc/client';
 import { observable } from '@trpc/server/observable';
-import superjson from 'superjson';
 
 import { type ToolsRouter } from '@/server/routers/tools';
+
+import { transformer } from '../transformer';
 
 // 401 error debouncing for market auth
 let lastMarket401Time = 0;
@@ -75,7 +76,7 @@ export const toolsClient = createTRPCClient<ToolsRouter>({
         return headers;
       },
       maxURLLength: 2083,
-      transformer: superjson,
+      transformer,
       url: '/trpc/tools',
     }),
   ],
