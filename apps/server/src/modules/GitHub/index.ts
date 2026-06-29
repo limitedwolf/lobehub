@@ -43,24 +43,90 @@ export const stripSlashes = (value: string): string => {
 
 export class GitHub {
   private readonly userAgent: string;
-  private readonly token?: string;
+  private readonly tokens: string[];
+  private cursor = 0;
 
-  constructor(options?: { token?: string; userAgent?: string }) {
+  /**
+   * @param options.token - Single token (back-compat).
+   * @param options.tokens - Explicit token list (takes precedence).
+   * When neither is given, tokens are read from `GITHUB_TOKENS` (comma-separated)
+   * and `GITHUB_TOKEN`. Multiple tokens are used round-robin with automatic
+   * fallback to the next token on rate-limit, lifting the REST limit from 60/h
+   * (unauthenticated) to 5000/h per token — which matters because all Vercel
+   * instances share an egress IP.
+   */
+  constructor(options?: { token?: string; tokens?: string[]; userAgent?: string }) {
     this.userAgent = options?.userAgent || 'LobeHub';
-    this.token = options?.token;
+    this.tokens = GitHub.resolveTokens(options);
+  }
+
+  /** Whether at least one token is configured. */
+  isAuthenticated(): boolean {
+    return this.tokens.length > 0;
+  }
+
+  private static resolveTokens(options?: { token?: string; tokens?: string[] }): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    const add = (value?: string) => {
+      const trimmed = value?.trim();
+      if (trimmed && !seen.has(trimmed)) {
+        seen.add(trimmed);
+        out.push(trimmed);
+      }
+    };
+
+    // An explicit `tokens` array (even empty) takes precedence and disables the
+    // env fallback — `tokens: []` forces unauthenticated (used in tests).
+    if (options?.tokens) {
+      options.tokens.forEach(add);
+      return out;
+    }
+    if (options?.token) {
+      add(options.token);
+      return out;
+    }
+    (process.env.GITHUB_TOKENS || '').split(',').forEach(add);
+    add(process.env.GITHUB_TOKEN);
+    return out;
   }
 
   /**
-   * Build request headers, attaching the GitHub token when available.
-   * An authenticated token lifts the REST API rate limit from 60/h to 5000/h,
-   * which matters because all Vercel instances share an egress IP.
+   * Authenticated fetch with round-robin token selection and automatic fallback
+   * to the next token when one is rate-limited. Used for all api.github.com and
+   * archive requests. (Raw CDN file fetches stay unauthenticated — see
+   * {@link fetchFileContent}.)
    */
-  private buildHeaders(extra?: Record<string, string>): Record<string, string> {
-    return {
-      'User-Agent': this.userAgent,
-      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-      ...extra,
-    };
+  private async apiFetch(url: string, extraHeaders?: Record<string, string>): Promise<Response> {
+    const order = this.attemptOrder();
+    for (let index = 0; index < order.length; index += 1) {
+      const token = order[index];
+      const headers: Record<string, string> = { 'User-Agent': this.userAgent, ...extraHeaders };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch(url, { headers });
+      const hasNext = index < order.length - 1;
+      if (hasNext && this.isRateLimited(response)) {
+        await response.arrayBuffer().catch(() => {}); // drain before retrying with next token
+        continue;
+      }
+      return response;
+    }
+    throw new GitHubDownloadError('GitHub request attempts exhausted');
+  }
+
+  /** Token order for one request: round-robin start, then the rest as fallbacks. */
+  private attemptOrder(): Array<string | undefined> {
+    if (this.tokens.length === 0) return [undefined];
+    const start = this.cursor % this.tokens.length;
+    this.cursor = (this.cursor + 1) % this.tokens.length;
+    return this.tokens.map((_, offset) => this.tokens[(start + offset) % this.tokens.length]);
+  }
+
+  private isRateLimited(response: Response): boolean {
+    if (response.status === 429) return true;
+    if (response.status !== 403) return false;
+    return response.headers.get('x-ratelimit-remaining') === '0';
   }
 
   /**
@@ -174,10 +240,16 @@ export class GitHub {
   }
 
   /**
-   * Build the raw file URL for a GitHub repository
+   * Build the raw file URL for a GitHub repository.
+   *
+   * Each path segment is URL-encoded so files with spaces or non-ASCII names
+   * (e.g. CJK paths like `templates/中国电信/右上角 logo.png`) resolve correctly
+   * instead of failing with `400 Bad Request`. Slashes are preserved as
+   * path separators.
    */
   buildRawFileUrl(info: GitHubRawFileInfo): string {
-    return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/${info.filePath}`;
+    const encodedPath = info.filePath.split('/').map(encodeURIComponent).join('/');
+    return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${info.branch}/${encodedPath}`;
   }
 
   /**
@@ -193,9 +265,7 @@ export class GitHub {
     const zipUrl = this.buildRepoZipUrl(info);
     log('downloadRepoZip: fetching url=%s', zipUrl);
 
-    const response = await fetch(zipUrl, {
-      headers: this.buildHeaders(),
-    });
+    const response = await this.apiFetch(zipUrl);
 
     log('downloadRepoZip: response status=%d, ok=%s', response.status, response.ok);
 
@@ -264,9 +334,7 @@ export class GitHub {
     const zipUrl = this.buildRepoZipUrl(info);
     log('openRepoZipStream: fetching url=%s', zipUrl);
 
-    const response = await fetch(zipUrl, {
-      headers: this.buildHeaders(),
-    });
+    const response = await this.apiFetch(zipUrl);
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -298,9 +366,7 @@ export class GitHub {
     const url = `https://api.github.com/repos/${info.owner}/${info.repo}`;
     log('getRepoSizeKb: fetching url=%s', url);
 
-    const response = await fetch(url, {
-      headers: this.buildHeaders({ Accept: 'application/vnd.github+json' }),
-    });
+    const response = await this.apiFetch(url, { Accept: 'application/vnd.github+json' });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -335,9 +401,7 @@ export class GitHub {
     const url = `https://api.github.com/repos/${info.owner}/${info.repo}/git/trees/${info.branch}?recursive=1`;
     log('listSubtree: fetching url=%s, subPath=%s', url, normalized);
 
-    const response = await fetch(url, {
-      headers: this.buildHeaders({ Accept: 'application/vnd.github+json' }),
-    });
+    const response = await this.apiFetch(url, { Accept: 'application/vnd.github+json' });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -379,9 +443,7 @@ export class GitHub {
     dirPath: string,
   ): Promise<GitHubTreeFile[]> {
     const url = `https://api.github.com/repos/${info.owner}/${info.repo}/contents/${dirPath}?ref=${info.branch}`;
-    const response = await fetch(url, {
-      headers: this.buildHeaders({ Accept: 'application/vnd.github+json' }),
-    });
+    const response = await this.apiFetch(url, { Accept: 'application/vnd.github+json' });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -408,38 +470,95 @@ export class GitHub {
   }
 
   /**
-   * Download a single raw file from GitHub
+   * Download a single file from GitHub (decoded as UTF-8 text).
    */
   async downloadRawFile(info: GitHubRawFileInfo): Promise<string> {
-    const rawUrl = this.buildRawFileUrl(info);
-
-    const response = await fetch(rawUrl, {
-      headers: this.buildHeaders(),
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new GitHubNotFoundError(
-          `File not found: ${info.owner}/${info.repo}@${info.branch}/${info.filePath}`,
-        );
-      }
-      throw new GitHubDownloadError(
-        `Failed to download file: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    return response.text();
+    const buffer = await this.fetchFileContent(info);
+    return buffer.toString('utf8');
   }
 
   /**
-   * Download a single raw file as buffer from GitHub
+   * Download a single file from GitHub as a Buffer.
    */
   async downloadRawFileBuffer(info: GitHubRawFileInfo): Promise<Buffer> {
-    const rawUrl = this.buildRawFileUrl(info);
+    return this.fetchFileContent(info);
+  }
 
-    const response = await fetch(rawUrl, {
-      headers: this.buildHeaders(),
+  /**
+   * Fetch a single file's bytes with retries.
+   *
+   * Each attempt tries the raw CDN first, then the authenticated Contents API
+   * (see {@link fetchFileContentOnce}). Transient failures (network errors like
+   * ECONNRESET, or 5xx from both endpoints) are retried with backoff — importing
+   * a large repository issues thousands of requests, so an occasional transient
+   * blip is expected and must not fail the whole import. A genuine `404` is
+   * terminal and never retried.
+   */
+  private async fetchFileContent(info: GitHubRawFileInfo, attempts = 3): Promise<Buffer> {
+    let lastError: Error = new GitHubDownloadError(`Failed to download file: ${info.filePath}`);
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        return await this.fetchFileContentOnce(info);
+      } catch (error) {
+        if (error instanceof GitHubNotFoundError) throw error; // file genuinely absent
+        lastError = error as Error;
+        if (attempt < attempts) await this.backoff(attempt);
+      }
+    }
+    throw lastError;
+  }
+
+  /**
+   * One fetch attempt: raw CDN first, then authenticated Contents API.
+   *
+   * 1. Try raw.githubusercontent.com — fast, unauthenticated, no rate limit.
+   * 2. On any non-404 failure, fall back to the authenticated GitHub Contents
+   *    API (`/contents/{path}` with `Accept: application/vnd.github.raw+json`).
+   *    raw.githubusercontent.com intermittently returns `400 Bad Request` under
+   *    heavy concurrent load even for valid files; the authenticated API does
+   *    not, so this fallback makes bulk downloads (thousands of files) reliable.
+   *    The Contents API needs a token for its 5000/h limit — which is why
+   *    GITHUB_TOKEN(S) matters for importing large repositories.
+   */
+  private async fetchFileContentOnce(info: GitHubRawFileInfo): Promise<Buffer> {
+    try {
+      const rawUrl = this.buildRawFileUrl(info);
+      const response = await fetch(rawUrl, { headers: { 'User-Agent': this.userAgent } });
+      if (response.ok) return Buffer.from(await response.arrayBuffer());
+      if (response.status === 404) {
+        throw new GitHubNotFoundError(
+          `File not found: ${info.owner}/${info.repo}@${info.branch}/${info.filePath}`,
+        );
+      }
+      await response.arrayBuffer().catch(() => {}); // drain before fallback
+      log('fetchFileContent: raw %d for %s, falling back to Contents API', response.status, info.filePath);
+    } catch (error) {
+      if (error instanceof GitHubNotFoundError) throw error;
+      log(
+        'fetchFileContent: raw error for %s (%s), falling back to Contents API',
+        info.filePath,
+        (error as Error).message,
+      );
+    }
+
+    return this.fetchFileViaContentsApi(info);
+  }
+
+  /** Exponential backoff with jitter: ~200ms, 400ms, ... */
+  private backoff(attempt: number): Promise<void> {
+    const ms = 200 * 2 ** (attempt - 1) + Math.floor(Math.random() * 100);
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
     });
+  }
+
+  /**
+   * Authenticated per-file fallback via the GitHub Contents API.
+   */
+  private async fetchFileViaContentsApi(info: GitHubRawFileInfo): Promise<Buffer> {
+    const encodedPath = info.filePath.split('/').map(encodeURIComponent).join('/');
+    const url = `https://api.github.com/repos/${info.owner}/${info.repo}/contents/${encodedPath}?ref=${encodeURIComponent(info.branch)}`;
+    const response = await this.apiFetch(url, { Accept: 'application/vnd.github.raw+json' });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -447,13 +566,17 @@ export class GitHub {
           `File not found: ${info.owner}/${info.repo}@${info.branch}/${info.filePath}`,
         );
       }
+      if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
+        throw new GitHubDownloadError(
+          'GitHub API rate limit exceeded. Configure GITHUB_TOKEN(S) to raise the limit.',
+        );
+      }
       throw new GitHubDownloadError(
         `Failed to download file: ${response.status} ${response.statusText}`,
       );
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    return Buffer.from(await response.arrayBuffer());
   }
 }
 

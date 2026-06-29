@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   GitHub,
@@ -11,6 +11,19 @@ import {
 } from './index';
 
 describe('GitHub', () => {
+  // Tokens are resolved from env when not passed explicitly; clear them so the
+  // default `new GitHub()` instances in these tests are deterministically
+  // unauthenticated regardless of the local .env.
+  const origTokens = process.env.GITHUB_TOKENS;
+  const origToken = process.env.GITHUB_TOKEN;
+  beforeEach(() => {
+    delete process.env.GITHUB_TOKENS;
+    delete process.env.GITHUB_TOKEN;
+  });
+  afterAll(() => {
+    if (origTokens !== undefined) process.env.GITHUB_TOKENS = origTokens;
+    if (origToken !== undefined) process.env.GITHUB_TOKEN = origToken;
+  });
   describe('parseRepoUrl', () => {
     const gh = new GitHub();
 
@@ -214,6 +227,22 @@ describe('GitHub', () => {
         'https://raw.githubusercontent.com/lobehub/lobe-chat/develop/src/components/Button/index.tsx',
       );
     });
+
+    it('should URL-encode spaces and non-ASCII path segments (avoids 400)', () => {
+      const url = gh.buildRawFileUrl({
+        branch: 'main',
+        filePath: 'templates/中国电信/右上角 logo.png',
+        owner: 'hugohe3',
+        repo: 'ppt-master',
+      });
+      expect(url).toBe(
+        'https://raw.githubusercontent.com/hugohe3/ppt-master/main/templates/' +
+          '%E4%B8%AD%E5%9B%BD%E7%94%B5%E4%BF%A1/%E5%8F%B3%E4%B8%8A%E8%A7%92%20logo.png',
+      );
+      // Slashes remain separators; segments are encoded.
+      expect(url).not.toContain('右上角');
+      expect(url).toContain('%20');
+    });
   });
 
   describe('downloadRepoZip', () => {
@@ -311,6 +340,7 @@ describe('GitHub', () => {
     const mockFetch = vi.fn();
 
     beforeEach(() => {
+      mockFetch.mockReset();
       vi.stubGlobal('fetch', mockFetch);
     });
 
@@ -318,11 +348,16 @@ describe('GitHub', () => {
       vi.unstubAllGlobals();
     });
 
-    it('should download raw file successfully', async () => {
+    const arrayBufferOf = (text: string) => {
+      const u8 = new TextEncoder().encode(text);
+      return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+    };
+
+    it('should download raw file successfully from the CDN', async () => {
       const mockContent = '# README\n\nThis is a test.';
       mockFetch.mockResolvedValueOnce({
+        arrayBuffer: () => Promise.resolve(arrayBufferOf(mockContent)),
         ok: true,
-        text: () => Promise.resolve(mockContent),
       });
 
       const result = await gh.downloadRawFile({
@@ -333,17 +368,15 @@ describe('GitHub', () => {
       });
 
       expect(result).toBe(mockContent);
+      // Raw CDN fetch is unauthenticated (User-Agent only).
       expect(mockFetch).toHaveBeenCalledWith(
         'https://raw.githubusercontent.com/lobehub/lobe-chat/main/README.md',
-        {
-          headers: {
-            'User-Agent': 'LobeHub',
-          },
-        },
+        { headers: { 'User-Agent': 'LobeHub' } },
       );
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw GitHubNotFoundError for 404', async () => {
+    it('should throw GitHubNotFoundError when the raw CDN returns 404 (no fallback)', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
@@ -358,6 +391,96 @@ describe('GitHub', () => {
           repo: 'lobe-chat',
         }),
       ).rejects.toThrow(GitHubNotFoundError);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fall back to the Contents API when the raw CDN returns a transient 400', async () => {
+      mockFetch
+        // 1. raw CDN 400 (transient anti-abuse)
+        .mockResolvedValueOnce({
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+          ok: false,
+          status: 400,
+          statusText: 'Bad Request',
+        })
+        // 2. authenticated Contents API succeeds
+        .mockResolvedValueOnce({
+          arrayBuffer: () => Promise.resolve(arrayBufferOf('recovered')),
+          ok: true,
+        });
+
+      const result = await gh.downloadRawFile({
+        branch: 'main',
+        filePath: 'flaky.md',
+        owner: 'lobehub',
+        repo: 'lobe-chat',
+      });
+
+      expect(result).toBe('recovered');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Second call is the Contents API.
+      expect(mockFetch.mock.calls[1][0]).toContain('api.github.com/repos/lobehub/lobe-chat/contents/');
+    });
+
+    it('should fall back to the Contents API when the raw CDN throws (network error)', async () => {
+      mockFetch
+        .mockRejectedValueOnce(new Error('ECONNRESET'))
+        .mockResolvedValueOnce({
+          arrayBuffer: () => Promise.resolve(arrayBufferOf('via-api')),
+          ok: true,
+        });
+
+      const result = await gh.downloadRawFile({
+        branch: 'main',
+        filePath: 'reset.md',
+        owner: 'lobehub',
+        repo: 'lobe-chat',
+      });
+
+      expect(result).toBe('via-api');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should retry a transient network error and then succeed', async () => {
+      mockFetch
+        // attempt 1: raw throws, Contents API throws
+        .mockRejectedValueOnce(new Error('ECONNRESET'))
+        .mockRejectedValueOnce(new Error('ECONNRESET'))
+        // attempt 2: raw succeeds
+        .mockResolvedValueOnce({
+          arrayBuffer: () => Promise.resolve(arrayBufferOf('after-retry')),
+          ok: true,
+        });
+
+      const result = await gh.downloadRawFile({
+        branch: 'main',
+        filePath: 'flaky-net.md',
+        owner: 'lobehub',
+        repo: 'lobe-chat',
+      });
+
+      expect(result).toBe('after-retry');
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it('should throw GitHubDownloadError when both endpoints fail across all retries', async () => {
+      mockFetch.mockResolvedValue({
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      await expect(
+        gh.downloadRawFile({
+          branch: 'main',
+          filePath: 'down.md',
+          owner: 'lobehub',
+          repo: 'lobe-chat',
+        }),
+      ).rejects.toThrow(GitHubDownloadError);
+      // (raw + Contents API) x 3 attempts.
+      expect(mockFetch).toHaveBeenCalledTimes(6);
     });
   });
 
@@ -391,10 +514,11 @@ describe('GitHub', () => {
     });
   });
 
-  describe('auth headers', () => {
+  describe('auth headers & token pool', () => {
     const mockFetch = vi.fn();
 
     beforeEach(() => {
+      mockFetch.mockReset();
       vi.stubGlobal('fetch', mockFetch);
     });
 
@@ -402,44 +526,53 @@ describe('GitHub', () => {
       vi.unstubAllGlobals();
     });
 
-    it('should attach Authorization header when a token is provided', async () => {
+    it('should attach Authorization on authenticated API calls when a token is provided', async () => {
       const gh = new GitHub({ token: 'ghp_secret' });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: () => Promise.resolve('content'),
-      });
+      mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({ size: 1 }), ok: true });
 
-      await gh.downloadRawFile({
-        branch: 'main',
-        filePath: 'README.md',
-        owner: 'lobehub',
-        repo: 'lobe-chat',
-      });
+      await gh.getRepoSizeKb({ owner: 'lobehub', repo: 'lobe-chat' });
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.any(String), {
-        headers: {
-          'Authorization': 'Bearer ghp_secret',
-          'User-Agent': 'LobeHub',
-        },
-      });
+      const headers = mockFetch.mock.calls.at(-1)![1].headers;
+      expect(headers.Authorization).toBe('Bearer ghp_secret');
+      expect(gh.isAuthenticated()).toBe(true);
     });
 
-    it('should omit Authorization header when no token is provided', async () => {
-      const gh = new GitHub();
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: () => Promise.resolve('content'),
-      });
+    it('should omit Authorization when no token is configured', async () => {
+      const gh = new GitHub({ tokens: [] });
+      mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({ size: 1 }), ok: true });
 
-      await gh.downloadRawFile({
-        branch: 'main',
-        filePath: 'README.md',
-        owner: 'lobehub',
-        repo: 'lobe-chat',
-      });
+      await gh.getRepoSizeKb({ owner: 'lobehub', repo: 'lobe-chat' });
 
       const headers = mockFetch.mock.calls.at(-1)![1].headers;
       expect(headers).not.toHaveProperty('Authorization');
+      expect(gh.isAuthenticated()).toBe(false);
+    });
+
+    it('should resolve a comma-separated GITHUB_TOKENS env var', () => {
+      process.env.GITHUB_TOKENS = 'tok_a, tok_b ,tok_a';
+      const gh = new GitHub();
+      expect(gh.isAuthenticated()).toBe(true);
+    });
+
+    it('should fall back to the next token when one is rate-limited', async () => {
+      const gh = new GitHub({ tokens: ['tok_a', 'tok_b'] });
+      mockFetch
+        // first token: rate-limited
+        .mockResolvedValueOnce({
+          arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+          headers: { get: (k: string) => (k === 'x-ratelimit-remaining' ? '0' : null) },
+          ok: false,
+          status: 403,
+        })
+        // second token: succeeds
+        .mockResolvedValueOnce({ json: () => Promise.resolve({ size: 7 }), ok: true });
+
+      const size = await gh.getRepoSizeKb({ owner: 'lobehub', repo: 'lobe-chat' });
+
+      expect(size).toBe(7);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe('Bearer tok_a');
+      expect(mockFetch.mock.calls[1][1].headers.Authorization).toBe('Bearer tok_b');
     });
   });
 
