@@ -178,6 +178,11 @@ export const MessageTaskCallbackSchema = z.object({
   topicId: z.string().optional(),
 });
 
+export const MessageWorkMetadataSchema = z.object({
+  rootOperationId: z.string().min(1),
+  userMessageId: z.string().optional(),
+});
+
 export const MessageMetadataSchema = ModelUsageSchema.merge(ModelPerformanceSchema).extend({
   collapsed: z.boolean().optional(),
   // Hetero-agent (Claude Code) per-message provenance. Listed here so zod does
@@ -208,6 +213,7 @@ export const MessageMetadataSchema = ModelUsageSchema.merge(ModelPerformanceSche
   // role='verify' card: which Agent Run (agent_operations.id) it renders.
   verifyOperationId: z.string().optional(),
   verifyRound: z.number().optional(),
+  work: MessageWorkMetadataSchema.optional(),
   // @deprecated token usage moved to the top-level `usage` column. Still listed
   // so zod doesn't strip `metadata.usage` from legacy writes during migration.
   usage: ModelUsageSchema.optional(),
@@ -438,6 +444,17 @@ export interface MessageMetadata {
   verifyOperationId?: string;
   /** Display round number for the verify card (1-based; repair rounds are separate). */
   verifyRound?: number;
+  /**
+   * Final assistant message marker for Work artifacts produced during one root
+   * operation. Work ownership stays on `work_contexts.root_operation_id`; this
+   * metadata only tells refreshed chat history where to render the cards.
+   */
+  work?: MessageWorkMetadata;
+}
+
+export interface MessageWorkMetadata {
+  rootOperationId: string;
+  userMessageId?: string;
 }
 
 /**
