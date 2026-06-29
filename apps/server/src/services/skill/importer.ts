@@ -41,7 +41,7 @@ const log = debug('lobe-chat:service:skill-importer');
 const GITHUB_ARCHIVE_MAX_SIZE_MB = Number(process.env.SKILL_IMPORT_MAX_REPO_SIZE_MB) || 30;
 
 /** Max concurrent per-file fetches when downloading a subdirectory. */
-const RAW_FETCH_CONCURRENCY = 8;
+const RAW_FETCH_CONCURRENCY = Number(process.env.SKILL_IMPORT_FETCH_CONCURRENCY) || 16;
 
 /**
  * Safety cap on the skill subdirectory's total size for the per-file path. The
