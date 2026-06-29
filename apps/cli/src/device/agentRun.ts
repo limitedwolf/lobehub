@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { homedir } from 'node:os';
 
 import {
   buildHeteroExecStdinPayload,
@@ -30,6 +31,28 @@ interface SpawnHeteroAgentRunLogger {
   error?: (msg: string) => void;
   info?: (msg: string) => void;
 }
+
+const APP_BUNDLE_PATH_PATTERN = /(?:^|[/\\])[^/\\]+\.app(?:[/\\]|$)/i;
+
+const resolveAgentRunCwd = (
+  cwd: string | undefined,
+  logger?: SpawnHeteroAgentRunLogger,
+): string => {
+  if (cwd) return cwd;
+
+  const daemonCwd = process.cwd();
+  if (APP_BUNDLE_PATH_PATTERN.test(daemonCwd)) {
+    const home = homedir();
+    if (home) {
+      logger?.info?.(
+        `agent_run_request cwd missing; daemon cwd is app bundle (${daemonCwd}), falling back to home (${home})`,
+      );
+      return home;
+    }
+  }
+
+  return daemonCwd;
+};
 
 /**
  * Spawn `lh hetero exec` for a gateway-dispatched agent run. Mirrors the
@@ -65,7 +88,7 @@ export function spawnHeteroAgentRun(
     systemContext,
     topicId,
   } = params;
-  const workDir = cwd ?? process.cwd();
+  const workDir = resolveAgentRunCwd(cwd, logger);
 
   // Server-ingest mode (--topic + --operation-id): events are batch-POSTed to
   // the server, not rendered. `--input-json -` reads the prompt from stdin.

@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { homedir } from 'node:os';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -27,6 +28,7 @@ const baseParams = {
 
 describe('spawnHeteroAgentRun', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     spawnMock.mockReset();
   });
 
@@ -90,6 +92,32 @@ describe('spawnHeteroAgentRun', () => {
 
     await expect(ackPromise).resolves.toEqual({ reason: 'spawn ENOENT', status: 'rejected' });
     expect(child.stdin.write).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the daemon cwd when no cwd is provided', () => {
+    vi.spyOn(process, 'cwd').mockReturnValue('/work/from-daemon');
+    const child = makeFakeChild();
+    spawnMock.mockReturnValue(child);
+
+    void spawnHeteroAgentRun({ ...baseParams });
+
+    const [, args, opts] = spawnMock.mock.calls[0];
+    expect(args).toContain('/work/from-daemon');
+    expect(opts.cwd).toBe('/work/from-daemon');
+  });
+
+  it('falls back to home when no cwd is provided and the daemon cwd is an app bundle', () => {
+    vi.spyOn(process, 'cwd').mockReturnValue('/Applications/LobeHub.app/Contents/MacOS');
+    const child = makeFakeChild();
+    const logger = { info: vi.fn() };
+    spawnMock.mockReturnValue(child);
+
+    void spawnHeteroAgentRun({ ...baseParams }, logger);
+
+    const [, args, opts] = spawnMock.mock.calls[0];
+    expect(args).toContain(homedir());
+    expect(opts.cwd).toBe(homedir());
+    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('falling back to home'));
   });
 
   it('appends --resume when resuming a session', () => {
