@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as AgentDocumentModels from '@/database/models/agentDocuments';
 import { createCallerFactory } from '@/libs/trpc/lambda';
 import { createContextInner } from '@/libs/trpc/lambda/context';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
 
 import { agentDocumentRouter } from '../agentDocument';
 
@@ -42,15 +42,15 @@ vi.mock('@/database/models/topicDocument', () => ({
   })),
 }));
 
-vi.mock('@/server/services/agentDocuments', () => ({
+vi.mock('~server/services/agentDocuments', () => ({
   AgentDocumentsService: vi.fn(),
 }));
 
-vi.mock('@/server/services/agentDocumentVfs', () => ({
+vi.mock('~server/services/agentDocumentVfs', () => ({
   AgentDocumentVfsService: vi.fn(),
 }));
 
-vi.mock('@/server/services/agentDocuments/toolOutcome', () => ({
+vi.mock('~server/services/agentDocuments/toolOutcome', () => ({
   emitAgentDocumentToolOutcomeSafely: vi.fn(),
 }));
 

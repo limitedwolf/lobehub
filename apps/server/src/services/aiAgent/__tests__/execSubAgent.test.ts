@@ -88,7 +88,7 @@ vi.mock('~server/services/market', () => ({
 }));
 
 // Mock ComposioService
-vi.mock('@/server/services/composio', () => ({
+vi.mock('~server/services/composio', () => ({
   ComposioService: vi.fn().mockImplementation(() => ({
     getComposioManifests: vi.fn().mockResolvedValue([]),
   })),

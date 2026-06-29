@@ -39,11 +39,11 @@ vi.mock('@/database/models/brief', () => ({
   BriefModel: vi.fn(() => ({ create: briefCreate })),
 }));
 // Resolved via dynamic import inside driveTaskFromVerify (cycle break).
-vi.mock('@/server/services/task', () => ({
+vi.mock('~server/services/task', () => ({
   TaskService: vi.fn(() => ({ updateStatus: serviceUpdateStatus })),
 }));
 // The deferred creator callback, also resolved via dynamic import.
-vi.mock('@/server/services/taskResultBridge', () => ({
+vi.mock('~server/services/taskResultBridge', () => ({
   TaskResultBridgeService: vi.fn(() => ({ deliver: deliverMock })),
 }));
 

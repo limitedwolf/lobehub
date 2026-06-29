@@ -10,7 +10,7 @@ vi.mock('@/envs/app', () => ({
   appEnv: { APP_URL: 'https://app.example.com' },
 }));
 
-vi.mock('@/server/services/sandbox', () => ({
+vi.mock('~server/services/sandbox', () => ({
   createSandboxService: vi.fn(() => ({
     callTool: mockCallTool,
   })),

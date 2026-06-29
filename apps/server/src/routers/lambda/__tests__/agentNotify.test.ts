@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { hookDispatcher } from '@/server/services/agentRuntime/hooks';
-import type { AgentHook } from '@/server/services/agentRuntime/hooks/types';
+import { hookDispatcher } from '~server/services/agentRuntime/hooks';
+import type { AgentHook } from '~server/services/agentRuntime/hooks/types';
 
 // serverDatabase middleware calls getServerDB(); stub it (our model mocks
 // ignore the db handle anyway).
@@ -35,13 +35,13 @@ vi.mock('@/database/models/message', () => ({
     update: mockMessageUpdate,
   })),
 }));
-vi.mock('@/server/services/aiAgent', () => ({
+vi.mock('~server/services/aiAgent', () => ({
   AiAgentService: vi.fn(() => ({ execAgent: mockExecAgent })),
 }));
 
 const mockPublishAgentRuntimeEnd = vi.fn();
 const mockPublishStreamEvent = vi.fn();
-vi.mock('@/server/modules/AgentRuntime/factory', async (orig) => ({
+vi.mock('~server/modules/AgentRuntime/factory', async (orig) => ({
   ...(await (orig as () => Promise<Record<string, unknown>>)()),
   createStreamEventManager: vi.fn(() => ({
     publishAgentRuntimeEnd: mockPublishAgentRuntimeEnd,

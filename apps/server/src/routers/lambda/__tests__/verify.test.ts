@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { verifyRouter } from '@/server/routers/lambda/verify';
-import { FileService } from '@/server/services/file';
+import { verifyRouter } from '~server/routers/lambda/verify';
+import { FileService } from '~server/services/file';
 
 const modelMocks = vi.hoisted(() => ({
   createEvidence: vi.fn(),
+  deleteRun: vi.fn(),
   findRunByOperation: vi.fn(),
   findRunById: vi.fn(),
   findResultById: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock('@/database/models/verifyCheckResult', () => ({
 
 vi.mock('@/database/models/verifyRun', () => ({
   VerifyRunModel: vi.fn(() => ({
+    delete: modelMocks.deleteRun,
     findByOperation: modelMocks.findRunByOperation,
     findById: modelMocks.findRunById,
   })),
@@ -37,14 +39,14 @@ vi.mock('@/database/models/verifyEvidence', () => ({
   })),
 }));
 
-vi.mock('@/server/services/verify', () => ({
+vi.mock('~server/services/verify', () => ({
   VerifyExecutorService: class VerifyExecutorService {},
   VerifyFeedbackService: class VerifyFeedbackService {},
   VerifyPlanGeneratorService: class VerifyPlanGeneratorService {},
   VerifyReporterService: class VerifyReporterService {},
 }));
 
-vi.mock('@/server/services/file', () => ({
+vi.mock('~server/services/file', () => ({
   FileService: vi.fn(() => ({
     getFullFileUrl: modelMocks.getFullFileUrl,
   })),
@@ -89,6 +91,28 @@ describe('verifyRouter', () => {
 
       expect(modelMocks.findRunById).toHaveBeenCalledWith('other-user-run');
       expect(modelMocks.upsertByCheckItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteRun', () => {
+    it("rejects a run outside the caller's scope before deleting", async () => {
+      modelMocks.findRunById.mockResolvedValueOnce(undefined);
+
+      await expect(createCaller().deleteRun({ verifyRunId: 'other-user-run' })).rejects.toThrow(
+        'Verification run not found',
+      );
+
+      expect(modelMocks.findRunById).toHaveBeenCalledWith('other-user-run');
+      expect(modelMocks.deleteRun).not.toHaveBeenCalled();
+    });
+
+    it('deletes a run the caller owns and returns its id', async () => {
+      modelMocks.findRunById.mockResolvedValueOnce({ id: 'run-1' });
+
+      const res = await createCaller().deleteRun({ verifyRunId: 'run-1' });
+
+      expect(modelMocks.deleteRun).toHaveBeenCalledWith('run-1');
+      expect(res).toEqual({ id: 'run-1', success: true });
     });
   });
 

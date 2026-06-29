@@ -24,7 +24,7 @@ vi.mock('@/database/models/verifyCriterion', () => ({
   VerifyCriterionModel: vi.fn(() => ({ findByIds: findByIdsMock })),
 }));
 vi.mock('@/database/models/document', () => ({ DocumentModel: vi.fn(() => ({})) }));
-vi.mock('@/server/services/aiGeneration', () => ({ AiGenerationService: vi.fn(() => ({})) }));
+vi.mock('~server/services/aiGeneration', () => ({ AiGenerationService: vi.fn(() => ({})) }));
 
 const db = {} as any;
 const lastPlan = (): VerifyCheckItem[] => setPlanMock.mock.calls.at(-1)![1] as VerifyCheckItem[];
