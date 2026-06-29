@@ -28,7 +28,7 @@ vi.mock('@/database/models/aiProvider', () => {
   };
 });
 
-vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
+vi.mock('~server/modules/KeyVaultsEncrypt', () => ({
   KeyVaultsGateKeeper: {
     getUserKeyVaults: vi.fn(),
   },

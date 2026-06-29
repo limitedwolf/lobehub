@@ -5,8 +5,8 @@ import { NextResponse } from 'next/server';
 
 import { checkAuth } from '@/app/(backend)/middleware/auth';
 import { AiProviderModel } from '@/database/models/aiProvider';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { createErrorResponse } from '@/utils/errorResponse';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
 
 const log = debug('lobe-server:models:pricing');
 
