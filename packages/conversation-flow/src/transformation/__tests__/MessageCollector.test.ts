@@ -848,6 +848,41 @@ describe('MessageCollector', () => {
       expect(allToolMessages.map((m) => m.id)).toEqual(['tool-1', 'tool-2']);
     });
 
+    it('skips a usage-only empty assistant shell and continues the tool chain', () => {
+      const astA = mkAssistant('ast-A', { parentId: 'user-1', tools: [bashTool('tc-1')] });
+      const toolA = mkTool('tool-1', { parentId: 'ast-A', tool_call_id: 'tc-1' });
+      const shell = mkAssistant('ast-shell', {
+        createdAt: 1,
+        metadata: { usage: { totalTokens: 12 } } as any,
+        parentId: 'ast-A',
+      });
+      const astC = mkAssistant('ast-C', {
+        createdAt: 2,
+        parentId: 'ast-shell',
+        tools: [bashTool('tc-2')],
+      });
+      const toolC = mkTool('tool-2', { parentId: 'ast-C', tool_call_id: 'tc-2' });
+      const astFinal = mkAssistant('ast-final', { parentId: 'tool-2' });
+
+      const allMessages: Message[] = [astA, toolA, shell, astC, toolC, astFinal];
+      const collector = new MessageCollector(new Map(), new Map());
+
+      const assistantChain: Message[] = [];
+      const allToolMessages: Message[] = [];
+      const processedIds = new Set<string>();
+      collector.collectAssistantChain(
+        astA,
+        allMessages,
+        assistantChain,
+        allToolMessages,
+        processedIds,
+      );
+
+      expect(assistantChain.map((m) => m.id)).toEqual(['ast-A', 'ast-C', 'ast-final']);
+      expect(allToolMessages.map((m) => m.id)).toEqual(['tool-1', 'tool-2']);
+      expect(processedIds.has('ast-shell')).toBe(true);
+    });
+
     it('does NOT bridge a multi-prose prelude (toolless → toolless ends the chain)', () => {
       // The bridge is intentionally narrow: it folds at most ONE prose step before
       // a tool step. Two consecutive toolless steps still terminate the chain so

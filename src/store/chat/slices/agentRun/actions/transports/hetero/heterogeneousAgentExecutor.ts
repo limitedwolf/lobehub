@@ -202,6 +202,9 @@ export interface HeterogeneousAgentExecutorParams {
   workingDirectory?: string;
 }
 
+type MainPersistToolBatchIntent = Extract<MainAgentIntent, { kind: 'persistToolBatch' }>;
+type MainResolveToolResultIntent = Extract<MainAgentIntent, { kind: 'resolveToolResult' }>;
+
 /**
  * Map heterogeneousProvider.command to adapter type key.
  */
@@ -301,11 +304,11 @@ const persistToolResult = async (
   toolMsgIdByCallId: Map<string, string>,
   context: ConversationContext,
   pluginState?: Record<string, any>,
-) => {
+): Promise<boolean> => {
   const toolMsgId = toolMsgIdByCallId.get(toolCallId);
   if (!toolMsgId) {
     console.warn('[HeterogeneousAgent] tool_result for unknown toolCallId:', toolCallId);
-    return;
+    return false;
   }
 
   try {
@@ -321,9 +324,81 @@ const persistToolResult = async (
         topicId: context.topicId,
       },
     );
+    return true;
   } catch (err) {
     console.error('[HeterogeneousAgent] Failed to update tool message content:', err);
+    return false;
   }
+};
+
+const MAIN_TOOL_PERSIST_RETRY_DELAYS_MS = [80, 240] as const;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const runWithRetries = async <T>(
+  label: string,
+  task: () => Promise<T>,
+  delays: readonly number[] = MAIN_TOOL_PERSIST_RETRY_DELAYS_MS,
+): Promise<T> => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= delays.length; attempt += 1) {
+    try {
+      return await task();
+    } catch (err) {
+      lastError = err;
+      if (attempt >= delays.length) break;
+
+      console.error(
+        `[HeterogeneousAgent] ${label} failed, retrying (${attempt + 1}/${delays.length}):`,
+        err,
+      );
+      await sleep(delays[attempt]);
+    }
+  }
+
+  throw lastError;
+};
+
+const isDuplicateMessageCreateError = (error: unknown): boolean => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : typeof error === 'object' && error && 'message' in error
+          ? String(error.message)
+          : '';
+
+  return /already exists|duplicate|unique constraint|constraint failed|23505/i.test(message);
+};
+
+const cloneMainToolBatchIntent = (
+  intent: MainPersistToolBatchIntent,
+): MainPersistToolBatchIntent => ({
+  assistantMessageId: intent.assistantMessageId,
+  content: intent.content,
+  kind: 'persistToolBatch',
+  reasoning: intent.reasoning,
+  tools: intent.tools.map((tool) => ({
+    isNew: tool.isNew,
+    payload: { ...tool.payload },
+    toolMessageId: tool.toolMessageId,
+  })),
+});
+
+const buildToolBatchUpdate = (
+  tools: MainPersistToolBatchIntent['tools'],
+  options: { content?: string; reasoning?: string; withResult: boolean },
+): Record<string, any> => {
+  const update: Record<string, any> = {
+    tools: tools.map(({ payload, toolMessageId }) =>
+      options.withResult ? { ...payload, result_msg_id: toolMessageId } : { ...payload },
+    ),
+  };
+  if (options.content) update.content = options.content;
+  if (options.reasoning) update.reasoning = { content: options.reasoning };
+  return update;
 };
 
 /**
@@ -445,6 +520,22 @@ export const executeHeterogeneousAgent = async (
    */
   const toolMsgIdByCallId: Map<string, string> = new Map();
   /**
+   * Run-lifetime snapshot of every main-agent tool batch the reducer emitted.
+   *
+   * A pure tool turn may have exactly one `tools_calling` event and then only a
+   * delayed `tool_result` + usage. If that one DB write fails and the intent
+   * throws, the reducer state is intentionally not committed, so terminal
+   * replay cannot rely on `mainState.toolState`. This ledger is renderer-local
+   * durability for the already-reduced intent: terminal reconciliation can
+   * re-upsert assistant.tools[] and tool rows from here.
+   */
+  const mainToolBatchLedger = new Map<string, MainPersistToolBatchIntent>();
+  /**
+   * Main tool results whose target row was missing or whose DB write failed.
+   * Replayed after terminal tool reconciliation ensures the rows exist.
+   */
+  const pendingMainToolResults = new Map<string, MainResolveToolResultIntent>();
+  /**
    * Shared main-agent run coordinator state — the pure reducer in
    * `@lobechat/heterogeneous-agents`. Owns the main turn/step state machine
    * (content accumulation, the `asst → tool → asst` parent chain incl. the
@@ -515,6 +606,8 @@ export const executeHeterogeneousAgent = async (
     !!mainState.accReasoning ||
     mainState.toolState.payloads.length > 0 ||
     toolMsgIdByCallId.size > 0 ||
+    mainToolBatchLedger.size > 0 ||
+    pendingMainToolResults.size > 0 ||
     mainState.subagents.runs.size > 0;
   const clearStaleResumeMetadata = async () => {
     if (!context.topicId || !updateTopicMetadata) return;
@@ -523,6 +616,188 @@ export const executeHeterogeneousAgent = async (
       heteroSessionId: undefined,
       workingDirectory: workingDirectory ?? '',
     });
+  };
+  const rememberMainToolBatch = (intent: MainPersistToolBatchIntent) => {
+    mainToolBatchLedger.set(intent.assistantMessageId, cloneMainToolBatchIntent(intent));
+  };
+  const createMainToolMessage = async (
+    assistantMessageId: string,
+    tool: MainPersistToolBatchIntent['tools'][number],
+    label: string,
+  ) => {
+    try {
+      await runWithRetries(label, () =>
+        messageService.createMessage({
+          agentId: context.agentId,
+          content: '',
+          id: tool.toolMessageId,
+          parentId: assistantMessageId,
+          plugin: {
+            apiName: tool.payload.apiName,
+            arguments: tool.payload.arguments,
+            identifier: tool.payload.identifier,
+            type: tool.payload.type as ChatToolPayload['type'],
+          },
+          role: 'tool',
+          tool_call_id: tool.payload.id,
+          topicId: context.topicId ?? undefined,
+        } as any),
+      );
+    } catch (err) {
+      if (!isDuplicateMessageCreateError(err)) throw err;
+      // Same message id already exists from an earlier partially successful
+      // attempt. Treat it as an idempotent create and restore the lookup.
+      console.warn('[HeterogeneousAgent] Main tool message already exists:', tool.toolMessageId);
+    }
+    toolMsgIdByCallId.set(tool.payload.id, tool.toolMessageId);
+  };
+  const persistMainToolBatch = async (
+    intent: MainPersistToolBatchIntent,
+    options: { ensureToolRows?: boolean; labelPrefix?: string } = {},
+  ) => {
+    const labelPrefix = options.labelPrefix ?? 'main tools';
+
+    await runWithRetries(`${labelPrefix} pre-register`, () =>
+      messageService.updateMessage(
+        intent.assistantMessageId,
+        buildToolBatchUpdate(intent.tools, {
+          content: intent.content,
+          reasoning: intent.reasoning,
+          withResult: false,
+        }),
+        {
+          agentId: context.agentId,
+          topicId: context.topicId,
+        },
+      ),
+    );
+
+    for (const tool of intent.tools) {
+      const shouldCreate = options.ensureToolRows
+        ? !toolMsgIdByCallId.has(tool.payload.id)
+        : tool.isNew;
+      if (!shouldCreate) continue;
+      await createMainToolMessage(
+        intent.assistantMessageId,
+        tool,
+        `${labelPrefix} create tool message`,
+      );
+    }
+
+    await runWithRetries(`${labelPrefix} finalize`, () =>
+      messageService.updateMessage(
+        intent.assistantMessageId,
+        buildToolBatchUpdate(intent.tools, {
+          content: intent.content,
+          reasoning: intent.reasoning,
+          withResult: true,
+        }),
+        {
+          agentId: context.agentId,
+          topicId: context.topicId,
+        },
+      ),
+    );
+  };
+  const replayPendingMainToolResults = async () => {
+    if (pendingMainToolResults.size === 0) return;
+
+    for (const [toolCallId, pending] of [...pendingMainToolResults]) {
+      const persisted = await persistToolResult(
+        pending.toolCallId,
+        pending.content,
+        pending.isError,
+        toolMsgIdByCallId,
+        context,
+        pending.pluginState,
+      );
+      if (persisted) pendingMainToolResults.delete(toolCallId);
+    }
+  };
+  const getMainMessagesForReconcile = async (): Promise<UIChatMessage[] | undefined> => {
+    try {
+      return await messageService.getMessages({
+        agentId: context.agentId,
+        groupId: context.groupId,
+        threadId: context.threadId,
+        topicId: context.topicId,
+      });
+    } catch (err) {
+      console.error('[HeterogeneousAgent] Failed to load messages for main tool reconcile:', err);
+      return undefined;
+    }
+  };
+  const hydrateMainToolLookupFromSnapshot = (
+    batch: MainPersistToolBatchIntent,
+    messagesById: Map<string, UIChatMessage>,
+    toolMessagesByCallId: Map<string, UIChatMessage>,
+  ) => {
+    for (const tool of batch.tools) {
+      const existingToolMessage =
+        messagesById.get(tool.toolMessageId) ?? toolMessagesByCallId.get(tool.payload.id);
+      if (!existingToolMessage) continue;
+      toolMsgIdByCallId.set(tool.payload.id, existingToolMessage.id);
+    }
+  };
+  const reconcileBatchToolMessageIds = (
+    batch: MainPersistToolBatchIntent,
+  ): MainPersistToolBatchIntent => ({
+    ...batch,
+    tools: batch.tools.map((tool) => ({
+      ...tool,
+      toolMessageId: toolMsgIdByCallId.get(tool.payload.id) ?? tool.toolMessageId,
+    })),
+  });
+  const assistantHasCompleteTools = (
+    batch: MainPersistToolBatchIntent,
+    messagesById: Map<string, UIChatMessage>,
+  ): boolean => {
+    const assistant = messagesById.get(batch.assistantMessageId);
+    const tools = assistant?.tools ?? [];
+    if (tools.length < batch.tools.length) return false;
+
+    return batch.tools.every((tool) =>
+      tools.some(
+        (existing) =>
+          existing.id === tool.payload.id && existing.result_msg_id === tool.toolMessageId,
+      ),
+    );
+  };
+  const batchHasMissingToolRows = (batch: MainPersistToolBatchIntent): boolean =>
+    batch.tools.some((tool) => !toolMsgIdByCallId.has(tool.payload.id));
+  const reconcileMainToolPersistence = async () => {
+    if (mainToolBatchLedger.size === 0) {
+      await replayPendingMainToolResults();
+      return;
+    }
+
+    const messages = await getMainMessagesForReconcile();
+    const messagesById = new Map((messages ?? []).map((message) => [message.id, message]));
+    const toolMessagesByCallId = new Map(
+      (messages ?? [])
+        .filter((message) => message.role === 'tool' && message.tool_call_id)
+        .map((message) => [message.tool_call_id!, message]),
+    );
+
+    for (const batch of mainToolBatchLedger.values()) {
+      try {
+        hydrateMainToolLookupFromSnapshot(batch, messagesById, toolMessagesByCallId);
+        const reconciledBatch = reconcileBatchToolMessageIds(batch);
+        const needsAssistantTools = !assistantHasCompleteTools(reconciledBatch, messagesById);
+        const needsToolRows = batchHasMissingToolRows(reconciledBatch);
+
+        if (needsAssistantTools || needsToolRows) {
+          await persistMainToolBatch(reconciledBatch, {
+            ensureToolRows: true,
+            labelPrefix: 'main tools terminal reconcile',
+          });
+        }
+      } catch (err) {
+        console.error('[HeterogeneousAgent] Failed to reconcile main tools:', err);
+      }
+    }
+
+    await replayPendingMainToolResults();
   };
   const writeTopicStatus = (status: ChatTopicStatus): void => {
     if (!context.topicId) return;
@@ -855,22 +1130,26 @@ export const executeHeterogeneousAgent = async (
 
   /**
    * Apply ONE main-scoped coordinator intent against the renderer's DB
-   * surfaces. Best-effort (errors logged, never thrown) — mirroring the prior
-   * inline persist helpers, so the run state always advances regardless of a
-   * transient DB failure (the next event / terminal flush re-persists). Live
-   * UI is NOT driven here: the executor still forwards raw stream events to the
+   * surfaces. Durable structural writes throw after retries so
+   * `reduceAndApplyMain` can keep commit-on-success semantics; main tool batches
+   * also go into `mainToolBatchLedger`, so terminal reconciliation can replay a
+   * pure tool turn even if its only `tools_calling` intent failed. Live UI is
+   * NOT driven here: the executor still forwards raw stream events to the
    * gateway `eventHandler` for token-level streaming, so `streamContent` is a
    * no-op (the server no-ops it too).
    */
   const applyMainIntent = async (intent: MainAgentIntent) => {
     switch (intent.kind) {
       case 'createAssistant': {
+        const metadata: Record<string, any> = {};
+        if (intent.signal) metadata.signal = intent.signal;
+        if (intent.mainMessageId) metadata.mainMessageId = intent.mainMessageId;
         try {
           await messageService.createMessage({
             agentId: intent.agentId ?? context.agentId,
             content: '',
             id: intent.messageId,
-            ...(intent.signal ? { metadata: { signal: intent.signal } } : {}),
+            ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
             model: intent.model,
             parentId: intent.parentId,
             provider: intent.provider,
@@ -926,69 +1205,20 @@ export const executeHeterogeneousAgent = async (
       }
 
       case 'persistToolBatch': {
-        const buildUpdate = (withResult: boolean): Record<string, any> => {
-          const update: Record<string, any> = {
-            tools: intent.tools.map((x) =>
-              withResult ? { ...x.payload, result_msg_id: x.toolMessageId } : { ...x.payload },
-            ),
-          };
-          if (intent.content) update.content = intent.content;
-          if (intent.reasoning) update.reasoning = { content: intent.reasoning };
-          return update;
-        };
-
-        // Phase 1: pre-register assistant.tools[] (no result_msg_id yet) so the
-        // conversation-flow parser finds matching ids the moment tool rows land.
-        await messageService
-          .updateMessage(intent.assistantMessageId, buildUpdate(false), {
-            agentId: context.agentId,
-            topicId: context.topicId,
-          })
-          .catch((err) =>
-            console.error('[HeterogeneousAgent] Failed to pre-register main tools:', err),
-          );
-
-        // Phase 2: create rows for new tools with their pre-allocated ids and
-        // register the global lookup so a later tool_result resolves.
-        for (const x of intent.tools) {
-          if (!x.isNew) continue;
-          try {
-            await messageService.createMessage({
-              agentId: context.agentId,
-              content: '',
-              id: x.toolMessageId,
-              parentId: intent.assistantMessageId,
-              plugin: {
-                apiName: x.payload.apiName,
-                arguments: x.payload.arguments,
-                identifier: x.payload.identifier,
-                type: x.payload.type as ChatToolPayload['type'],
-              },
-              role: 'tool',
-              tool_call_id: x.payload.id,
-              topicId: context.topicId ?? undefined,
-            } as any);
-          } catch (err) {
-            console.error('[HeterogeneousAgent] Failed to create main tool message:', err);
-            continue;
-          }
-          toolMsgIdByCallId.set(x.payload.id, x.toolMessageId);
+        rememberMainToolBatch(intent);
+        try {
+          await persistMainToolBatch(intent);
+          await replayPendingMainToolResults();
+        } catch (err) {
+          console.error('[HeterogeneousAgent] Failed to persist main tools:', err);
+          throw err;
         }
-
-        // Phase 3: backfill result_msg_id on assistant.tools[].
-        await messageService
-          .updateMessage(intent.assistantMessageId, buildUpdate(true), {
-            agentId: context.agentId,
-            topicId: context.topicId,
-          })
-          .catch((err) =>
-            console.error('[HeterogeneousAgent] Failed to finalize main tools:', err),
-          );
         return;
       }
 
       case 'resolveToolResult': {
-        await persistToolResult(
+        pendingMainToolResults.set(intent.toolCallId, { ...intent });
+        const persisted = await persistToolResult(
           intent.toolCallId,
           intent.content,
           intent.isError,
@@ -996,6 +1226,7 @@ export const executeHeterogeneousAgent = async (
           context,
           intent.pluginState,
         );
+        if (persisted) pendingMainToolResults.delete(intent.toolCallId);
         return;
       }
 
@@ -1333,6 +1564,7 @@ export const executeHeterogeneousAgent = async (
         // does not cascade to child sub-ops, so the main-error path running
         // before the drain still lets each subagent op finalize.
         await reduceAndApplyMain(terminalEvent);
+        await reconcileMainToolPersistence();
 
         // Replay any subagent flush that failed transiently mid-stream, pinned
         // to its original in-thread assistant (NOT the terminal row).
@@ -1411,6 +1643,7 @@ export const executeHeterogeneousAgent = async (
             )
             .catch(console.error);
         }
+        await reconcileMainToolPersistence();
 
         // If the error came from a user-initiated cancel (SIGINT → non-zero
         // exit), don't surface it as a runtime error toast — the operation is
@@ -1523,10 +1756,12 @@ export const executeHeterogeneousAgent = async (
       // `sendPrompt` rejects when the CLI exits non-zero, which is how SIGINT
       // lands here too. If the user cancelled, don't surface an error.
       if (isAborted()) {
+        await reconcileMainToolPersistence();
         writeTopicStatus('active');
         return;
       }
       const messageError = toHeterogeneousAgentMessageError(error, adapterType);
+      await reconcileMainToolPersistence();
       await persistTerminalError(messageError, {
         clearContent: shouldSuppressTerminalErrorEcho(mainState.accContent, messageError),
       });

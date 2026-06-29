@@ -585,6 +585,59 @@ describe('heterogeneousAgentExecutor DB persistence', () => {
       const toolCreates = mockCreateMessage.mock.calls.filter(([p]: any) => p.role === 'tool');
       expect(toolCreates.length).toBe(1);
     });
+
+    it('reconciles a pure tool turn when the only persistToolBatch write fails', async () => {
+      let toolUpdateFailures = 0;
+      mockUpdateMessage.mockImplementation(async (_id: string, value: any) => {
+        if (Array.isArray(value?.tools) && toolUpdateFailures < 3) {
+          toolUpdateFailures += 1;
+          throw new Error('temporary tools write failure');
+        }
+      });
+
+      await runWithEvents([
+        ccInit(),
+        ccMessageStart('msg_01'),
+        ccToolUse('msg_01', 'toolu_poll', 'Bash', {
+          command: 'for i in $(seq 1 60); do curl localhost:3010 || sleep 1; done',
+        }),
+        ccMessageDelta({ input_tokens: 100, output_tokens: 20 }),
+        ccToolResult('toolu_poll', 'server is ready'),
+        ccResult(),
+      ]);
+
+      const toolWrites = mockUpdateMessage.mock.calls
+        .filter(([id, value]: any) => id === 'ast-initial' && Array.isArray(value?.tools))
+        .map(([, value]: any) => value.tools);
+      expect(toolWrites.length).toBeGreaterThanOrEqual(2);
+
+      const finalTools = toolWrites.findLast((tools: any[]) => tools[0]?.result_msg_id);
+      expect(finalTools).toBeDefined();
+      const [finalTool] = finalTools!;
+      expect(finalTools).toEqual([
+        expect.objectContaining({
+          apiName: 'Bash',
+          id: 'toolu_poll',
+          result_msg_id: expect.any(String),
+        }),
+      ]);
+
+      const toolCreates = mockCreateMessage.mock.calls.filter(
+        ([params]: any) => params.role === 'tool' && params.tool_call_id === 'toolu_poll',
+      );
+      expect(toolCreates.length).toBe(1);
+
+      expect(mockUpdateToolMessage).toHaveBeenCalledWith(
+        finalTool.result_msg_id,
+        expect.objectContaining({ content: 'server is ready' }),
+        { agentId: 'agent-1', topicId: 'topic-1' },
+      );
+
+      const usageOnlyWrite = mockUpdateMessage.mock.calls.find(
+        ([id, value]: any) => id === 'ast-initial' && value.metadata?.usage?.totalTokens,
+      );
+      expect(usageOnlyWrite).toBeDefined();
+    });
   });
 
   // ────────────────────────────────────────────────────
@@ -1465,6 +1518,66 @@ describe('heterogeneousAgentExecutor DB persistence', () => {
   });
 
   describe('Codex multi-turn persistence', () => {
+    it('terminal reconcile backfills Codex command tools for a prose assistant', async () => {
+      let toolUpdateFailures = 0;
+      mockUpdateMessage.mockImplementation(async (_id: string, value: any) => {
+        if (Array.isArray(value?.tools) && toolUpdateFailures < 3) {
+          toolUpdateFailures += 1;
+          throw new Error('temporary codex tools write failure');
+        }
+      });
+
+      await runWithEvents(
+        [
+          codexSessionConfigured('gpt-5.5'),
+          codexThreadStarted(),
+          codexTurnStarted(),
+          codexAgentMessage('item_15', 'GraphQL root entry is viewer.'),
+          codexCommandStarted('item_16', '/bin/zsh -lc check-viewer'),
+          codexCommandCompleted('item_16', '/bin/zsh -lc check-viewer', 'viewer ok\n'),
+          codexCommandStarted('item_17', '/bin/zsh -lc inspect-schema'),
+          codexCommandCompleted('item_17', '/bin/zsh -lc inspect-schema', 'schema ok\n'),
+          codexAgentMessage('item_18', 'GraphQL schema is confirmed.'),
+          codexTurnCompleted({ input_tokens: 100, output_tokens: 20 }),
+        ],
+        {
+          params: {
+            heterogeneousProvider: { command: 'codex', type: 'codex' as const },
+          },
+        },
+      );
+
+      expect(mockGetMessages).toHaveBeenCalledWith(
+        expect.objectContaining({ agentId: 'agent-1', topicId: 'topic-1' }),
+      );
+
+      const toolWrites = mockUpdateMessage.mock.calls
+        .filter(([id, value]: any) => id === 'ast-initial' && Array.isArray(value?.tools))
+        .map(([, value]: any) => value.tools);
+      const finalTools = toolWrites.findLast(
+        (tools: any[]) =>
+          tools.length === 2 && tools.every((tool) => typeof tool.result_msg_id === 'string'),
+      );
+      expect(finalTools?.map((tool: any) => tool.id)).toEqual(['item_16', 'item_17']);
+
+      const toolCreates = mockCreateMessage.mock.calls.filter(
+        ([params]: any) =>
+          params.role === 'tool' && ['item_16', 'item_17'].includes(params.tool_call_id),
+      );
+      expect(toolCreates.length).toBe(2);
+
+      expect(mockUpdateToolMessage).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ content: 'viewer ok\n' }),
+        { agentId: 'agent-1', topicId: 'topic-1' },
+      );
+      expect(mockUpdateToolMessage).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ content: 'schema ok\n' }),
+        { agentId: 'agent-1', topicId: 'topic-1' },
+      );
+    });
+
     it('should persist Codex host model metadata onto the current assistant message', async () => {
       await runWithEvents(
         [

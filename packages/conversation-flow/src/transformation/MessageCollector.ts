@@ -43,6 +43,16 @@ const isCallbackSignal = (sig: MessageSignal | undefined): boolean =>
 const isTaskCompletionSignal = (sig: MessageSignal | undefined): boolean =>
   sig?.type === 'task-completion';
 
+const isUsageOnlyEmptyAssistantShell = (msg: Message): boolean => {
+  if (msg.role !== 'assistant') return false;
+  if (msg.content.trim().length > 0) return false;
+  if (msg.tools && msg.tools.length > 0) return false;
+  if (msg.reasoning?.content?.trim()) return false;
+  if (msg.error) return false;
+
+  return !!(msg.metadata as { usage?: unknown } | undefined | null)?.usage;
+};
+
 /**
  * MessageCollector - Handles collection of related messages
  *
@@ -167,6 +177,27 @@ export class MessageCollector {
   ): void {
     if (processedIds.has(currentAssistant.id)) return;
 
+    if (isUsageOnlyEmptyAssistantShell(currentAssistant)) {
+      processedIds.add(currentAssistant.id);
+      const continuation = this.findFlatChainContinuation(
+        currentAssistant,
+        [],
+        allMessages,
+        processedIds,
+        assistantChain[0]?.agentId ?? currentAssistant.agentId,
+      );
+      if (continuation) {
+        this.collectAssistantChain(
+          continuation,
+          allMessages,
+          assistantChain,
+          allToolMessages,
+          processedIds,
+        );
+      }
+      return;
+    }
+
     // Mark visited up front so duplicated tool_call_ids (the same tool result
     // reachable from multiple assistants) can't recurse forever.
     processedIds.add(currentAssistant.id);
@@ -192,6 +223,27 @@ export class MessageCollector {
       groupAgentId,
     );
     if (!continuation) return;
+
+    if (isUsageOnlyEmptyAssistantShell(continuation)) {
+      processedIds.add(continuation.id);
+      const onward = this.findFlatChainContinuation(
+        continuation,
+        [],
+        allMessages,
+        processedIds,
+        groupAgentId,
+      );
+      if (onward) {
+        this.collectAssistantChain(
+          onward,
+          allMessages,
+          assistantChain,
+          allToolMessages,
+          processedIds,
+        );
+      }
+      return;
+    }
 
     if (continuation.tools && continuation.tools.length > 0) {
       // Continue the chain (recursion marks it processed at the top)
@@ -430,6 +482,18 @@ export class MessageCollector {
     const nextNode = this.findChainContinuationNode(idNode, agentId);
     if (nextNode) {
       const nextMsg = this.messageMap.get(nextNode.id)!;
+      if (isUsageOnlyEmptyAssistantShell(nextMsg)) {
+        const onward = this.findChainContinuationNode(nextNode, agentId);
+        if (onward) {
+          this.collectAssistantGroupMessages(
+            this.messageMap.get(onward.id)!,
+            onward,
+            children,
+            agentId,
+          );
+        }
+        return;
+      }
       this.collectAssistantGroupMessages(nextMsg, nextNode, children, agentId);
     }
   }
