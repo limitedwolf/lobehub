@@ -306,18 +306,25 @@ describe('ShellProcessManager', () => {
   });
 
   describe('killTree', () => {
-    it('happy path: resolves success and invokes tree-kill with SIGTERM', async () => {
-      treeKillMock.mockImplementation((_pid, _signal, cb) => {
-        cb?.();
-      });
+    it('happy path: resolves success after SIGKILL escalation', async () => {
+      vi.useFakeTimers();
+      try {
+        treeKillMock.mockImplementation((_pid, _signal, cb) => {
+          cb?.();
+        });
 
-      const proc = createMockProcess(null, 42);
-      manager.register('sh-1', createShellProcess(proc));
+        const proc = createMockProcess(null, 42);
+        manager.register('sh-1', createShellProcess(proc));
 
-      const result = await manager.killTree('sh-1');
+        const killPromise = manager.killTree('sh-1');
+        await vi.advanceTimersByTimeAsync(3000);
+        const result = await killPromise;
 
-      expect(result).toEqual({ error: undefined, success: true });
-      expect(treeKillMock).toHaveBeenCalledWith(42, 'SIGTERM', expect.any(Function));
+        expect(result).toEqual({ error: undefined, success: true });
+        expect(treeKillMock).toHaveBeenCalledWith(42, 'SIGTERM', expect.any(Function));
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('SIGKILL fallback fires 3s after SIGTERM callback', async () => {
@@ -330,11 +337,12 @@ describe('ShellProcessManager', () => {
         const proc = createMockProcess(null, 42);
         manager.register('sh-1', createShellProcess(proc));
 
-        await manager.killTree('sh-1');
+        const killPromise = manager.killTree('sh-1');
 
         expect(treeKillMock).toHaveBeenCalledTimes(1);
 
         await vi.advanceTimersByTimeAsync(3000);
+        await killPromise;
 
         expect(treeKillMock).toHaveBeenCalledTimes(2);
         expect(treeKillMock.mock.calls[1]?.[1]).toBe('SIGKILL');
@@ -351,17 +359,24 @@ describe('ShellProcessManager', () => {
     });
 
     it('returns error when tree-kill callback receives an error', async () => {
-      treeKillMock.mockImplementation((_pid, _signal, cb) => {
-        cb?.(new Error('kill failed'));
-      });
+      vi.useFakeTimers();
+      try {
+        treeKillMock.mockImplementation((_pid, _signal, cb) => {
+          cb?.(new Error('kill failed'));
+        });
 
-      const proc = createMockProcess(null, 42);
-      manager.register('sh-1', createShellProcess(proc));
+        const proc = createMockProcess(null, 42);
+        manager.register('sh-1', createShellProcess(proc));
 
-      const result = await manager.killTree('sh-1');
+        const killPromise = manager.killTree('sh-1');
+        await vi.advanceTimersByTimeAsync(3000);
+        const result = await killPromise;
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('kill failed');
+        expect(result.success).toBe(false);
+        expect(result.error).toBe('kill failed');
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('removes entry from registry in SIGKILL callback', async () => {
@@ -374,8 +389,9 @@ describe('ShellProcessManager', () => {
         const proc = createMockProcess(null, 42);
         manager.register('sh-1', createShellProcess(proc));
 
-        await manager.killTree('sh-1');
+        const killPromise = manager.killTree('sh-1');
         await vi.advanceTimersByTimeAsync(3000);
+        await killPromise;
 
         const listResult = await manager.getOutput({ shell_id: 'sh-1' });
         expect(listResult.success).toBe(false);
@@ -412,14 +428,14 @@ describe('ShellProcessManager', () => {
     });
   });
 
-  describe('events', () => {
+  describe('subscribe', () => {
     afterEach(() => {
       vi.useRealTimers();
     });
 
     it('register emits change once', () => {
       const listener = vi.fn();
-      manager.events.on('change', listener);
+      manager.subscribe(listener);
       const proc = createMockProcess(null, 10);
       manager.register('sh-evt-1', createShellProcess(proc));
       expect(listener).toHaveBeenCalledTimes(1);
@@ -430,7 +446,7 @@ describe('ShellProcessManager', () => {
       const sp = createShellProcess(proc);
       manager.register('sh-evt-2', sp);
       let capturedEndedAt: number | undefined;
-      manager.events.on('change', () => {
+      manager.subscribe(() => {
         capturedEndedAt = sp.endedAt;
       });
       proc.emit('exit', 0);
@@ -445,11 +461,12 @@ describe('ShellProcessManager', () => {
       const proc = createMockProcess(null, 12);
       manager.register('sh-evt-3', createShellProcess(proc));
       const listener = vi.fn();
-      manager.events.on('change', listener);
+      manager.subscribe(listener);
       listener.mockClear();
-      await manager.killTree('sh-evt-3');
+      const killPromise = manager.killTree('sh-evt-3');
       expect(listener).not.toHaveBeenCalled();
       await vi.advanceTimersByTimeAsync(3000);
+      await killPromise;
       expect(listener).toHaveBeenCalledTimes(1);
     });
 
@@ -459,16 +476,30 @@ describe('ShellProcessManager', () => {
         throw new Error('listener error');
       });
       const normalListener = vi.fn();
-      manager.events.on('change', throwingListener);
-      manager.events.on('change', normalListener);
+      manager.subscribe(throwingListener);
+      manager.subscribe(normalListener);
       manager.register('sh-evt-4', createShellProcess(proc));
       expect(throwingListener).toHaveBeenCalledTimes(1);
       expect(normalListener).toHaveBeenCalledTimes(1);
     });
+
+    it('subscribe() returns a working unsubscribe', () => {
+      const listener = vi.fn();
+      const unsub = manager.subscribe(listener);
+      const proc = createMockProcess(null, 14);
+      manager.register('sh-evt-5', createShellProcess(proc));
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsub();
+
+      const proc2 = createMockProcess(null, 15);
+      manager.register('sh-evt-6', createShellProcess(proc2));
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('cleanupAll', () => {
-    it('serializes killTree calls for all registered entries', async () => {
+    it('parallelizes killTree calls for all registered entries with escalationDelayMs:500', async () => {
       const p1 = createMockProcess(null, 100);
       const p2 = createMockProcess(null, 101);
       const p3 = createMockProcess(null, 102);
@@ -480,18 +511,21 @@ describe('ShellProcessManager', () => {
       await manager.cleanupAll();
 
       expect(killTreeSpy).toHaveBeenCalledTimes(3);
-      expect(killTreeSpy).toHaveBeenCalledWith('a');
-      expect(killTreeSpy).toHaveBeenCalledWith('b');
-      expect(killTreeSpy).toHaveBeenCalledWith('c');
+      expect(killTreeSpy).toHaveBeenCalledWith('a', { escalationDelayMs: 500 });
+      expect(killTreeSpy).toHaveBeenCalledWith('b', { escalationDelayMs: 500 });
+      expect(killTreeSpy).toHaveBeenCalledWith('c', { escalationDelayMs: 500 });
     });
 
-    it('clears registry after all entries are processed', async () => {
+    it('clears registry when killTree deletes entries (via SIGKILL callback)', async () => {
       const p1 = createMockProcess(null, 100);
       const p2 = createMockProcess(null, 101);
       manager.register('a', createShellProcess(p1));
       manager.register('b', createShellProcess(p2));
 
-      vi.spyOn(manager, 'killTree').mockResolvedValue({ success: true });
+      vi.spyOn(manager, 'killTree').mockImplementation(async (id: string) => {
+        (manager as any).processes.delete(id);
+        return { success: true };
+      });
       await manager.cleanupAll();
 
       expect((await manager.getOutput({ shell_id: 'a' })).success).toBe(false);

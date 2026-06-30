@@ -1,6 +1,6 @@
 // Import after mocks are set up
 import { app } from 'electron';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 import { App } from '../App';
 
@@ -215,17 +215,30 @@ describe('App', () => {
       appInstance.shellProcessManager = {
         cleanupAll: vi.fn().mockResolvedValue(undefined),
       } as any;
+      appInstance.shellProcessPersister = {
+        detach: vi.fn(),
+        flush: vi.fn().mockResolvedValue(undefined),
+      } as any;
 
       await (appInstance as any).runShutdownCleanup();
 
       expect(appInstance.shellProcessManager.cleanupAll).toHaveBeenCalled();
       expect(app.quit).toHaveBeenCalled();
+
+      const cleanupOrder = (appInstance.shellProcessManager.cleanupAll as Mock).mock
+        .invocationCallOrder[0];
+      const quitOrder = (app.quit as Mock).mock.invocationCallOrder[0];
+      expect(cleanupOrder).toBeLessThan(quitOrder!);
     });
 
     it('calls app.quit even when cleanupAll never resolves (timeout)', async () => {
       vi.useFakeTimers();
       appInstance.shellProcessManager = {
         cleanupAll: vi.fn().mockReturnValue(new Promise(() => {})),
+      } as any;
+      appInstance.shellProcessPersister = {
+        detach: vi.fn(),
+        flush: vi.fn().mockResolvedValue(undefined),
       } as any;
       (appInstance as any).cleanupTimeoutMs = 50;
 
@@ -239,6 +252,10 @@ describe('App', () => {
     it('calls app.quit when cleanupAll rejects', async () => {
       appInstance.shellProcessManager = {
         cleanupAll: vi.fn().mockRejectedValue(new Error('boom')),
+      } as any;
+      appInstance.shellProcessPersister = {
+        detach: vi.fn(),
+        flush: vi.fn().mockResolvedValue(undefined),
       } as any;
 
       await (appInstance as any).runShutdownCleanup();

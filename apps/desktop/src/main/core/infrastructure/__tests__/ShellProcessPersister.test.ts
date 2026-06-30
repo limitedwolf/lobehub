@@ -94,9 +94,9 @@ describe('ShellProcessPersister', () => {
     const manager = new ShellProcessManager();
     const persister = new ShellProcessPersister(manager, { debounceMs: 200, filePath });
 
-    manager.events.emit('change');
-    manager.events.emit('change');
-    manager.events.emit('change');
+    (manager as any).emitChange();
+    (manager as any).emitChange();
+    (manager as any).emitChange();
 
     await vi.advanceTimersByTimeAsync(200);
 
@@ -240,7 +240,7 @@ describe('ShellProcessPersister', () => {
     const persister = new ShellProcessPersister(manager, { debounceMs: 200, filePath });
 
     persister.detach();
-    manager.events.emit('change');
+    (manager as any).emitChange();
     await vi.advanceTimersByTimeAsync(200);
 
     expect(writeFileMock).not.toHaveBeenCalled();
@@ -251,7 +251,7 @@ describe('ShellProcessPersister', () => {
     const manager = new ShellProcessManager();
     const persister = new ShellProcessPersister(manager, { debounceMs: 200, filePath });
 
-    manager.events.emit('change');
+    (manager as any).emitChange();
     await persister.flush();
 
     await vi.advanceTimersByTimeAsync(200);

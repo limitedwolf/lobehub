@@ -99,28 +99,18 @@ describe('ShellCommandCtr (thin wrapper)', () => {
     expect(result.success).toBe(true);
   });
 
-  it('should route lh commands to CliCtr.runCliCommand bypassing processManager', async () => {
-    const result = await ctr.handleRunCommand({
-      command: 'lh status --json',
-      description: 'lh status',
-    });
+  it.each([
+    ['lh status --json', 'status --json'],
+    ['lobe status', 'status'],
+    ['lobehub --version', '--version'],
+  ])('routes "%s" through CliCtr and bypasses processManager', async (command, args) => {
+    const result = await ctr.handleRunCommand({ command, description: command });
 
-    expect(mockCliCtr.runCliCommand).toHaveBeenCalledWith('status --json');
+    expect(mockCliCtr.runCliCommand).toHaveBeenCalledWith(args);
     expect(result.success).toBe(true);
     expect(result.stdout).toContain('cli output');
     expect(mockRunCommand).not.toHaveBeenCalled();
     expect(mockShellProcessManager.getOutput).not.toHaveBeenCalled();
     expect(mockShellProcessManager.killTree).not.toHaveBeenCalled();
-  });
-
-  it('should route lobehub commands to CliCtr.runCliCommand', async () => {
-    const result = await ctr.handleRunCommand({
-      command: 'lobehub search test',
-      description: 'lobehub search',
-    });
-
-    expect(mockCliCtr.runCliCommand).toHaveBeenCalledWith('search test');
-    expect(result.success).toBe(true);
-    expect(mockRunCommand).not.toHaveBeenCalled();
   });
 });

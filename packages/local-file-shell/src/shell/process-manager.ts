@@ -1,5 +1,4 @@
 import type { ChildProcess } from 'node:child_process';
-import { EventEmitter } from 'node:events';
 
 import treeKill from 'tree-kill';
 
@@ -37,8 +36,12 @@ export interface ShellProcessMeta {
   startedAt: number;
 }
 
+interface KillTreeOptions {
+  escalationDelayMs?: number;
+}
+
 export class ShellProcessManager {
-  readonly events = new EventEmitter();
+  private subscribers = new Set<() => void>();
 
   private nextShellId = 1;
 
@@ -165,21 +168,37 @@ export class ShellProcessManager {
     };
   }
 
-  killTree(shellId: string): Promise<KillCommandResult> {
-    return new Promise((resolve) => {
-      const sp = this.processes.get(shellId);
-      if (!sp) return resolve({ error: `Shell ID ${shellId} not found`, success: false });
-      const pid = sp.process.pid;
-      if (!pid) return resolve({ error: 'process has no pid', success: false });
+  subscribe(listener: () => void): () => void {
+    const wrapped = () => {
+      try {
+        listener();
+      } catch {
+        // Swallow — subscribers are responsible for their own logging.
+      }
+    };
+    this.subscribers.add(wrapped);
+    return () => {
+      this.subscribers.delete(wrapped);
+    };
+  }
 
-      treeKill(pid, 'SIGTERM', (err) => {
+  killTree(shellId: string, options: KillTreeOptions = {}): Promise<KillCommandResult> {
+    const sp = this.processes.get(shellId);
+    if (!sp) return Promise.resolve({ error: `Shell ID ${shellId} not found`, success: false });
+    const pid = sp.process.pid;
+    if (!pid) return Promise.resolve({ error: 'process has no pid', success: false });
+
+    const escalationDelayMs = options.escalationDelayMs ?? 3000;
+
+    return new Promise<KillCommandResult>((resolve) => {
+      treeKill(pid, 'SIGTERM', (termErr) => {
         setTimeout(() => {
           treeKill(pid, 'SIGKILL', () => {
             this.processes.delete(shellId);
             this.emitChange();
+            resolve({ error: termErr?.message, success: !termErr });
           });
-        }, 3000);
-        resolve({ error: err?.message, success: !err });
+        }, escalationDelayMs);
       });
     });
   }
@@ -192,26 +211,21 @@ export class ShellProcessManager {
     });
   }
 
-  async cleanupAll(): Promise<void> {
+  async cleanupAll(perEntryTimeoutMs = 1000): Promise<void> {
     const ids = [...this.processes.keys()];
-    for (const shellId of ids) {
-      await Promise.race([
-        this.killTree(shellId).catch(() => {}),
-        new Promise<void>((resolve) => setTimeout(resolve, 1000)),
-      ]);
-    }
-    this.processes.clear();
+    await Promise.allSettled(
+      ids.map((id) =>
+        Promise.race([
+          this.killTree(id, { escalationDelayMs: 500 }).catch(() => undefined),
+          new Promise<void>((resolve) => setTimeout(resolve, perEntryTimeoutMs)),
+        ]),
+      ),
+    );
+    // No .clear(): killTree's SIGKILL callback deletes each entry.
   }
 
   private emitChange(): void {
-    const listeners = this.events.rawListeners('change') as (() => void)[];
-    for (const fn of listeners) {
-      try {
-        fn();
-      } catch {
-        // subscriber errors must not propagate to the caller
-      }
-    }
+    for (const fn of this.subscribers) fn();
   }
 
   private toMeta(shellId: string, sp: ShellProcess): ShellProcessMeta {

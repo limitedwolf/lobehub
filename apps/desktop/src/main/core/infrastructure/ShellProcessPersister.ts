@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -71,29 +72,28 @@ async function getStartTimeFingerprint(pid: number): Promise<StartTimeFingerprin
 }
 
 async function writeAtomic(filePath: string, data: string): Promise<void> {
-  const tmp = `${filePath}.${process.pid}.tmp`;
+  const tmp = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
   await fs.writeFile(tmp, data, 'utf8');
   await fs.rename(tmp, filePath);
 }
 
 export class ShellProcessPersister {
-  private changeListener: () => void;
   private debounceMs: number;
   private filePath: string;
   private manager: ShellProcessManager;
   private timer: ReturnType<typeof setTimeout> | undefined;
+  private unsubscribe: () => void;
 
   constructor(manager: ShellProcessManager, options?: ShellProcessPersisterOptions) {
     this.manager = manager;
     this.filePath = options?.filePath ?? path.join(app.getPath('userData'), 'processes.json');
     this.debounceMs = options?.debounceMs ?? 200;
 
-    this.changeListener = () => this.scheduleWrite();
-    manager.events.on('change', this.changeListener);
+    this.unsubscribe = manager.subscribe(() => this.scheduleWrite());
   }
 
   detach(): void {
-    this.manager.events.off('change', this.changeListener);
+    this.unsubscribe();
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
       this.timer = undefined;

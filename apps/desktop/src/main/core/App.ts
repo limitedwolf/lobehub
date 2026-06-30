@@ -478,13 +478,14 @@ export class App {
     this.ipcServer = new ElectronIPCServer(name, ipcServerEvents);
   }
 
+  private cleanupStarted = false;
+
   private cleanupTimeoutMs = 3000;
 
   private handleBeforeQuit = (event: Electron.Event) => {
-    // Re-entry guard. Electron fires before-quit again after our app.quit()
-    // call below; on the second pass we must let the default behavior win.
-    if (this.isQuiting) return;
-    this.isQuiting = true;
+    if (this.cleanupStarted) return;
+    this.cleanupStarted = true;
+    this.isQuiting = true; // preserve existing downstream contract
     event.preventDefault();
 
     void this.runShutdownCleanup();
@@ -505,6 +506,11 @@ export class App {
         ]),
         new Promise<void>((resolve) => setTimeout(resolve, this.cleanupTimeoutMs)),
       ]);
+
+      // Suppress any late-fired emits from in-flight SIGKILL callbacks and write
+      // a final consistent snapshot before quitting.
+      this.shellProcessPersister.detach();
+      await this.shellProcessPersister.flush();
     } catch (error) {
       logger.warn('Background process cleanup threw unexpectedly:', error);
     }

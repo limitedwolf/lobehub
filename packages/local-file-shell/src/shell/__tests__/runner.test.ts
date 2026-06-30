@@ -85,7 +85,7 @@ describe('runCommand', () => {
         { processManager },
       );
 
-      expect(result.output).toContain('red');
+      expect(result.output).toContain('\x1B[31m');
     });
 
     it('should truncate very long output', async () => {
