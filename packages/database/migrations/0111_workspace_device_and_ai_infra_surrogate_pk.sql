@@ -1,6 +1,12 @@
 -- Combined workspace-scoped DB rollout (formerly two separate 0111 migrations):
---   1. ai_infra surrogate `_id` PK + workspace-scoped partial uniques (LOBE-10056)
---   2. workspace-scoped device unique + workspace `frozen` columns (LOBE-10315)
+--   1. ai_infra surrogate `_id` PK + workspace-scoped partial uniques
+--      (Phase 5 of workspace DB migration rollout: replaces composite PKs
+--       on ai_providers/ai_models with surrogate _id UUID PK + partial unique
+--       indexes scoped by workspace_id NULL vs NOT NULL)
+--   2. workspace-scoped device unique + workspace `frozen` columns
+--      (Supports workspace-level device lists: replaces full unique with
+--       workspace-scoped partial uniques so personal and workspace-enrolled
+--       rows live in independent identity spaces)
 --
 -- The two parts touch disjoint tables (ai_providers / ai_models vs.
 -- devices / workspaces). Every statement is guarded so the migration is a
@@ -10,11 +16,12 @@
 
 -- ===========================================================================
 -- Part 1 — ai_infra surrogate `_id` PK + workspace-scoped partial uniques
--- (LOBE-10056 Phase 5)
+-- (Phase 5: rebuilds composite PKs on ai_models (~4M rows) and ai_providers
+--  with surrogate _id UUID PK, avoiding full table rewrite via phased rollout)
 --
 -- On cloud production this whole part is a NO-OP: the manual steps [3]~[7]
--- (LOBE-10073 .. LOBE-10077) already performed the backfill, NOT NULL, PK swap
--- and partial indexes online / CONCURRENTLY. Every statement below is guarded
+-- (backfill _id, enforce NOT NULL, build unique indexes CONCURRENTLY,
+-- atomically swap PK) already ran online. Every statement below is guarded
 -- (UPDATE … WHERE _id IS NULL / IF EXISTS / catalog check / IF NOT EXISTS) so
 -- it skips cleanly there, while still fully rebuilding the schema on a fresh or
 -- self-hosted database (where [3]~[7] never ran).
@@ -28,7 +35,7 @@ UPDATE "ai_models" SET "_id" = gen_random_uuid() WHERE "_id" IS NULL;--> stateme
 ALTER TABLE "ai_providers" ALTER COLUMN "_id" SET NOT NULL;--> statement-breakpoint
 ALTER TABLE "ai_models" ALTER COLUMN "_id" SET NOT NULL;--> statement-breakpoint
 
--- 3) drop old composite PKs (no-op on prod, already dropped in [7]) --
+-- 3) drop old composite PKs (no-op on prod, already dropped in step [7]) --
 ALTER TABLE "ai_providers" DROP CONSTRAINT IF EXISTS "ai_providers_id_user_id_pk";--> statement-breakpoint
 ALTER TABLE "ai_models" DROP CONSTRAINT IF EXISTS "ai_models_id_provider_id_user_id_pk";--> statement-breakpoint
 
@@ -49,7 +56,7 @@ DO $$ BEGIN
   END IF;
 END $$;--> statement-breakpoint
 
--- 5) workspace-scoped partial unique indexes (no-op on prod, already built in [6]) --
+-- 5) workspace-scoped partial unique indexes (no-op on prod, already built in step [6]) --
 CREATE UNIQUE INDEX IF NOT EXISTS "ai_providers_id_user_id_unique" ON "ai_providers" USING btree ("id","user_id") WHERE "workspace_id" IS NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "ai_providers_id_user_id_workspace_id_unique" ON "ai_providers" USING btree ("id","user_id","workspace_id") WHERE "workspace_id" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "ai_models_id_provider_id_user_id_unique" ON "ai_models" USING btree ("id","provider_id","user_id") WHERE "workspace_id" IS NULL;--> statement-breakpoint
@@ -57,7 +64,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS "ai_models_id_provider_id_user_id_workspace_id
 
 -- ===========================================================================
 -- Part 2 — workspace-scoped device unique + workspace `frozen` columns
--- (LOBE-10315)
+-- (Enables workspace-level device management: each workspace can register its
+--  own devices, shown alongside personal devices with grouping in the UI)
 --
 -- Replace the full (user_id, device_id) unique with two partial uniques scoped
 -- by workspace_id (null vs. not null), so personal and workspace-enrolled rows
