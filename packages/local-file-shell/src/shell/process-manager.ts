@@ -225,7 +225,9 @@ export class ShellProcessManager {
   }
 
   private emitChange(): void {
-    for (const fn of this.subscribers) fn();
+    // Snapshot first: a listener that unsubscribes during emit must not skip later listeners.
+    const snapshot = Array.from(this.subscribers);
+    for (const fn of snapshot) fn();
   }
 
   private toMeta(shellId: string, sp: ShellProcess): ShellProcessMeta {
