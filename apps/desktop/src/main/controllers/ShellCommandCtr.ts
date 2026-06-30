@@ -52,6 +52,6 @@ export default class ShellCommandCtr extends ControllerModule {
 
   @IpcMethod()
   async handleKillCommand({ shell_id }: KillCommandParams): Promise<KillCommandResult> {
-    return processManager.kill(shell_id);
+    return processManager.killTree(shell_id);
   }
 }

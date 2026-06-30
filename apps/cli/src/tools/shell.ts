@@ -10,8 +10,8 @@ import { log } from '../utils/logger';
 
 const processManager = new ShellProcessManager();
 
-export function cleanupAllProcesses() {
-  processManager.cleanupAll();
+export async function cleanupAllProcesses() {
+  await processManager.cleanupAll();
 }
 
 export async function runCommand(params: RunCommandParams) {
@@ -23,5 +23,5 @@ export async function getCommandOutput(params: GetCommandOutputParams) {
 }
 
 export async function killCommand(params: KillCommandParams) {
-  return processManager.kill(params.shell_id);
+  return processManager.killTree(params.shell_id);
 }

@@ -1,13 +1,27 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import type * as ChildProcessNS from 'node:child_process';
+import { spawn } from 'node:child_process';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ShellProcessManager } from '../process-manager';
 import { runCommand } from '../runner';
 
+vi.mock('node:child_process', async () => {
+  const actual = await vi.importActual<typeof ChildProcessNS>('node:child_process');
+  return { ...actual, spawn: vi.fn(actual.spawn) };
+});
+
+const spawnMock = vi.mocked(spawn);
+
 describe('runCommand', () => {
   const processManager = new ShellProcessManager();
 
-  afterEach(() => {
-    processManager.cleanupAll();
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await processManager.cleanupAll();
   });
 
   describe('foreground observation mode', () => {
@@ -28,7 +42,7 @@ describe('runCommand', () => {
 
       expect(first.shell_id).toBe('sh-1');
       expect(second.shell_id).toBe('sh-2');
-      localManager.cleanupAll();
+      await localManager.cleanupAll();
     });
 
     it('should capture stderr', async () => {
@@ -65,13 +79,13 @@ describe('runCommand', () => {
       expect(result.shell_id).toBeDefined();
     }, 10_000);
 
-    it('should strip ANSI codes from output', async () => {
+    it('should pass ANSI codes through to output', async () => {
       const result = await runCommand(
         { command: 'printf "\\033[31mred\\033[0m"' },
         { processManager },
       );
 
-      expect(result.output).not.toContain('\u001B');
+      expect(result.output).toContain('red');
     });
 
     it('should truncate very long output', async () => {
@@ -155,7 +169,7 @@ describe('runCommand', () => {
         { processManager },
       );
 
-      const result = processManager.kill(bgResult.shell_id!);
+      const result = await processManager.killTree(bgResult.shell_id!);
       expect(result.success).toBe(true);
     });
 
@@ -166,7 +180,7 @@ describe('runCommand', () => {
     });
 
     it('should return error when killing unknown shell_id', async () => {
-      const result = processManager.kill('unknown-id');
+      const result = await processManager.killTree('unknown-id');
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
     });
@@ -213,6 +227,49 @@ describe('runCommand', () => {
       await new Promise((r) => setTimeout(r, 100));
       const output = await processManager.getOutput({ shell_id: bgResult.shell_id! });
       expect(output.exit_code).toBe(0);
+    });
+  });
+
+  describe('env stamp and spawn options', () => {
+    it('sets LOBEHUB_PROCESS_ID in the spawned environment', async () => {
+      const result = await runCommand({ command: 'echo $LOBEHUB_PROCESS_ID' }, { processManager });
+
+      expect(result.stdout?.trim()).toMatch(
+        /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/,
+      );
+    });
+
+    it('sets detached: true on spawn', async () => {
+      await runCommand({ command: 'echo ok' }, { processManager });
+
+      const spawnOpts = spawnMock.mock.calls.at(-1)?.[2];
+      expect(spawnOpts?.detached).toBe(true);
+    });
+
+    it('populates new metadata fields on the registered ShellProcess', async () => {
+      const registerSpy = vi.spyOn(processManager, 'register');
+      await runCommand(
+        { command: 'echo ok', cwd: '/tmp', run_in_background: true },
+        { processManager },
+      );
+
+      const sp = registerSpy.mock.calls.at(-1)?.[1];
+      expect(sp).toBeDefined();
+      expect(sp!.command).toBe('echo ok');
+      expect(sp!.cwd).toBe('/tmp');
+      expect(sp!.runInBackground).toBe(true);
+      expect(sp!.processId).toMatch(/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/);
+      expect(typeof sp!.startedAt).toBe('number');
+    });
+
+    it('sets pgid to childProcess.pid on POSIX', async () => {
+      if (process.platform === 'win32') return;
+
+      const registerSpy = vi.spyOn(processManager, 'register');
+      await runCommand({ command: 'echo ok' }, { processManager });
+
+      const sp = registerSpy.mock.calls.at(-1)?.[1];
+      expect(sp!.pgid).toBe(sp!.process.pid);
     });
   });
 

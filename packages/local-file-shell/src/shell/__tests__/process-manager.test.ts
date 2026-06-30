@@ -1,31 +1,48 @@
 import type { ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
+import treeKill from 'tree-kill';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ShellProcess, ShellProcessManager } from '../process-manager';
 
-function createMockProcess(exitCode: number | null = null): ChildProcess {
-  const process = new EventEmitter() as ChildProcess;
-  // Node types expose `exitCode` as readonly; make the test double writable so
-  // we can simulate the child process exiting.
-  Object.defineProperty(process, 'exitCode', {
+vi.mock('tree-kill', () => ({
+  default: vi.fn(),
+}));
+
+const treeKillMock = vi.mocked(treeKill);
+
+function createMockProcess(exitCode: number | null = null, pid?: number): ChildProcess {
+  const proc = new EventEmitter() as ChildProcess;
+  Object.defineProperty(proc, 'exitCode', {
     configurable: true,
     value: exitCode,
     writable: true,
   });
-  process.kill = vi.fn() as unknown as ChildProcess['kill'];
-  return process;
+  Object.defineProperty(proc, 'pid', {
+    configurable: true,
+    value: pid,
+    writable: true,
+  });
+  proc.kill = vi.fn() as unknown as ChildProcess['kill'];
+  return proc;
 }
 
-function createShellProcess(process: ChildProcess): ShellProcess {
+function createShellProcess(
+  proc: ChildProcess,
+  overrides: Partial<ShellProcess> = {},
+): ShellProcess {
   return {
-    exitCode: process.exitCode,
+    command: 'test-command',
+    exitCode: proc.exitCode,
     lastReadStderr: 0,
     lastReadStdout: 0,
-    process,
+    process: proc,
+    processId: 'test-process-id',
+    runInBackground: false,
     stderr: [],
     stdout: [],
+    ...overrides,
   };
 }
 
@@ -33,6 +50,7 @@ describe('ShellProcessManager', () => {
   let manager: ShellProcessManager;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     manager = new ShellProcessManager();
   });
 
@@ -241,72 +259,203 @@ describe('ShellProcessManager', () => {
     });
   });
 
-  describe('kill', () => {
-    it('should kill process successfully', () => {
-      const process = createMockProcess();
-      manager.register('test-1', createShellProcess(process));
+  describe('list / listAll', () => {
+    it('register + list returns one alive entry with correct shape', () => {
+      const proc = createMockProcess(null, 42);
+      manager.register(
+        'sh-1',
+        createShellProcess(proc, {
+          command: 'sleep 60',
+          cwd: '/tmp',
+          processId: 'uuid-abc',
+          runInBackground: true,
+        }),
+      );
 
-      const result = manager.kill('test-1');
-
-      expect(result.success).toBe(true);
-      expect(process.kill).toHaveBeenCalled();
-    });
-
-    it('should return error for non-existent shell_id', () => {
-      const result = manager.kill('non-existent');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('not found');
-    });
-
-    it('should remove process from registry after killing', async () => {
-      const process = createMockProcess();
-      manager.register('test-1', createShellProcess(process));
-
-      manager.kill('test-1');
-
-      const result = await manager.getOutput({ shell_id: 'test-1' });
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('not found');
-    });
-
-    it('should handle kill error gracefully', () => {
-      const process = createMockProcess();
-      (process.kill as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => {
-        throw new Error('Kill failed');
+      const entries = manager.list();
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({
+        command: 'sleep 60',
+        cwd: '/tmp',
+        exitCode: null,
+        pgid: undefined,
+        pid: 42,
+        processId: 'uuid-abc',
+        runInBackground: true,
+        shellId: 'sh-1',
       });
-      manager.register('test-1', createShellProcess(process));
+      expect(typeof entries[0]!.startedAt).toBe('number');
+    });
 
-      const result = manager.kill('test-1');
+    it('list excludes exited entries; listAll includes them', () => {
+      const proc = createMockProcess(0, 42);
+      const sp = createShellProcess(proc, { exitCode: 0 });
+      manager.register('sh-1', sp);
+
+      expect(manager.list()).toHaveLength(0);
+      expect(manager.listAll()).toHaveLength(1);
+    });
+
+    it('list excludes entries where process.exitCode is non-null', () => {
+      const proc = createMockProcess(null, 42);
+      manager.register('sh-1', createShellProcess(proc));
+      (proc as { exitCode: number | null }).exitCode = 0;
+
+      expect(manager.list()).toHaveLength(0);
+    });
+  });
+
+  describe('killTree', () => {
+    it('happy path: resolves success and invokes tree-kill with SIGTERM', async () => {
+      treeKillMock.mockImplementation((_pid, _signal, cb) => {
+        cb?.();
+      });
+
+      const proc = createMockProcess(null, 42);
+      manager.register('sh-1', createShellProcess(proc));
+
+      const result = await manager.killTree('sh-1');
+
+      expect(result).toEqual({ error: undefined, success: true });
+      expect(treeKillMock).toHaveBeenCalledWith(42, 'SIGTERM', expect.any(Function));
+    });
+
+    it('SIGKILL fallback fires 3s after SIGTERM callback', async () => {
+      vi.useFakeTimers();
+      try {
+        treeKillMock.mockImplementation((_pid, _signal, cb) => {
+          cb?.();
+        });
+
+        const proc = createMockProcess(null, 42);
+        manager.register('sh-1', createShellProcess(proc));
+
+        await manager.killTree('sh-1');
+
+        expect(treeKillMock).toHaveBeenCalledTimes(1);
+
+        await vi.advanceTimersByTimeAsync(3000);
+
+        expect(treeKillMock).toHaveBeenCalledTimes(2);
+        expect(treeKillMock.mock.calls[1]?.[1]).toBe('SIGKILL');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('returns error when shellId is not found', async () => {
+      const result = await manager.killTree('unknown');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Kill failed');
+      expect(result.error).toMatch(/not found/);
+    });
+
+    it('returns error when tree-kill callback receives an error', async () => {
+      treeKillMock.mockImplementation((_pid, _signal, cb) => {
+        cb?.(new Error('kill failed'));
+      });
+
+      const proc = createMockProcess(null, 42);
+      manager.register('sh-1', createShellProcess(proc));
+
+      const result = await manager.killTree('sh-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('kill failed');
+    });
+
+    it('removes entry from registry in SIGKILL callback', async () => {
+      vi.useFakeTimers();
+      try {
+        treeKillMock.mockImplementation((_pid, _signal, cb) => {
+          cb?.();
+        });
+
+        const proc = createMockProcess(null, 42);
+        manager.register('sh-1', createShellProcess(proc));
+
+        await manager.killTree('sh-1');
+        await vi.advanceTimersByTimeAsync(3000);
+
+        const listResult = await manager.getOutput({ shell_id: 'sh-1' });
+        expect(listResult.success).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe('killByPid', () => {
+    it('calls tree-kill with the given pid; does not touch registry', async () => {
+      treeKillMock.mockImplementation((_pid, _signal, cb) => {
+        cb?.();
+      });
+
+      const proc = createMockProcess(null, 42);
+      manager.register('sh-1', createShellProcess(proc));
+
+      const result = await manager.killByPid(999);
+
+      expect(result).toEqual({ error: undefined, success: true });
+      expect(treeKillMock).toHaveBeenCalledWith(999, 'SIGTERM', expect.any(Function));
+      expect(manager.listAll()).toHaveLength(1);
+    });
+
+    it('uses SIGKILL when force is true', async () => {
+      treeKillMock.mockImplementation((_pid, _signal, cb) => {
+        cb?.();
+      });
+
+      await manager.killByPid(999, true);
+
+      expect(treeKillMock).toHaveBeenCalledWith(999, 'SIGKILL', expect.any(Function));
     });
   });
 
   describe('cleanupAll', () => {
-    it('should kill all registered processes', async () => {
-      const p1 = createMockProcess();
-      const p2 = createMockProcess();
-      manager.register('test-1', createShellProcess(p1));
-      manager.register('test-2', createShellProcess(p2));
+    it('serializes killTree calls for all registered entries', async () => {
+      const p1 = createMockProcess(null, 100);
+      const p2 = createMockProcess(null, 101);
+      const p3 = createMockProcess(null, 102);
+      manager.register('a', createShellProcess(p1));
+      manager.register('b', createShellProcess(p2));
+      manager.register('c', createShellProcess(p3));
 
-      manager.cleanupAll();
+      const killTreeSpy = vi.spyOn(manager, 'killTree').mockResolvedValue({ success: true });
+      await manager.cleanupAll();
 
-      expect(p1.kill).toHaveBeenCalled();
-      expect(p2.kill).toHaveBeenCalled();
-      expect((await manager.getOutput({ shell_id: 'test-1' })).success).toBe(false);
-      expect((await manager.getOutput({ shell_id: 'test-2' })).success).toBe(false);
+      expect(killTreeSpy).toHaveBeenCalledTimes(3);
+      expect(killTreeSpy).toHaveBeenCalledWith('a');
+      expect(killTreeSpy).toHaveBeenCalledWith('b');
+      expect(killTreeSpy).toHaveBeenCalledWith('c');
     });
 
-    it('should handle kill errors during cleanup', () => {
-      const p1 = createMockProcess();
-      (p1.kill as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => {
-        throw new Error('fail');
-      });
-      manager.register('test-1', createShellProcess(p1));
+    it('clears registry after all entries are processed', async () => {
+      const p1 = createMockProcess(null, 100);
+      const p2 = createMockProcess(null, 101);
+      manager.register('a', createShellProcess(p1));
+      manager.register('b', createShellProcess(p2));
 
-      expect(() => manager.cleanupAll()).not.toThrow();
+      vi.spyOn(manager, 'killTree').mockResolvedValue({ success: true });
+      await manager.cleanupAll();
+
+      expect((await manager.getOutput({ shell_id: 'a' })).success).toBe(false);
+      expect((await manager.getOutput({ shell_id: 'b' })).success).toBe(false);
+    });
+
+    it('continues processing remaining entries when one killTree fails', async () => {
+      const p1 = createMockProcess(null, 100);
+      const p2 = createMockProcess(null, 101);
+      manager.register('a', createShellProcess(p1));
+      manager.register('b', createShellProcess(p2));
+
+      const killTreeSpy = vi
+        .spyOn(manager, 'killTree')
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce({ success: true });
+
+      await expect(manager.cleanupAll()).resolves.toBeUndefined();
+      expect(killTreeSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

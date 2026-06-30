@@ -1,5 +1,7 @@
 import type { ChildProcess } from 'node:child_process';
 
+import treeKill from 'tree-kill';
+
 import type { GetCommandOutputParams, GetCommandOutputResult, KillCommandResult } from '../types';
 import { truncateOutput } from './utils';
 
@@ -7,14 +9,31 @@ const DEFAULT_OBSERVATION_TIMEOUT_MS = 30_000;
 const MAX_OBSERVATION_TIMEOUT_MS = 120_000;
 
 export interface ShellProcess {
+  command: string;
+  cwd?: string;
   endedAt?: number;
   exitCode: number | null;
   lastReadStderr: number;
   lastReadStdout: number;
+  pgid?: number;
   process: ChildProcess;
+  processId: string;
+  runInBackground: boolean;
   startedAt?: number;
   stderr: string[];
   stdout: string[];
+}
+
+export interface ShellProcessMeta {
+  command: string;
+  cwd?: string;
+  exitCode: number | null;
+  pgid: number | undefined;
+  pid: number | undefined;
+  processId: string;
+  runInBackground: boolean;
+  shellId: string;
+  startedAt: number;
 }
 
 export class ShellProcessManager {
@@ -39,6 +58,20 @@ export class ShellProcessManager {
     shellProcess.process.once('exit', markEnded);
     shellProcess.process.once('error', markEnded);
     this.processes.set(shellId, shellProcess);
+  }
+
+  list(): ShellProcessMeta[] {
+    const result: ShellProcessMeta[] = [];
+    for (const [shellId, sp] of this.processes) {
+      if (sp.exitCode === null && sp.process.exitCode === null) {
+        result.push(this.toMeta(shellId, sp));
+      }
+    }
+    return result;
+  }
+
+  listAll(): ShellProcessMeta[] {
+    return [...this.processes.entries()].map(([shellId, sp]) => this.toMeta(shellId, sp));
   }
 
   async getOutput({
@@ -127,29 +160,54 @@ export class ShellProcessManager {
     };
   }
 
-  kill(shell_id: string): KillCommandResult {
-    const shellProcess = this.processes.get(shell_id);
-    if (!shellProcess) {
-      return { error: `Shell ID ${shell_id} not found`, success: false };
-    }
+  killTree(shellId: string): Promise<KillCommandResult> {
+    return new Promise((resolve) => {
+      const sp = this.processes.get(shellId);
+      if (!sp) return resolve({ error: `Shell ID ${shellId} not found`, success: false });
+      const pid = sp.process.pid;
+      if (!pid) return resolve({ error: 'process has no pid', success: false });
 
-    try {
-      shellProcess.process.kill();
-      this.processes.delete(shell_id);
-      return { success: true };
-    } catch (error) {
-      return { error: (error as Error).message, success: false };
-    }
+      treeKill(pid, 'SIGTERM', (err) => {
+        setTimeout(() => {
+          treeKill(pid, 'SIGKILL', () => {
+            this.processes.delete(shellId);
+          });
+        }, 3000);
+        resolve({ error: err?.message, success: !err });
+      });
+    });
   }
 
-  cleanupAll(): void {
-    for (const [id, sp] of this.processes) {
-      try {
-        sp.process.kill();
-      } catch {
-        // Ignore
-      }
-      this.processes.delete(id);
+  async killByPid(pid: number, force?: boolean): Promise<KillCommandResult> {
+    return new Promise((resolve) => {
+      treeKill(pid, force ? 'SIGKILL' : 'SIGTERM', (err) => {
+        resolve({ error: err?.message, success: !err });
+      });
+    });
+  }
+
+  async cleanupAll(): Promise<void> {
+    const ids = [...this.processes.keys()];
+    for (const shellId of ids) {
+      await Promise.race([
+        this.killTree(shellId).catch(() => {}),
+        new Promise<void>((resolve) => setTimeout(resolve, 1000)),
+      ]);
     }
+    this.processes.clear();
+  }
+
+  private toMeta(shellId: string, sp: ShellProcess): ShellProcessMeta {
+    return {
+      command: sp.command,
+      cwd: sp.cwd,
+      exitCode: sp.exitCode,
+      pgid: sp.pgid,
+      pid: sp.process.pid,
+      processId: sp.processId,
+      runInBackground: sp.runInBackground,
+      shellId,
+      startedAt: sp.startedAt ?? 0,
+    };
   }
 }

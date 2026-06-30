@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 
 import type { RunCommandParams, RunCommandResult } from '../types';
 import type { ShellProcess, ShellProcessManager } from './process-manager';
@@ -32,21 +33,32 @@ export async function runCommand(
   logger?.debug(`${logPrefix} Starting`, { background: run_in_background, cwd, timeout });
 
   const shellConfig = getShellConfig(command);
-  const childEnv = extraEnv ? { ...process.env, ...extraEnv } : process.env;
+  const processId = randomUUID();
+  const childEnv = {
+    ...(extraEnv ? { ...process.env, ...extraEnv } : process.env),
+    LOBEHUB_PROCESS_ID: processId,
+  };
 
   try {
     const shellId = processManager.createShellId();
     const childProcess = spawn(shellConfig.cmd, shellConfig.args, {
       cwd,
+      detached: true,
       env: childEnv,
       shell: false,
     });
 
     const shellProcess: ShellProcess = {
+      command,
+      cwd,
       exitCode: null,
       lastReadStderr: 0,
       lastReadStdout: 0,
+      pgid: process.platform === 'win32' ? undefined : childProcess.pid,
       process: childProcess,
+      processId,
+      runInBackground: run_in_background ?? false,
+      startedAt: Date.now(),
       stderr: [],
       stdout: [],
     };
