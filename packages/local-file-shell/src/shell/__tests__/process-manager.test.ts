@@ -2,7 +2,7 @@ import type { ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
 import treeKill from 'tree-kill';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ShellProcess, ShellProcessManager } from '../process-manager';
 
@@ -409,6 +409,61 @@ describe('ShellProcessManager', () => {
       await manager.killByPid(999, true);
 
       expect(treeKillMock).toHaveBeenCalledWith(999, 'SIGKILL', expect.any(Function));
+    });
+  });
+
+  describe('events', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('register emits change once', () => {
+      const listener = vi.fn();
+      manager.events.on('change', listener);
+      const proc = createMockProcess(null, 10);
+      manager.register('sh-evt-1', createShellProcess(proc));
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('natural exit emits change with endedAt already set', () => {
+      const proc = createMockProcess(null, 11);
+      const sp = createShellProcess(proc);
+      manager.register('sh-evt-2', sp);
+      let capturedEndedAt: number | undefined;
+      manager.events.on('change', () => {
+        capturedEndedAt = sp.endedAt;
+      });
+      proc.emit('exit', 0);
+      expect(capturedEndedAt).toBeDefined();
+    });
+
+    it('killTree emits change once after SIGKILL cleanup', async () => {
+      vi.useFakeTimers();
+      treeKillMock.mockImplementation((_pid, _signal, cb) => {
+        cb?.();
+      });
+      const proc = createMockProcess(null, 12);
+      manager.register('sh-evt-3', createShellProcess(proc));
+      const listener = vi.fn();
+      manager.events.on('change', listener);
+      listener.mockClear();
+      await manager.killTree('sh-evt-3');
+      expect(listener).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('throwing listener does not prevent subsequent listeners from firing', () => {
+      const proc = createMockProcess(null, 13);
+      const throwingListener = vi.fn(() => {
+        throw new Error('listener error');
+      });
+      const normalListener = vi.fn();
+      manager.events.on('change', throwingListener);
+      manager.events.on('change', normalListener);
+      manager.register('sh-evt-4', createShellProcess(proc));
+      expect(throwingListener).toHaveBeenCalledTimes(1);
+      expect(normalListener).toHaveBeenCalledTimes(1);
     });
   });
 

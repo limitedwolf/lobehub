@@ -1,4 +1,5 @@
 import type { ChildProcess } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 
 import treeKill from 'tree-kill';
 
@@ -37,6 +38,8 @@ export interface ShellProcessMeta {
 }
 
 export class ShellProcessManager {
+  readonly events = new EventEmitter();
+
   private nextShellId = 1;
 
   private processes = new Map<string, ShellProcess>();
@@ -53,11 +56,13 @@ export class ShellProcessManager {
 
     const markEnded = () => {
       shellProcess.endedAt ??= Date.now();
+      this.emitChange();
     };
 
     shellProcess.process.once('exit', markEnded);
     shellProcess.process.once('error', markEnded);
     this.processes.set(shellId, shellProcess);
+    this.emitChange();
   }
 
   list(): ShellProcessMeta[] {
@@ -171,6 +176,7 @@ export class ShellProcessManager {
         setTimeout(() => {
           treeKill(pid, 'SIGKILL', () => {
             this.processes.delete(shellId);
+            this.emitChange();
           });
         }, 3000);
         resolve({ error: err?.message, success: !err });
@@ -195,6 +201,17 @@ export class ShellProcessManager {
       ]);
     }
     this.processes.clear();
+  }
+
+  private emitChange(): void {
+    const listeners = this.events.rawListeners('change') as (() => void)[];
+    for (const fn of listeners) {
+      try {
+        fn();
+      } catch {
+        // subscriber errors must not propagate to the caller
+      }
+    }
   }
 
   private toMeta(shellId: string, sp: ShellProcess): ShellProcessMeta {
