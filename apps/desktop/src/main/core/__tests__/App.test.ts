@@ -1,6 +1,7 @@
+// Import after mocks are set up
+import { app } from 'electron';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Import after mocks are set up
 import { App } from '../App';
 
 const mockPathExistsSync = vi.fn();
@@ -16,6 +17,7 @@ vi.mock('electron', () => ({
     isReady: vi.fn(() => true),
     whenReady: vi.fn(() => Promise.resolve()),
     on: vi.fn(),
+    quit: vi.fn(),
     commandLine: {
       appendSwitch: vi.fn(),
     },
@@ -196,6 +198,66 @@ describe('App', () => {
       const storagePath = appInstance.appStoragePath;
 
       expect(storagePath).toBe('/mock/storage/path');
+    });
+  });
+
+  describe('handleBeforeQuit + runShutdownCleanup', () => {
+    beforeEach(() => {
+      import.meta.glob = vi.fn(() => ({}));
+      appInstance = new App();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('calls cleanupAll and then app.quit', async () => {
+      appInstance.shellProcessManager = {
+        cleanupAll: vi.fn().mockResolvedValue(undefined),
+      } as any;
+
+      await (appInstance as any).runShutdownCleanup();
+
+      expect(appInstance.shellProcessManager.cleanupAll).toHaveBeenCalled();
+      expect(app.quit).toHaveBeenCalled();
+    });
+
+    it('calls app.quit even when cleanupAll never resolves (timeout)', async () => {
+      vi.useFakeTimers();
+      appInstance.shellProcessManager = {
+        cleanupAll: vi.fn().mockReturnValue(new Promise(() => {})),
+      } as any;
+      (appInstance as any).cleanupTimeoutMs = 50;
+
+      const cleanupPromise = (appInstance as any).runShutdownCleanup();
+      await vi.advanceTimersByTimeAsync(50);
+      await cleanupPromise;
+
+      expect(app.quit).toHaveBeenCalled();
+    });
+
+    it('calls app.quit when cleanupAll rejects', async () => {
+      appInstance.shellProcessManager = {
+        cleanupAll: vi.fn().mockRejectedValue(new Error('boom')),
+      } as any;
+
+      await (appInstance as any).runShutdownCleanup();
+
+      expect(app.quit).toHaveBeenCalled();
+    });
+
+    it('handleBeforeQuit re-entry guard prevents double preventDefault', () => {
+      (appInstance as any).runShutdownCleanup = vi.fn().mockResolvedValue(undefined);
+
+      const event1 = { preventDefault: vi.fn() };
+      (appInstance as any).handleBeforeQuit(event1);
+      expect(event1.preventDefault).toHaveBeenCalledOnce();
+      expect(appInstance.isQuiting).toBe(true);
+
+      const event2 = { preventDefault: vi.fn() };
+      (appInstance as any).handleBeforeQuit(event2);
+      expect(event2.preventDefault).not.toHaveBeenCalled();
+      expect(appInstance.isQuiting).toBe(true);
     });
   });
 });

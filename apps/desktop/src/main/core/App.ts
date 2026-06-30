@@ -478,17 +478,37 @@ export class App {
     this.ipcServer = new ElectronIPCServer(name, ipcServerEvents);
   }
 
-  // Add before-quit handler function
-  private handleBeforeQuit = () => {
-    logger.info('Application is preparing to quit');
-    this.isQuiting = true;
+  private cleanupTimeoutMs = 3000;
 
-    // Destroy tray
+  private handleBeforeQuit = (event: Electron.Event) => {
+    // Re-entry guard. Electron fires before-quit again after our app.quit()
+    // call below; on the second pass we must let the default behavior win.
+    if (this.isQuiting) return;
+    this.isQuiting = true;
+    event.preventDefault();
+
+    void this.runShutdownCleanup();
+  };
+
+  private runShutdownCleanup = async (): Promise<void> => {
     if (process.platform === 'win32') {
       this.trayManager.destroyAll();
     }
-
-    // Execute cleanup operations
     this.staticFileServerManager.destroy();
+
+    logger.info('Quitting: cleaning up background processes...');
+    try {
+      await Promise.race([
+        Promise.allSettled([
+          this.shellProcessManager.cleanupAll(),
+          // binaryManager.closeAllSessions() — wired in PR-4 when BinaryManager.lifecycle ships
+        ]),
+        new Promise<void>((resolve) => setTimeout(resolve, this.cleanupTimeoutMs)),
+      ]);
+    } catch (error) {
+      logger.warn('Background process cleanup threw unexpectedly:', error);
+    }
+    logger.info('Cleanup finished; quitting now.');
+    app.quit();
   };
 }
