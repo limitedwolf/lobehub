@@ -1,11 +1,12 @@
 'use client';
 
 import { type UserCredSummary } from '@lobechat/types';
+import { TRPCClientError } from '@trpc/client';
 import { Button, Flexbox } from '@lobehub/ui';
 import { useMutation } from '@tanstack/react-query';
-import { Empty, Spin } from 'antd';
+import { Empty, Result, Spin } from 'antd';
 import { createStaticStyles } from 'antd-style';
-import { LogIn } from 'lucide-react';
+import { LogIn, SettingOutlined } from 'lucide-react';
 import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -44,7 +45,7 @@ const CredsList: FC = () => {
   const { allowed: canManageCredentials } = usePermission('manage_provider_key');
   const credsApi = useCredsApi();
 
-  const { data, isLoading, refetch } = credsApi.query.list.useQuery(undefined, {
+  const { data, error, isLoading, refetch } = credsApi.query.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -86,6 +87,24 @@ const CredsList: FC = () => {
         <Button icon={LogIn} type={'primary'} onClick={() => signIn()}>
           {t('creds.signIn')}
         </Button>
+      </div>
+    );
+  }
+
+  // 组织未创建：引导用户先完成社区资料设置
+  if (
+    error instanceof TRPCClientError &&
+    error.data?.code === 'NOT_FOUND' &&
+    !isLoading
+  ) {
+    return (
+      <div className={styles.signInPrompt}>
+        <Result
+          icon={<SettingOutlined style={{ fontSize: 48 }} />}
+          status={'info'}
+          subTitle={t('creds.orgSetupRequired')}
+          title={t('creds.orgSetupRequired')}
+        />
       </div>
     );
   }
