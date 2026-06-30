@@ -1312,10 +1312,7 @@ export class AiAgentService {
     const heteroProviderType = agentConfig.agencyConfig?.heterogeneousProvider?.type;
     const isHeteroAgent = !!heteroProviderType || HETERO_AGENT_MODELS.has(model);
     const heteroType = (heteroProviderType ?? model) as
-      | 'claude-code'
-      | 'codex'
-      | 'hermes'
-      | 'openclaw';
+      'claude-code' | 'codex' | 'hermes' | 'openclaw';
 
     // ── Shared turn setup (runs for BOTH hetero and normal agents) ──────────
     // Everything up to and including persisting the turn is identical for both
@@ -2377,6 +2374,7 @@ export class AiAgentService {
         hasEnabledKnowledgeBases,
         isBotConversation,
         isGroupSupervisor,
+        modelAbilities,
         // Context-aware builtin manifests: inside a sub-agent (or group) run,
         // lobe-agent drops `callSubAgent` so the model can't recurse into nested
         // sub-agents (which the runtime rejects, looping until the inactivity
@@ -4219,8 +4217,7 @@ export class AiAgentService {
     if (topicId) {
       const topic = await this.topicModel.findById(topicId);
       const runningOp = (topic?.metadata as any)?.runningOperation as
-        | { deviceId?: string; heteroType?: string; operationId?: string }
-        | undefined;
+        { deviceId?: string; heteroType?: string; operationId?: string } | undefined;
 
       if (
         runningOp?.deviceId &&
