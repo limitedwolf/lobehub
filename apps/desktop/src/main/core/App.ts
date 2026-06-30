@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import type { ElectronIPCEventHandler } from '@lobechat/electron-server-ipc';
 import { ElectronIPCServer } from '@lobechat/electron-server-ipc';
+import { ShellProcessManager } from '@lobechat/local-file-shell';
 import { app, nativeTheme, protocol } from 'electron';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import * as electronIs from 'electron-is';
@@ -35,6 +36,7 @@ import { IoCContainer } from './infrastructure/IoCContainer';
 import { LocalFileProtocolManager } from './infrastructure/LocalFileProtocolManager';
 import { ProtocolManager } from './infrastructure/ProtocolManager';
 import { RendererUrlManager } from './infrastructure/RendererUrlManager';
+import { ShellProcessPersister } from './infrastructure/ShellProcessPersister';
 import { StaticFileServerManager } from './infrastructure/StaticFileServerManager';
 import { StoreManager } from './infrastructure/StoreManager';
 import { UpdaterManager } from './infrastructure/UpdaterManager';
@@ -65,6 +67,8 @@ export class App {
   rendererUrlManager: RendererUrlManager;
   localFileProtocolManager: LocalFileProtocolManager;
   binaryManager: BinaryManager;
+  shellProcessManager: ShellProcessManager;
+  shellProcessPersister: ShellProcessPersister;
   screenCaptureManager: ScreenCaptureManager;
   chromeFlags: string[] = ['OverlayScrollbar', 'FluentOverlayScrollbar', 'FluentScrollbar'];
 
@@ -148,6 +152,8 @@ export class App {
     this.staticFileServerManager = new StaticFileServerManager(this);
     this.protocolManager = new ProtocolManager(this);
     this.binaryManager = new BinaryManager(this);
+    this.shellProcessManager = new ShellProcessManager();
+    this.shellProcessPersister = new ShellProcessPersister(this.shellProcessManager);
     this.screenCaptureManager = new ScreenCaptureManager(this);
 
     // Register built-in binary specs

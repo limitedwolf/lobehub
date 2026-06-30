@@ -6,7 +6,7 @@ import type {
   RunCommandParams,
   RunCommandResult,
 } from '@lobechat/electron-client-ipc';
-import { runCommand, ShellProcessManager } from '@lobechat/local-file-shell';
+import { runCommand } from '@lobechat/local-file-shell';
 
 import { createLogger } from '@/utils/logger';
 
@@ -15,13 +15,15 @@ import { ControllerModule, IpcMethod } from './index';
 
 const logger = createLogger('controllers:ShellCommandCtr');
 
-const processManager = new ShellProcessManager();
-
 /** Prefix for a simple `lh`/`lobe`/`lobehub` invocation (keyword + boundary, args via slice). */
 const SIMPLE_LH_PREFIX = /^\s*(?:lh|lobe|lobehub)(?=\s|$)/;
 
 export default class ShellCommandCtr extends ControllerModule {
   static override readonly groupName = 'shellCommand';
+
+  private get processManager() {
+    return this.app.shellProcessManager;
+  }
 
   @IpcMethod()
   async handleRunCommand(params: RunCommandParams): Promise<RunCommandResult> {
@@ -42,16 +44,16 @@ export default class ShellCommandCtr extends ControllerModule {
       }
     }
 
-    return runCommand(params, { logger, processManager });
+    return runCommand(params, { logger, processManager: this.processManager });
   }
 
   @IpcMethod()
   async handleGetCommandOutput(params: GetCommandOutputParams): Promise<GetCommandOutputResult> {
-    return processManager.getOutput(params);
+    return this.processManager.getOutput(params);
   }
 
   @IpcMethod()
   async handleKillCommand({ shell_id }: KillCommandParams): Promise<KillCommandResult> {
-    return processManager.killTree(shell_id);
+    return this.processManager.killTree(shell_id);
   }
 }
