@@ -811,18 +811,29 @@ export class ConversationControlActionImpl {
     // If the operation has already been garbage-collected (e.g. the bridge
     // timed out earlier and `runtime_end` rolled the op into `completed`
     // 30s+ ago), don't pass the stale opId into the optimistic chain — the
-    // `internal_getConversationContext` fallback uses global state, which
-    // matches the active conversation the user just clicked in. The IPC
-    // submit below stays unchanged: `bridge.resolve()` no-ops on unknown
-    // toolCallIds, so it's safe to fire even when the bridge is gone.
+    // `internal_getConversationContext` fallback would then use global state.
+    // A global approval card can be mounted for exactly this GC'd state (see
+    // `reconstructContextFromMessages`), so scope the optimistic writes with
+    // this card's own `effectiveContext` instead — otherwise they land on
+    // whatever topic the user is currently viewing, leaving the approved tool
+    // message un-flipped in its own bucket (the card lingers). The IPC submit
+    // below stays unchanged: `bridge.resolve()` no-ops on unknown toolCallIds,
+    // so it's safe to fire even when the bridge is gone.
     const operationAlive = !!this.#get().operations[operationId];
     if (!operationAlive) {
       console.warn(
-        '[submitHeteroIntervention] operation already gone, using global-state fallback for optimistic write:',
+        '[submitHeteroIntervention] operation already gone, scoping optimistic write to the card context:',
         operationId,
       );
     }
-    const optimisticContext: OptimisticUpdateContext = operationAlive ? { operationId } : {};
+    const optimisticContext: OptimisticUpdateContext = operationAlive
+      ? { operationId }
+      : {
+          agentId: effectiveContext.agentId,
+          groupId: effectiveContext.groupId,
+          threadId: effectiveContext.threadId,
+          topicId: effectiveContext.topicId,
+        };
 
     if (actionType === 'submit') {
       await this.#get().optimisticUpdateMessagePlugin(

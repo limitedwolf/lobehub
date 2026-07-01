@@ -35,9 +35,16 @@ export class MessageInternalsActionImpl {
 
   internal_dispatchMessage = (
     payload: MessageDispatch,
-    context?: { operationId?: string },
+    context?: {
+      agentId?: string;
+      groupId?: string;
+      operationId?: string;
+      threadId?: string;
+      topicId?: string;
+    },
   ): void => {
-    // Get full conversation context (including scope) from operation or global state
+    // Get full conversation context (including scope) from operation, explicit
+    // context, or global state.
     const ctx = this.#get().internal_getConversationContext(context);
     log(
       '[internal_dispatchMessage] context: agentId=%s, topicId=%s, threadId=%s, scope=%s',

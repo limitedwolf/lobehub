@@ -24,9 +24,17 @@ import { dbMessageSelectors } from '../selectors';
  * Context for optimistic updates to specify session/topic isolation
  */
 export interface OptimisticUpdateContext {
+  // Explicit conversation target, used when no live operation pins the bucket
+  // (e.g. a GC'd hetero submit answered from the global approval card). Takes
+  // precedence over global active-conversation state so the write lands on the
+  // right bucket. See `internal_getConversationContext`.
+  agentId?: string;
+  groupId?: string;
   operationId?: string;
   /** Pre-generated temp message ID (used when ID needs to be known before creation) */
   tempMessageId?: string;
+  threadId?: string;
+  topicId?: string;
 }
 
 /**

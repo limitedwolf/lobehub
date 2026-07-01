@@ -1942,12 +1942,12 @@ describe('ConversationControl actions', () => {
       );
     });
 
-    it("CURRENT BEHAVIOR: falls back to global-state optimistic context (empty op) and still submits when the operation is GC'd", async () => {
-      // Characterizes action.ts ~735/~758: when the resolved op has already been
-      // garbage-collected (not present in `operations`), the optimistic context
-      // is the empty object `{}` (global-state fallback) rather than carrying the
-      // stale operationId — but the IPC submit STILL fires with that operationId,
-      // and the call does NOT throw. Locked as-is.
+    it("scopes the optimistic context to the effective context (not a stale opId) and still submits when the operation is GC'd", async () => {
+      // When the resolved op has already been garbage-collected (not present in
+      // `operations`), we don't pass the stale operationId into the optimistic
+      // chain — instead the optimistic context carries the effective conversation
+      // (here the global fallback, since no explicit context is passed), and the
+      // IPC submit STILL fires with that operationId. The call does NOT throw.
       const { result } = renderHook(() => useChatStore());
 
       const agentId = 'hetero-agent';
@@ -1997,11 +1997,12 @@ describe('ConversationControl actions', () => {
         ).resolves.toBeUndefined();
       });
 
-      // Optimistic write uses the empty global-state fallback context.
+      // Optimistic write carries the effective context (global fallback here),
+      // not a stale operationId.
       expect(pluginSpy).toHaveBeenCalledWith(
         'tool-msg-1',
         expect.objectContaining({ intervention: expect.objectContaining({ status: 'rejected' }) }),
-        {},
+        { agentId, groupId: undefined, threadId: undefined, topicId },
       );
 
       // IPC submit still fires with the (stale) resolved operationId + cancel.
@@ -2084,6 +2085,88 @@ describe('ConversationControl actions', () => {
       );
       // ...and the topic the user is currently viewing is never touched.
       expect(updateTopicStatusSpy).not.toHaveBeenCalledWith(
+        expect.objectContaining({ topicId: activeTopicId }),
+      );
+    });
+
+    it("scopes the optimistic message write to the card's context (not the active topic) when the operation is GC'd", async () => {
+      // Regression: when the run's `execHeterogeneousAgent` op has been
+      // garbage-collected, a global approval card is still mounted from the
+      // bucket's message fields (`reconstructContextFromMessages`). Answering it
+      // must scope the optimistic plugin/content writes to the CARD's bucket, or
+      // the approved tool message never flips in its own bucket (card lingers)
+      // and a no-op write hits whatever topic the user is currently viewing.
+      const { result } = renderHook(() => useChatStore());
+
+      const agentId = 'hetero-agent';
+      const cardTopicId = 'background-topic';
+      const activeTopicId = 'the-topic-user-is-viewing';
+      const chatKey = messageMapKey({ agentId, topicId: cardTopicId });
+
+      const assistantMessage = createMockMessage({ id: 'assistant-msg-1', role: 'assistant' });
+      const toolMessage = createMockMessage({
+        id: 'tool-msg-1',
+        parentId: assistantMessage.id,
+        plugin: {
+          apiName: 'askUserQuestion',
+          arguments: '{}',
+          identifier: 'lobe-claude-code',
+          type: 'default',
+        },
+        role: 'tool',
+        tool_call_id: 'cc_call_1',
+      } as any);
+
+      act(() => {
+        useChatStore.setState({
+          // User is parked elsewhere; the card's run op is already GC'd.
+          activeAgentId: agentId,
+          activeThreadId: undefined,
+          activeTopicId,
+          dbMessagesMap: { [chatKey]: [assistantMessage, toolMessage] },
+          messagesMap: { [chatKey]: [assistantMessage, toolMessage] },
+          messageOperationMap: { [assistantMessage.id]: 'gc-op-id' },
+          operations: {},
+        });
+      });
+
+      const pluginSpy = vi
+        .spyOn(result.current, 'optimisticUpdateMessagePlugin')
+        .mockResolvedValue(undefined);
+      const contentSpy = vi
+        .spyOn(result.current, 'optimisticUpdateMessageContent')
+        .mockResolvedValue(undefined);
+      vi.spyOn(result.current, 'updateTopicStatus').mockResolvedValue(undefined as any);
+      vi.spyOn(heterogeneousAgentService, 'submitIntervention').mockResolvedValue(undefined as any);
+
+      await act(async () => {
+        await result.current.submitHeteroIntervention(
+          'tool-msg-1',
+          'submit',
+          { 'Which color?': 'Blue' },
+          { agentId, threadId: undefined, topicId: cardTopicId },
+        );
+      });
+
+      // Both optimistic writes carry the card's own agent/topic — NOT a stale
+      // operationId and NOT the active topic.
+      const expectedCtx = {
+        agentId,
+        groupId: undefined,
+        threadId: undefined,
+        topicId: cardTopicId,
+      };
+      expect(pluginSpy).toHaveBeenCalledWith('tool-msg-1', expect.anything(), expectedCtx);
+      expect(contentSpy).toHaveBeenCalledWith(
+        'tool-msg-1',
+        expect.any(String),
+        undefined,
+        expectedCtx,
+      );
+      // Never scoped to the topic the user is currently viewing.
+      expect(pluginSpy).not.toHaveBeenCalledWith(
+        'tool-msg-1',
+        expect.anything(),
         expect.objectContaining({ topicId: activeTopicId }),
       );
     });

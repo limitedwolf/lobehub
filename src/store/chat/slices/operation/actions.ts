@@ -47,7 +47,13 @@ export class OperationActionsImpl {
     this.#get = get;
   }
 
-  internal_getConversationContext = (context?: { operationId?: string }): MessageMapKeyInput => {
+  internal_getConversationContext = (context?: {
+    agentId?: string;
+    groupId?: string;
+    operationId?: string;
+    threadId?: string;
+    topicId?: string;
+  }): MessageMapKeyInput => {
     if (context?.operationId) {
       const operation = this.#get().operations[context.operationId];
       if (!operation) {
@@ -84,6 +90,23 @@ export class OperationActionsImpl {
         // subTopicId). Only agentId needs the non-null assertion.
         return { ...operation.context, agentId: agentId! };
       }
+    }
+
+    // Explicit conversation context — used when the caller knows the concrete
+    // conversation but no live operation pins it (e.g. answering a global
+    // approval whose `execHeterogeneousAgent` op was already GC'd). Preferred
+    // over global state so optimistic writes land on the card's own bucket,
+    // not whatever topic the user happens to be viewing. Only agent/topic/
+    // thread scope reaches here — group/page scopes can't be mounted from a
+    // GC'd op (see `reconstructContextFromMessages`), so they still need a live
+    // operation and never fall through to this branch.
+    if (context?.agentId) {
+      return {
+        agentId: context.agentId,
+        groupId: context.groupId,
+        threadId: context.threadId,
+        topicId: context.topicId,
+      };
     }
 
     // Fallback to global state
