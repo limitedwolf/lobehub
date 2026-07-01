@@ -16,9 +16,10 @@ import { chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { consumePendingTopicRepos, getPendingTopicRepos } from '@/store/chat/pendingTopicRepos';
 import { topicSelectors } from '@/store/chat/selectors';
 import type { ChatStore } from '@/store/chat/store';
+import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import type { StoreSetter } from '@/store/types';
 import { useUserStore } from '@/store/user';
-import { settingsSelectors } from '@/store/user/selectors';
+import { settingsSelectors, toolInterventionSelectors } from '@/store/user/selectors';
 
 import { buildRunLifecycle } from '../../lifecycle/buildRunLifecycle';
 import type { RunScope } from '../../lifecycle/types';
@@ -212,8 +213,8 @@ export class GatewayActionImpl {
 
     // Forward agent events to caller, and track terminal events.
     //
-    // Only THIS op's terminal counts. On a multiplexed connection (LOBE-10868)
-    // the supervisor's WS also carries forwarded member terminals; a member
+    // Only THIS op's terminal counts. On a multiplexed connection the
+    // supervisor's WS also carries forwarded member terminals; a member
     // finishing must not mark the supervisor run complete or stomp its unread
     // status. Match on the event's operationId (absent ⇒ legacy single-op WS,
     // treat as this op's to preserve prior behavior).
@@ -365,6 +366,8 @@ export class GatewayActionImpl {
     metadata?: Pick<MessageMetadata, 'trigger'>;
     /** Called when the gateway session completes (agent finished running) */
     onComplete?: () => void;
+    /** Temporary sidebar topic inserted by sendMessage before the server creates the real topic. */
+    optimisticTopic?: { id: string; title: string };
     /** Parent message ID for regeneration/continue (skip user message creation, branch from this message) */
     parentMessageId?: string;
     /**
@@ -397,6 +400,7 @@ export class GatewayActionImpl {
       message,
       metadata,
       onComplete,
+      optimisticTopic,
       parentMessageId,
       parentOperationId,
       resumeApproval,
@@ -432,6 +436,10 @@ export class GatewayActionImpl {
       : undefined;
 
     const localDeviceId = await resolveLocalDeviceId(context.agentId);
+    const userInterventionConfig = {
+      approvalMode: toolInterventionSelectors.approvalMode(useUserStore.getState()),
+      allowList: toolInterventionSelectors.allowList(useUserStore.getState()),
+    };
 
     const result = await aiAgentService.execAgentTask(
       {
@@ -465,6 +473,7 @@ export class GatewayActionImpl {
         prompt: message,
         resumeApproval,
         trigger: metadata?.trigger,
+        userInterventionConfig,
       },
       { signal: abortSignal },
     );
@@ -482,6 +491,18 @@ export class GatewayActionImpl {
     if (isCreateNewTopic && result.topicId) {
       // Topic created successfully — now safe to clear the pending repo selection.
       if (context.agentId) consumePendingTopicRepos(context.agentId);
+      if (optimisticTopic) {
+        this.#get().internal_replaceTopicId({
+          agentId: context.agentId,
+          groupId: context.groupId,
+          nextId: result.topicId,
+          previousId: optimisticTopic.id,
+          value: {
+            ...(context.groupId ? {} : { sessionId: context.agentId }),
+            title: optimisticTopic.title,
+          },
+        });
+      }
       try {
         const newContext = { ...context, topicId: result.topicId };
         const messages = await messageService.getMessages(newContext);
@@ -513,9 +534,10 @@ export class GatewayActionImpl {
 
     // Use the server-created topicId for the execution context
     const execContext = { ...context, topicId: result.topicId };
+    this.#get().moveQueuedMessages(messageMapKey(context), messageMapKey(execContext));
 
     if (result.topicId) {
-      this.#get().internal_updateTopicLoading(result.topicId, true);
+      if (!optimisticTopic) this.#get().internal_updateTopicLoading(result.topicId, true);
       void this.#get().updateTopicStatus?.({
         agentId: context.agentId,
         groupId: context.groupId,
@@ -608,9 +630,9 @@ export class GatewayActionImpl {
     });
 
     // Demux the supervisor's WebSocket: with single-connection multiplexing
-    // (LOBE-10868) this WS also carries each broadcast member's streaming events
-    // (forwarded server-side onto the supervisor op channel). Route owner events
-    // to the full handler and member events to render-only member handlers so a
+    // this WS also carries each broadcast member's streaming events (forwarded
+    // server-side onto the supervisor op channel). Route owner events to the
+    // full handler and member events to render-only member handlers so a
     // member's chunks stream into its own council column instead of corrupting
     // the supervisor bubble.
     const eventRouter = createGatewayEventRouter({

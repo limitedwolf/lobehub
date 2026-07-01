@@ -40,8 +40,9 @@ export interface GatewayMemberStreamHandlerParams {
 
 /**
  * A render-only handler for a broadcast council member whose streaming events
- * are multiplexed onto the supervisor's Gateway WebSocket (LOBE-10868, option
- * B: server forwards member events onto the supervisor op channel).
+ * are multiplexed onto the supervisor's Gateway WebSocket (server forwards
+ * member events onto the supervisor op channel, single-connection
+ * multiplexing).
  *
  * Scope is deliberately narrow — it owns ONLY the member's live text/reasoning/
  * tool-call streaming into its council column. It does NOT drive any run
@@ -143,6 +144,17 @@ export const createGatewayMemberStreamHandler = (
         }
         if (data.chunkType === 'tools_calling' && data.toolsCalling) {
           dispatch({ tools: data.toolsCalling });
+        }
+        break;
+      }
+
+      case 'visible_output_end': {
+        // Example: forwarded member streams can finish text before the
+        // supervisor's terminal barrier refetches the group tree. Clear only
+        // the member column's visible loading; terminal reconciliation still
+        // belongs to agent_runtime_end/error.
+        if (localOperationId) {
+          get().updateOperationMetadata(localOperationId, { visibleLoadingDone: true });
         }
         break;
       }

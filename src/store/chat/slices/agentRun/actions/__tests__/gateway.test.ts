@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as ConstVersion from '@/const/version';
 import { aiAgentService } from '@/services/aiAgent';
 import { topicService } from '@/services/topic';
+import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
 import type { GatewayConnection } from '../transports/gateway/gateway';
 import { GatewayActionImpl } from '../transports/gateway/gateway';
@@ -32,6 +33,10 @@ vi.mock('@/services/topic', () => ({
 const mockUserDefaultConfig = vi.hoisted(() => ({
   disableGatewayMode: undefined as boolean | undefined,
 }));
+const mockToolInterventionConfig = vi.hoisted(() => ({
+  allowList: [] as string[],
+  approvalMode: 'manual' as 'allow-list' | 'auto-run' | 'manual',
+}));
 
 vi.mock('@/store/user', () => ({
   useUserStore: {
@@ -44,6 +49,10 @@ vi.mock('@/store/user/selectors', () => ({
     defaultAgentConfig: () => ({
       chatConfig: { disableGatewayMode: mockUserDefaultConfig.disableGatewayMode },
     }),
+  },
+  toolInterventionSelectors: {
+    allowList: () => mockToolInterventionConfig.allowList,
+    approvalMode: () => mockToolInterventionConfig.approvalMode,
   },
 }));
 
@@ -141,6 +150,8 @@ describe('GatewayActionImpl', () => {
   beforeEach(() => {
     mockAgentStore.state = { activeAgentId: undefined, agentMap: {} };
     mockUserDefaultConfig.disableGatewayMode = undefined;
+    mockToolInterventionConfig.approvalMode = 'manual';
+    mockToolInterventionConfig.allowList = [];
   });
 
   afterEach(() => {
@@ -498,7 +509,19 @@ describe('GatewayActionImpl', () => {
   describe('executeGatewayAgent', () => {
     function createExecuteTestAction() {
       const mockClient = createMockClient();
+      const moveQueuedMessages = vi.fn();
       const state: Record<string, any> = { gatewayConnections: {}, topicDataMap: {} };
+      const associateMessageWithOperation = vi.fn();
+      const connectToGateway = vi.fn();
+      const internalDispatchTopic = vi.fn();
+      const internalReplaceTopicId = vi.fn();
+      const internalUpdateTopicLoading = vi.fn();
+      const onOperationCancel = vi.fn();
+      const replaceMessages = vi.fn();
+      const refreshTopic = vi.fn().mockResolvedValue(undefined);
+      const startOperation = vi.fn(() => ({ operationId: 'gw-op-1' }));
+      const switchTopic = vi.fn();
+      const updateTopicStatus = vi.fn();
       const set = vi.fn((updater: any) => {
         if (typeof updater === 'function') {
           Object.assign(state, updater(state));
@@ -509,14 +532,18 @@ describe('GatewayActionImpl', () => {
 
       const get = vi.fn(() => ({
         ...state,
-        associateMessageWithOperation: vi.fn(),
-        connectToGateway: vi.fn(),
-        internal_dispatchTopic: vi.fn(),
-        internal_updateTopicLoading: vi.fn(),
-        onOperationCancel: vi.fn(),
-        replaceMessages: vi.fn(),
-        startOperation: vi.fn(() => ({ operationId: 'gw-op-1' })),
-        switchTopic: vi.fn(),
+        associateMessageWithOperation,
+        connectToGateway,
+        internal_dispatchTopic: internalDispatchTopic,
+        internal_replaceTopicId: internalReplaceTopicId,
+        internal_updateTopicLoading: internalUpdateTopicLoading,
+        moveQueuedMessages,
+        onOperationCancel,
+        replaceMessages,
+        refreshTopic,
+        startOperation,
+        switchTopic,
+        updateTopicStatus,
       })) as any;
 
       // Set up window.global_serverConfigStore
@@ -531,7 +558,25 @@ describe('GatewayActionImpl', () => {
       const action = new GatewayActionImpl(set as any, get, undefined);
       action.createClient = vi.fn(() => mockClient);
 
-      return { action, get, mockClient, set, state };
+      return {
+        action,
+        associateMessageWithOperation,
+        connectToGateway,
+        get,
+        internalDispatchTopic,
+        internalReplaceTopicId,
+        internalUpdateTopicLoading,
+        mockClient,
+        moveQueuedMessages,
+        onOperationCancel,
+        replaceMessages,
+        refreshTopic,
+        set,
+        startOperation,
+        state,
+        switchTopic,
+        updateTopicStatus,
+      };
     }
 
     afterEach(() => {
@@ -603,6 +648,72 @@ describe('GatewayActionImpl', () => {
       );
     });
 
+    it('should move queued follow-ups from the new-topic key to the server-created topic key', async () => {
+      const { action, moveQueuedMessages } = createExecuteTestAction();
+      const context = { agentId: 'agent-1', topicId: null, threadId: null };
+
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'server-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        token: 'test-token',
+        topicId: 'topic-created',
+        userMessageId: 'usr-1',
+      });
+
+      await action.executeGatewayAgent({
+        context,
+        message: 'Hello',
+      });
+
+      expect(moveQueuedMessages).toHaveBeenCalledWith(
+        messageMapKey(context),
+        messageMapKey({ ...context, topicId: 'topic-created' }),
+      );
+    });
+
+    it('should replace the optimistic topic placeholder with the server topic id', async () => {
+      const { action, internalReplaceTopicId } = createExecuteTestAction();
+
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'server-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        token: 'test-token',
+        topicId: 'topic-1',
+        userMessageId: 'usr-1',
+      });
+
+      await action.executeGatewayAgent({
+        context: { agentId: 'agent-1', topicId: null, threadId: null, scope: 'main' },
+        message: '666',
+        optimisticTopic: { id: 'tmp-topic', title: '666' },
+      });
+
+      expect(internalReplaceTopicId).toHaveBeenCalledWith({
+        agentId: 'agent-1',
+        groupId: undefined,
+        nextId: 'topic-1',
+        previousId: 'tmp-topic',
+        value: {
+          sessionId: 'agent-1',
+          title: '666',
+        },
+      });
+    });
+
     it('should forward metadata trigger to execAgentTask', async () => {
       const { action } = createExecuteTestAction();
 
@@ -631,6 +742,43 @@ describe('GatewayActionImpl', () => {
         expect.objectContaining({
           prompt: 'Hello',
           trigger: 'onboarding',
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('should forward current user intervention config to execAgentTask', async () => {
+      const { action } = createExecuteTestAction();
+      mockToolInterventionConfig.approvalMode = 'allow-list';
+      mockToolInterventionConfig.allowList = ['lobe-user-interaction/askUserQuestion'];
+
+      vi.mocked(aiAgentService.execAgentTask).mockResolvedValue({
+        agentId: 'agent-1',
+        assistantMessageId: 'ast-1',
+        autoStarted: true,
+        createdAt: new Date().toISOString(),
+        message: 'ok',
+        operationId: 'server-op-1',
+        status: 'created',
+        success: true,
+        timestamp: new Date().toISOString(),
+        token: 'test-token',
+        topicId: 'topic-1',
+        userMessageId: 'usr-1',
+      });
+
+      await action.executeGatewayAgent({
+        context: { agentId: 'agent-1', topicId: 'topic-1', threadId: null, scope: 'main' },
+        message: 'Hello',
+      });
+
+      expect(aiAgentService.execAgentTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: 'Hello',
+          userInterventionConfig: {
+            allowList: ['lobe-user-interaction/askUserQuestion'],
+            approvalMode: 'allow-list',
+          },
         }),
         expect.anything(),
       );
@@ -813,6 +961,7 @@ describe('GatewayActionImpl', () => {
         connectToGateway: vi.fn(),
         internal_dispatchTopic: vi.fn(),
         internal_updateTopicLoading: vi.fn(),
+        moveQueuedMessages: vi.fn(),
         onOperationCancel,
         replaceMessages: vi.fn(),
         startOperation,
