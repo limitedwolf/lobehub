@@ -8,10 +8,12 @@ import { AgentModel } from '@/database/models/agent';
 import { DocumentModel } from '@/database/models/document';
 import { ThreadModel } from '@/database/models/thread';
 import type { LobeChatDatabase } from '@/database/type';
+import type { AgentHook, AgentHookEvent } from '@/server/services/agentRuntime/hooks/types';
 import { AiAgentService } from '@/server/services/aiAgent';
 
 import type { VerifierAgentRunner } from './executor';
 import { describeEvidence, type JudgeEvidence } from './prompts';
+import { settleVerifierCheckFromTerminal } from './verifierTerminal';
 
 const log = debug('lobe-server:verify-agent-verifier');
 
@@ -20,7 +22,7 @@ const log = debug('lobe-server:verify-agent-verifier');
  * sub-agent reports its verdict by calling the `submitVerifyResult` tool with the
  * `checkItemId` injected here — it does not write to the DB directly.
  *
- * `evidence` is what the builder self-captured during the run (LOBE-10638): the
+ * `evidence` is what the builder self-captured during the run: the
  * verifier judges against the run goal AND this evidence — it's the verifier's
  * primary Data, not a competing verdict.
  */
@@ -61,13 +63,14 @@ export const buildVerifierPrompt = (params: {
  * config (executionTarget / device / provider) — so picking a heterogeneous
  * agent (e.g. Codex) naturally gives the verifier device + browser access. When
  * unset (or the pinned agent no longer exists) it falls back to the builtin
- * verify agent, which inherits the parent run's model/provider (its own default
- * may not point at a configured provider).
+ * verify agent, which receives a verify-safe provider/model resolved by the
+ * lifecycle layer. That resolver intentionally filters heterogeneous runtime
+ * identifiers (e.g. claude-code / codex) that cannot run LobeHub LLM calls.
  */
 export const createVerifierAgentRunner = (params: {
   db: LobeChatDatabase;
   deliverable: string;
-  /** Inherit the parent run's model so the builtin fallback uses a configured provider. */
+  /** Verify-safe model selected by the completion lifecycle. */
   model?: string | null;
   provider?: string | null;
   topicId?: string | null;
@@ -91,11 +94,11 @@ export const createVerifierAgentRunner = (params: {
 
     // Resolve which agent verifies. A pinned agent runs as itself (`agentId`) so
     // its own agency config drives execution target/provider — we don't override
-    // its model/provider. The builtin fallback runs by `slug` and inherits the
-    // parent run's model/provider.
+    // its model/provider. The builtin fallback runs by `slug` with the verify-safe
+    // model/provider selected by lifecycle.
     let threadAgentId: string;
     let agentRef: { agentId: string } | { slug: string };
-    let inheritModel = false;
+    let useProvidedModelConfig = false;
     // A pinned agent (selected for its runtime/device) carries only its own
     // configured plugins, so it lacks the verify writeback tool — inject it, else
     // the verdict never lands and the check result is stuck `running`. The builtin
@@ -118,7 +121,7 @@ export const createVerifierAgentRunner = (params: {
       }
       threadAgentId = builtin.id;
       agentRef = { slug: BUILTIN_AGENT_SLUGS.verifyAgent };
-      inheritModel = true;
+      useProvidedModelConfig = true;
     }
 
     const thread = await new ThreadModel(db, userId, workspaceId).create({
@@ -134,10 +137,42 @@ export const createVerifierAgentRunner = (params: {
 
     // Attach the builder-captured file artifacts (screenshots / videos / large
     // text) so a multimodal verifier can SEE them — the prompt only references
-    // them by presence + caption, which is blind for visual checks (LOBE-10638).
+    // them by presence + caption, which is blind for visual checks.
     const evidenceFileIds = (evidence ?? [])
       .map((e) => e.fileId)
       .filter((id): id is string => Boolean(id));
+
+    const terminalHookBody = {
+      checkItemId: checkItem.id,
+      parentOperationId: operationId,
+      userId,
+      ...(workspaceId ? { workspaceId } : {}),
+    };
+    const hooks: AgentHook[] = [
+      {
+        handler: async (event: AgentHookEvent) => {
+          await settleVerifierCheckFromTerminal(
+            db,
+            userId,
+            {
+              checkItemId: checkItem.id,
+              errorMessage: event.errorMessage,
+              parentOperationId: operationId,
+              reason: event.reason,
+              verifierOperationId: event.operationId,
+            },
+            workspaceId,
+          );
+        },
+        id: 'verify-agent-terminal',
+        type: 'onComplete' as const,
+        webhook: {
+          body: terminalHookBody,
+          delivery: 'qstash' as const,
+          url: '/api/workflows/verify/on-verifier-complete',
+        },
+      },
+    ];
 
     // The aiAgent → agentRuntime completion → verify lifecycle → this runner →
     // aiAgent import cycle is safe statically: every use here is call-time (inside
@@ -148,12 +183,13 @@ export const createVerifierAgentRunner = (params: {
       appContext: { threadId: thread.id, topicId },
       autoStart: true,
       ...(evidenceFileIds.length ? { fileIds: evidenceFileIds } : {}),
-      // Only the builtin fallback inherits the parent run's model/provider; a
-      // pinned agent keeps its own (critical for heterogeneous runtimes).
-      ...(inheritModel && model ? { model } : {}),
+      hooks,
+      // Only the builtin fallback receives lifecycle's verify-safe model/provider;
+      // a pinned agent keeps its own runtime config.
+      ...(useProvidedModelConfig && model ? { model } : {}),
       parentOperationId: operationId,
       prompt: buildVerifierPrompt({ checkItem, deliverable, evidence, goal, instruction }),
-      ...(inheritModel && provider ? { provider } : {}),
+      ...(useProvidedModelConfig && provider ? { provider } : {}),
       ...agentRef,
       userInterventionConfig: { approvalMode: 'headless' },
     });

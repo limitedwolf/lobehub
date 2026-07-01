@@ -13,6 +13,10 @@ export default {
   'import.incompatible.title': 'Current application does not support importing this file',
   'loginRequired.desc': 'You will be redirected to the sign-in page shortly',
   'loginRequired.title': 'Please sign in to use this feature',
+  'forbidden.backHome': 'Back to Home',
+  'forbidden.desc':
+    "You don't have permission to view this page. Please contact a workspace owner if you need access.",
+  'forbidden.title': 'Access denied',
   'notFound.backHome': 'Back to Home',
   'notFound.check': 'Please check if your URL is correct.',
   'notFound.desc': "We couldn't find the page you were looking for.",
@@ -181,6 +185,13 @@ export default {
     'This workspace is frozen by an admin and cannot run requests. Please contact the workspace owner to resolve the issue.',
   'response.WorkspaceFrozenByRiskControl':
     'This workspace was auto-frozen by risk control and cannot run requests. Please contact support to review the status.',
+  'workspaceBillingInactive.bannerHint': 'Click for details',
+  'workspaceBillingInactive.bannerTitle': 'Workspace subscription inactive',
+  'workspaceBillingInactive.confirm': 'Got it',
+  'workspaceBillingInactive.renew': 'Go to billing',
+  'workspaceBillingInactive.description':
+    "This workspace's paid subscription has lapsed. Sending messages and other paid actions are paused until the subscription is restored — you can still browse shared content in the meantime.",
+  'workspaceBillingInactive.title': 'Workspace subscription inactive',
   'workspaceFrozenByAdmin.bannerDescription': 'Contact support to review the reason and unfreeze.',
   'workspaceFrozenByAdmin.bannerHint': 'Click for details',
   'workspaceFrozenByAdmin.bannerTitle': 'Workspace frozen by admin',

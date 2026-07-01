@@ -1,7 +1,11 @@
 import type { LobeAgentChatConfig } from '@lobechat/types';
 import { describe, expect, it } from 'vitest';
 
-import { applyModelExtendParams, resolveDefaultThinkingLevelForModel } from './modelExtendParams';
+import {
+  applyModelExtendParams,
+  resolveDefaultEnableAdaptiveThinkingForModel,
+  resolveDefaultThinkingLevelForModel,
+} from './modelExtendParams';
 
 const chatConfig = (config: Partial<LobeAgentChatConfig> = {}): LobeAgentChatConfig =>
   ({ ...config }) as LobeAgentChatConfig;
@@ -85,6 +89,50 @@ describe('applyModelExtendParams', () => {
     });
 
     expect(result.reasoning_effort).toBe('max');
+  });
+
+  it('preserves thinking budget when deepseekV4ReasoningEffort is set', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({
+        deepseekV4ReasoningEffort: 'high',
+        reasoningBudgetToken: 2048,
+      }),
+      extendParams: ['deepseekV4ReasoningEffort', 'reasoningBudgetToken'],
+      model: 'deepseek-v4-pro',
+    });
+
+    expect(result.reasoning_effort).toBe('high');
+    expect(result.thinking).toEqual({
+      budget_tokens: 2048,
+      type: 'enabled',
+    });
+  });
+
+  it('respects Claude Sonnet 5 adaptive thinking default when unset', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({}),
+      extendParams: ['enableAdaptiveThinking'],
+      model: 'claude-sonnet-5',
+    });
+
+    expect(result.thinking).toBeUndefined();
+  });
+
+  it('disables adaptive thinking only when explicitly turned off', () => {
+    const result = applyModelExtendParams({
+      chatConfig: chatConfig({ enableAdaptiveThinking: false }),
+      extendParams: ['enableAdaptiveThinking'],
+      model: 'claude-sonnet-5',
+    });
+
+    expect(result.thinking).toEqual({ type: 'disabled' });
+  });
+});
+
+describe('resolveDefaultEnableAdaptiveThinkingForModel', () => {
+  it('uses per-model defaults', () => {
+    expect(resolveDefaultEnableAdaptiveThinkingForModel('claude-sonnet-5')).toBe(true);
+    expect(resolveDefaultEnableAdaptiveThinkingForModel('claude-opus-4-8')).toBeUndefined();
   });
 });
 

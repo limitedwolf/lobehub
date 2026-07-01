@@ -364,6 +364,7 @@ const AgentStreamEventSchema = z.object({
     'stream_start',
     'stream_chunk',
     'stream_end',
+    'visible_output_end',
     'stream_retry',
     'tool_start',
     'tool_end',
@@ -1213,6 +1214,19 @@ export const aiAgentRouter = router({
         .from(topics)
         .where(and(eq(topics.id, topicId), eq(topics.userId, ctx.userId)))
         .limit(1);
+
+      // Owner-token callers (a logged-in desktop reusing its own session) must
+      // prove they own the target topic — `topicRow` is already filtered by
+      // `userId`, so a missing row means the topic isn't theirs. The
+      // operation-token path is exempt: its `sub` may be a workspaceId that
+      // never matches `topics.userId`, and it's trusted as server-minted.
+      if (ctx.heteroAuthKind === 'user' && !topicRow) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Topic not found or not owned by the caller',
+        });
+      }
+
       const wsId = topicRow?.workspaceId ?? undefined;
       const heteroService = new HeterogeneousAgentService(ctx.serverDB, ctx.userId, {
         workspaceId: wsId,
@@ -1230,6 +1244,9 @@ export const aiAgentRouter = router({
       });
       return { ack: true as const };
     } catch (error: any) {
+      // Preserve deliberate auth errors (e.g. the ownership FORBIDDEN) instead
+      // of masking them as a generic 500.
+      if (error instanceof TRPCError) throw error;
       log('heteroIngest failed: %s', error?.message);
       throw new TRPCError({
         cause: error,
@@ -1258,6 +1275,15 @@ export const aiAgentRouter = router({
         .from(topics)
         .where(and(eq(topics.id, topicId), eq(topics.userId, ctx.userId)))
         .limit(1);
+
+      // See heteroIngest: owner tokens must own the topic; operation tokens are exempt.
+      if (ctx.heteroAuthKind === 'user' && !topicRow) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Topic not found or not owned by the caller',
+        });
+      }
+
       const wsId = topicRow?.workspaceId ?? undefined;
       const heteroService = new HeterogeneousAgentService(ctx.serverDB, ctx.userId, {
         workspaceId: wsId,
@@ -1279,6 +1305,9 @@ export const aiAgentRouter = router({
 
       return { ack: true as const };
     } catch (err: any) {
+      // Preserve deliberate auth errors (e.g. the ownership FORBIDDEN) instead
+      // of masking them as a generic 500.
+      if (err instanceof TRPCError) throw err;
       log('heteroFinish failed: %s', err?.message);
       throw new TRPCError({
         cause: err,

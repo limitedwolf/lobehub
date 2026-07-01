@@ -90,6 +90,23 @@ export const agentKeys = {
   list: def('agent:list', (isLogin: boolean) => ['agent:list', isLogin]),
 };
 
+// ---- agent builder (opening-suggestion chips) ---------------------------
+// Kept off `CACHE_TIERS` on purpose — these are ephemeral LLM-generated chips.
+// `contextSummary` is intentionally NOT part of the key so config autosaves for
+// the same target don't refetch; `nonce` bumps on manual refresh.
+export const agentBuilderKeys = {
+  suggestions: def(
+    'agentBuilder:suggestions',
+    (mode: string, builderAgentId: string, targetId: string | undefined, nonce: number) => [
+      'agentBuilder:suggestions',
+      mode,
+      builderAgentId,
+      targetId,
+      nonce,
+    ],
+  ),
+};
+
 // ---- group --------------------------------------------------------------
 export const groupKeys = {
   detail: def('group:detail', (groupId: string) => ['group:detail', groupId]),
@@ -412,10 +429,21 @@ export const deviceKeys = {
     deviceId,
     path,
   ]),
+  gitBranch: def('device:gitBranch', (deviceId: string, path: string) => [
+    'device:gitBranch',
+    deviceId,
+    path,
+  ]),
   gitBranches: def('device:gitBranches', (deviceId: string, path: string) => [
     'device:gitBranches',
     deviceId,
     path,
+  ]),
+  gitLinkedPR: def('device:gitLinkedPR', (deviceId: string, path: string, branch: string) => [
+    'device:gitLinkedPR',
+    deviceId,
+    path,
+    branch,
   ]),
   gitRemoteBranches: def('device:gitRemoteBranches', (deviceId: string, dirPath: string) => [
     'device:gitRemoteBranches',
@@ -432,12 +460,6 @@ export const deviceKeys = {
       baseRef,
     ],
   ),
-  gitInfo: def('device:gitInfo', (deviceId: string, path: string, isGithub: boolean) => [
-    'device:gitInfo',
-    deviceId,
-    path,
-    isGithub,
-  ]),
   gitWorkingTreeStatus: def('device:gitWorkingTreeStatus', (deviceId: string, path: string) => [
     'device:gitWorkingTreeStatus',
     deviceId,
@@ -556,6 +578,18 @@ export const chatToolKeys = {
 
 // ---- stats (settings/stats + user header counts) ------------------------
 export const statsKeys = {
+  agentUsageStat: def(
+    'stats:agentUsageStat',
+    (agentId: string, startAt: string, endAt: string, granularity: string) => [
+      'stats:agentUsageStat',
+      agentId,
+      startAt,
+      endAt,
+      granularity,
+    ],
+  ),
+  agents: def('stats:agents', () => ['stats:agents']),
+  countAgents: def('stats:countAgents', () => ['stats:countAgents']),
   countMessages: def('stats:countMessages', () => ['stats:countMessages']),
   countSessions: def('stats:countSessions', () => ['stats:countSessions']),
   countTopics: def('stats:countTopics', () => ['stats:countTopics']),
@@ -828,6 +862,7 @@ export const matchDomain =
 export const swrKeys = {
   agent: { ...agentKeys, ...agentConfigKeys },
   agentBot: agentBotKeys,
+  agentBuilder: agentBuilderKeys,
   agentDocument: agentDocumentSWRKeys,
   agentHome: agentHomeKeys,
   agentKnowledge: agentKnowledgeKeys,

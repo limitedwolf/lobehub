@@ -247,6 +247,11 @@ export interface MessageMetadata {
   activeBranchIndex?: number;
   activeColumn?: boolean;
   /**
+   * Marks a `role: 'tool'` message (a group broadcast tool call) as an
+   * AgentCouncil: its member responses render as one parallel-streaming block.
+   */
+  agentCouncil?: boolean;
+  /**
    * Message collapse state
    * true: collapsed, false/undefined: expanded
    */
@@ -419,7 +424,7 @@ export interface MessageMetadata {
 /**
  * Pointer carried on a `role='taskCallback'` message — the result-bridge card
  * that reports a finished task's handoff back to its creator conversation
- * (LOBE-10625). The handoff summary itself lives in the message `content`; this
+ * The handoff summary itself lives in the message `content`; this
  * pointer drives the card header (identifier + outcome) and the jump link.
  */
 export interface MessageTaskCallback {

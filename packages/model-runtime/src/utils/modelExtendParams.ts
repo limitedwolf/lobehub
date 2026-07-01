@@ -23,10 +23,7 @@ export interface ModelExtendParams {
 }
 
 type ThinkingLevelExtendParam =
-  | 'thinkingLevel'
-  | 'thinkingLevel2'
-  | 'thinkingLevel3'
-  | 'thinkingLevel4';
+  'thinkingLevel' | 'thinkingLevel2' | 'thinkingLevel3' | 'thinkingLevel4';
 
 type ThinkingLevelValue = NonNullable<LobeAgentChatConfig['thinkingLevel']>;
 
@@ -49,6 +46,10 @@ const MODEL_THINKING_LEVEL_DEFAULTS: Partial<
   'gemini-3.1-flash-lite-preview': {
     thinkingLevel: 'minimal',
   },
+} as const;
+
+const MODEL_ENABLE_ADAPTIVE_THINKING_DEFAULTS: Partial<Record<string, boolean>> = {
+  'claude-sonnet-5': true,
 } as const;
 
 /**
@@ -83,6 +84,14 @@ export const resolveDefaultThinkingLevelForModel = (model?: string): ThinkingLev
   if (!model) return DEFAULT_THINKING_LEVEL_BY_EXTEND_PARAM.thinkingLevel;
 
   return resolveThinkingLevelDefault(model, 'thinkingLevel');
+};
+
+export const resolveDefaultEnableAdaptiveThinkingForModel = (
+  model?: string,
+): boolean | undefined => {
+  if (!model) return;
+
+  return MODEL_ENABLE_ADAPTIVE_THINKING_DEFAULTS[model];
 };
 
 export interface ApplyModelExtendParamsContext {
@@ -157,14 +166,19 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
     };
   }
 
-  // Adaptive thinking (Claude Opus/Sonnet 4.6)
+  // Adaptive thinking
   if (modelExtendParams.includes('enableAdaptiveThinking')) {
     if (chatConfig.enableAdaptiveThinking) {
       extendParams.thinking = {
         type: 'adaptive',
       };
-    } else if (!modelExtendParams.includes('enableReasoning')) {
-      // Only disable when the model has no enableReasoning fallback
+    } else if (
+      Object.hasOwn(chatConfig, 'enableAdaptiveThinking') &&
+      chatConfig.enableAdaptiveThinking === false &&
+      !modelExtendParams.includes('enableReasoning')
+    ) {
+      // Claude Sonnet 5 defaults adaptive thinking on; fresh configs used to
+      // serialize as `{ thinking: { type: 'disabled' } }` and override that.
       extendParams.thinking = {
         type: 'disabled',
       };
@@ -241,11 +255,13 @@ export const applyModelExtendParams = (ctx: ApplyModelExtendParamsContext): Mode
       if (deepseekV4ReasoningEffort === 'none') {
         delete extendParams.reasoning_effort;
         extendParams.thinking = {
+          ...extendParams.thinking,
           type: 'disabled',
         };
       } else {
         extendParams.reasoning_effort = deepseekV4ReasoningEffort;
         extendParams.thinking = {
+          ...extendParams.thinking,
           type: 'enabled',
         };
       }

@@ -10,13 +10,23 @@ LOBE_DEFAULT_MODEL_LIST.forEach((model) => {
 
 // #region LobeHub online model descriptions
 const lobeHubOnlineModelLocales = {
+  'claude-sonnet-5.description':
+    "Claude Sonnet 5 is Anthropic's most agentic Sonnet model, built for sustained coding, tool use, and long-context workflows with Sonnet-tier speed and efficiency.",
+  'gemini-3.1-flash-lite-image.description':
+    "Gemini 3.1 Flash Lite Image (Nano Banana 2 Lite) is Google's fastest and most cost-efficient image generation model, built for high-volume generation and editing.",
   'grok-4.20-beta-0309-reasoning.description':
     'Intelligent, blazing-fast model that reasons before responding',
   'grok-4.20-beta-0309-non-reasoning.description': 'A non-reasoning variant for simple use cases',
-  'MiniMax-M3.description':
-    'Frontier multimodal coding and agentic model with a 1M context window, native image/video understanding, and controllable thinking.',
-  'MiniMax-M2.1-Lightning.description':
-    'Powerful multilingual programming capabilities with faster and more efficient inference.',
+  'kimi-k2-0905-preview.description':
+    'kimi-k2 is an MoE foundation model with strong coding and agent capabilities (1T total params, 32B active). Based on kimi-k2-0711-preview, with enhanced agentic coding abilities and better context understanding.',
+  'kimi-k2-turbo-preview.description':
+    'High-speed version of kimi-k2, always aligned with the latest kimi-k2. Same model parameters, output speed up to 60–100 tokens/sec.',
+  'kimi-k2-thinking-turbo.description':
+    'High-speed version of kimi-k2-thinking, suitable for scenarios requiring both deep reasoning and extremely fast responses.',
+  'lobehub-glm-5.2-fast.description':
+    'Fast variant of GLM-5.2 with substantially lower latency. Same capabilities as GLM-5.2 — costs more, but responds much faster.',
+  'gemini-3.1-flash-lite-image:image.description':
+    "Gemini 3.1 Flash Lite Image (Nano Banana 2 Lite) is Google's fastest and most cost-efficient image generation model, built for high-volume generation and editing.",
   'seedream-5-0-260128.description':
     'ByteDance-Seedream-5.0-lite by BytePlus features web-retrieval-augmented generation for real-time information, enhanced complex prompt interpretation, and improved reference consistency for professional visual creation.',
   'fal-ai/bytedance/seedream/v4.5.description':
