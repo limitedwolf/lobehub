@@ -8,11 +8,11 @@ import { appEnv } from '@/envs/app';
 import { fileEnv } from '@/envs/file';
 import { pythonEnv } from '@/envs/python';
 import { type Locales } from '@/locales/resources';
-import { buildAnalyticsConfig, fetchViteDevTemplate, renderSpaHtml } from '@/server/spaHtml';
-import { translation } from '@/server/translation';
 import { type SPAClientEnv, type SPAServerConfig } from '@/types/spaServerConfig';
 import { RouteVariants } from '@/utils/server/routeVariants';
 import { getServerGlobalConfig } from '~server/globalConfig';
+import { buildAnalyticsConfig, fetchViteDevTemplate, renderSpaHtml } from '~server/spaHtml';
+import { translation } from '~server/translation';
 
 export function generateStaticParams() {
   const mobileOptions = isDesktop ? [false] : [true, false];

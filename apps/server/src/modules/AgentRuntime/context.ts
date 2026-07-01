@@ -4,13 +4,13 @@ import { type ExecSubAgentParams, type ExecVirtualSubAgentParams } from '@lobech
 
 import { type MessageModel } from '@/database/models/message';
 import { type LobeChatDatabase } from '@/database/type';
-import { type EvalContext } from '@/server/modules/Mecha/ContextEngineering/types';
-import type { HookDispatcher } from '@/server/services/agentRuntime/hooks/HookDispatcher';
+import { type EvalContext } from '~server/modules/Mecha/ContextEngineering/types';
+import type { HookDispatcher } from '~server/services/agentRuntime/hooks/HookDispatcher';
 import type {
   ExecGroupMemberParams,
   ExecGroupMemberResult,
-} from '@/server/services/agentRuntime/types';
-import { type ToolExecutionService } from '@/server/services/toolExecution';
+} from '~server/services/agentRuntime/types';
+import { type ToolExecutionService } from '~server/services/toolExecution';
 
 import { type IStreamEventManager } from './types';
 

@@ -4,7 +4,7 @@ import {
   type InstructionExecutor,
 } from '@lobechat/agent-runtime';
 
-import { type ToolExecutionResultResponse } from '@/server/services/toolExecution';
+import { type ToolExecutionResultResponse } from '~server/services/toolExecution';
 
 import { type RuntimeExecutorContext } from '../context';
 import { log } from '../executorHelpers';

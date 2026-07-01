@@ -10,11 +10,11 @@ import { MessageModel } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
 import { router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { createStreamEventManager } from '@/server/modules/AgentRuntime/factory';
-import { CompletionLifecycle } from '@/server/services/agentRuntime/CompletionLifecycle';
-import type { SerializedHook } from '@/server/services/agentRuntime/hooks/types';
-import { AiAgentService } from '@/server/services/aiAgent';
-import { instantiateVerifyPlanOnStart } from '@/server/services/verify';
+import { createStreamEventManager } from '~server/modules/AgentRuntime/factory';
+import { CompletionLifecycle } from '~server/services/agentRuntime/CompletionLifecycle';
+import type { SerializedHook } from '~server/services/agentRuntime/hooks/types';
+import { AiAgentService } from '~server/services/aiAgent';
+import { instantiateVerifyPlanOnStart } from '~server/services/verify';
 
 // Module-level singleton so we don't create a new Redis connection per request.
 let _streamManager: ReturnType<typeof createStreamEventManager> | undefined;

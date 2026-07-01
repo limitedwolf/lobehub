@@ -1,7 +1,7 @@
 import debug from 'debug';
 
 // Import the transport pieces from their concrete modules rather than the
-// `@/server/modules/AgentRuntime` barrel: the barrel re-exports RuntimeExecutors,
+// `~server/modules/AgentRuntime` barrel: the barrel re-exports RuntimeExecutors,
 // which eagerly constructs the ModelRuntime ApiKeyManager at module load and
 // throws in client/test contexts. These leaf modules pull no ModelRuntime.
 import { inMemoryStreamEventManager } from '~server/modules/AgentRuntime/InMemoryStreamEventManager';

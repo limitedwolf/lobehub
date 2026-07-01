@@ -75,24 +75,25 @@ import { shouldEnableBuiltinSkill } from '@/helpers/skillFilters';
 import { buildConnectorManifests } from '@/libs/mcp/buildConnectorManifests';
 import { patchManifestWithPermissions } from '@/libs/mcp/connectorPermissionCheck';
 import { signOperationJwt, signUserJWT } from '@/libs/trpc/utils/internalJwt';
-import { createStreamEventManager } from '@/server/modules/AgentRuntime/factory';
-import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import type { EvalContext, ServerAgentToolsContext } from '@/server/modules/Mecha';
-import { createServerAgentToolsEngine } from '@/server/modules/Mecha';
-import type { ServerUserMemoryConfig } from '@/server/modules/Mecha/ContextEngineering/types';
-import { AgentService } from '@/server/services/agent';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
+import { markdownToTxt } from '@/utils/markdownToTxt';
+import { createStreamEventManager } from '~server/modules/AgentRuntime/factory';
+import { KeyVaultsGateKeeper } from '~server/modules/KeyVaultsEncrypt';
+import type { EvalContext, ServerAgentToolsContext } from '~server/modules/Mecha';
+import { createServerAgentToolsEngine } from '~server/modules/Mecha';
+import type { ServerUserMemoryConfig } from '~server/modules/Mecha/ContextEngineering/types';
+import { AgentService } from '~server/services/agent';
+import { AgentDocumentsService } from '~server/services/agentDocuments';
 import type {
   AgentExecutionParams,
   AgentExecutionResult,
   AgentRuntimeServiceOptions,
   SubAgentBridgeParams,
-} from '@/server/services/agentRuntime';
-import { AgentRuntimeService } from '@/server/services/agentRuntime';
-import { getAbortError, isAbortError, throwIfAborted } from '@/server/services/agentRuntime/abort';
-import { CompletionLifecycle } from '@/server/services/agentRuntime/CompletionLifecycle';
-import { hookDispatcher } from '@/server/services/agentRuntime/hooks';
-import type { AgentHook } from '@/server/services/agentRuntime/hooks/types';
+} from '~server/services/agentRuntime';
+import { AgentRuntimeService } from '~server/services/agentRuntime';
+import { getAbortError, isAbortError, throwIfAborted } from '~server/services/agentRuntime/abort';
+import { CompletionLifecycle } from '~server/services/agentRuntime/CompletionLifecycle';
+import { hookDispatcher } from '~server/services/agentRuntime/hooks';
+import type { AgentHook } from '~server/services/agentRuntime/hooks/types';
 import type {
   ExecGroupMemberParams,
   ExecGroupMemberResult,
@@ -100,26 +101,25 @@ import type {
   GroupActionMemberMode,
   GroupActionOnComplete,
   StepLifecycleCallbacks,
-} from '@/server/services/agentRuntime/types';
-import { enqueueAgentSignalSourceEvent } from '@/server/services/agentSignal';
+} from '~server/services/agentRuntime/types';
+import { enqueueAgentSignalSourceEvent } from '~server/services/agentSignal';
 import {
   isAgentSignalEnabledForUser,
   isLobeAiAgentSlug,
   resolveAgentSelfIterationCapability,
-} from '@/server/services/agentSignal/featureGate';
-import { shouldSuppressSignal } from '@/server/services/agentSignal/suppressSignal';
-import { ComposioService } from '@/server/services/composio';
-import { deviceGateway } from '@/server/services/deviceGateway';
-import { getScopedOnlineDevices } from '@/server/services/deviceGateway/scopedDevices';
-import { DocumentService } from '@/server/services/document';
-import { FileService } from '@/server/services/file';
-import { resolveAttachmentsByFileIds } from '@/server/services/file/resolveAttachments';
-import { HeterogeneousAgentService } from '@/server/services/heterogeneousAgent';
-import type { ConversationHistoryEntry } from '@/server/services/heterogeneousAgent/cloudHeteroContext';
-import { buildCloudHeteroContext } from '@/server/services/heterogeneousAgent/cloudHeteroContext';
-import { buildRemoteDeviceHeteroContext } from '@/server/services/heterogeneousAgent/remoteDeviceHeteroContext';
-import { MarketService } from '@/server/services/market';
-import { markdownToTxt } from '@/utils/markdownToTxt';
+} from '~server/services/agentSignal/featureGate';
+import { shouldSuppressSignal } from '~server/services/agentSignal/suppressSignal';
+import { ComposioService } from '~server/services/composio';
+import { deviceGateway } from '~server/services/deviceGateway';
+import { getScopedOnlineDevices } from '~server/services/deviceGateway/scopedDevices';
+import { DocumentService } from '~server/services/document';
+import { FileService } from '~server/services/file';
+import { resolveAttachmentsByFileIds } from '~server/services/file/resolveAttachments';
+import { HeterogeneousAgentService } from '~server/services/heterogeneousAgent';
+import type { ConversationHistoryEntry } from '~server/services/heterogeneousAgent/cloudHeteroContext';
+import { buildCloudHeteroContext } from '~server/services/heterogeneousAgent/cloudHeteroContext';
+import { buildRemoteDeviceHeteroContext } from '~server/services/heterogeneousAgent/remoteDeviceHeteroContext';
+import { MarketService } from '~server/services/market';
 
 import { resolveDeviceAccessPolicy } from './deviceAccessPolicy';
 import { buildAllowedBuiltinTools, isDeviceToolIdentifier } from './deviceToolRegistry';
@@ -1903,7 +1903,7 @@ export class AiAgentService {
           // importing it statically would couple that whole subsystem into every
           // `aiAgent` import. Only this cloud-CLI branch needs it.
           const { spawnHeteroSandbox } =
-            await import('@/server/services/heterogeneousAgent/sandboxRunner');
+            await import('~server/services/heterogeneousAgent/sandboxRunner');
           spawnHeteroSandbox({
             ...heteroParams,
             agentType: heteroType as 'claude-code' | 'codex',

@@ -9,9 +9,9 @@ import { LOBE_LOCALE_COOKIE } from '@/const/locale';
 import { appEnv } from '@/envs/app';
 import { authEnv } from '@/envs/auth';
 import { type Locales } from '@/locales/resources';
-import { isHonoGrayPath, resolveGrayRewrite } from '@/server/backend-proxy/gray';
 import { parseBrowserLanguage } from '@/utils/locale';
 import { DEFAULT_LANG, locales, RouteVariants } from '@/utils/server/routeVariants';
+import { isHonoGrayPath, resolveGrayRewrite } from '~server/backend-proxy/gray';
 
 import { authSpaRoutes, nextjsOnlyRoutes } from '../nextjsOnlyRoutes';
 import { createRouteMatcher } from './createRouteMatcher';

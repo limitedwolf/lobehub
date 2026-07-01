@@ -18,8 +18,8 @@ import {
   type DeviceAccessReason,
   isDeviceToolIdentifier,
   logDeviceToolAudit,
-} from '@/server/services/aiAgent/deviceToolAudit';
-import { type ToolExecutionResultResponse } from '@/server/services/toolExecution';
+} from '~server/services/aiAgent/deviceToolAudit';
+import { type ToolExecutionResultResponse } from '~server/services/toolExecution';
 
 import { type RuntimeExecutorContext } from '../context';
 import { dispatchClientTool } from '../dispatchClientTool';

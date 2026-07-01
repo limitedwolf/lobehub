@@ -29,7 +29,7 @@ vi.mock('@/database/models/agentOperation', () => ({
 }));
 // Partial mock: keep the real runVerifyOnCompletion (CompletionLifecycle's gate
 // imports it from this barrel) and only stub the start-side plan instantiation.
-vi.mock('@/server/services/verify', async (orig) => ({
+vi.mock('~server/services/verify', async (orig) => ({
   ...(await (orig as () => Promise<Record<string, unknown>>)()),
   instantiateVerifyPlanOnStart: mockInstantiateVerifyPlan,
 }));

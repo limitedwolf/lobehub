@@ -8,13 +8,13 @@ import { type ChatToolPayload } from '@lobechat/types';
 import debug from 'debug';
 
 import { type LobeChatDatabase } from '@/database/type';
-import { FileService } from '@/server/services/file';
+import { FileService } from '~server/services/file';
 import {
   type ServerAgentMemberRunner,
   type ServerSubAgentRunner,
   type ToolExecutionResultResponse,
-} from '@/server/services/toolExecution';
-import { archiveToolResultIfNeeded } from '@/server/services/toolExecution/archiveToolResult';
+} from '~server/services/toolExecution';
+import { archiveToolResultIfNeeded } from '~server/services/toolExecution/archiveToolResult';
 
 import { type RuntimeExecutorContext } from './context';
 import { type LLMErrorKind } from './llmErrorClassification';

@@ -4,9 +4,9 @@ import { OG_URL } from '@lobechat/const';
 import { DEFAULT_LANG } from '@/const/locale';
 import { OFFICIAL_URL } from '@/const/url';
 import { isCustomBranding, isCustomORG } from '@/const/version';
-import { translation } from '@/server/translation';
 import { type DynamicLayoutProps } from '@/types/next';
 import { RouteVariants } from '@/utils/server/routeVariants';
+import { translation } from '~server/translation';
 
 const isDev = process.env.NODE_ENV === 'development';
 

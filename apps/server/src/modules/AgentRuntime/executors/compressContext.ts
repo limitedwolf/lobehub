@@ -8,8 +8,8 @@ import {
 import { consumeStreamUntilDone } from '@lobechat/model-runtime';
 import { chainCompressContext } from '@lobechat/prompts';
 
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
-import { MessageService } from '@/server/services/message';
+import { initModelRuntimeFromDB } from '~server/modules/ModelRuntime';
+import { MessageService } from '~server/services/message';
 
 import { type RuntimeExecutorContext } from '../context';
 import { buildPostProcessUrl, log } from '../executorHelpers';
