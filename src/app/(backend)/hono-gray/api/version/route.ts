@@ -1,4 +1,4 @@
-import { fetchBackendRuntime } from '~server/backend-proxy/client';
+import { fetchBackendRuntime } from '@/server/backend-proxy/client';
 
 const handler = (req: Request) => fetchBackendRuntime(req);
 

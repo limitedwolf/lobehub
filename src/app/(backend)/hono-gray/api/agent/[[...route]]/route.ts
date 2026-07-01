@@ -1,4 +1,4 @@
-import { fetchBackendRuntime } from '~server/backend-proxy/client';
+import { fetchBackendRuntime } from '@/server/backend-proxy/client';
 
 export const maxDuration = 600;
 
