@@ -1,5 +1,6 @@
 import { useGlobalStore } from '@/store/global';
 import { type LobeDocument } from '@/types/document';
+import { getIdFromIdentifier, standardizeIdentifier } from '@/utils/identifier';
 
 import { type PageState } from '../../initialState';
 
@@ -55,8 +56,15 @@ const getFilteredDocumentsLimited = (s: PageState): LobeDocument[] => {
 const getDocumentById = (docId: string | undefined) => (s: PageState) => {
   if (!docId) return undefined;
 
-  // Find in documents array
-  return s.documents?.find((doc) => doc.id === docId);
+  const candidateIds = new Set([
+    docId,
+    standardizeIdentifier(docId),
+    getIdFromIdentifier(docId, 'docs'),
+  ]);
+
+  // Find in documents array. Direct page routes may use `docs_*` identifiers
+  // while the API payload can be keyed by the raw document id.
+  return s.documents?.find((doc) => candidateIds.has(doc.id));
 };
 
 const hasMoreDocuments = (s: PageState): boolean => s.hasMoreDocuments;

@@ -3,6 +3,8 @@ import { type IEditor } from '@lobehub/editor';
 import { type EditLockHealth } from '@/features/EditLock';
 
 export type MetaSaveStatus = 'idle' | 'saving' | 'saved';
+export type CollaborationStatus =
+  'connected' | 'connecting' | 'disconnected' | 'error' | 'idle' | 'reconnecting';
 export type RightPanelMode = 'copilot' | 'history';
 
 export interface PublicState {
@@ -28,8 +30,10 @@ export interface PublicState {
 }
 
 export interface State extends PublicState {
+  collaborationStatus?: CollaborationStatus;
   documentId: string | undefined;
   editor?: IEditor;
+  isCollaborationSynced?: boolean;
   /** True until the first lock peek resolves; the editor stays read-only until then. */
   isLockPending?: boolean;
   isMetaDirty?: boolean;
@@ -60,8 +64,10 @@ export interface State extends PublicState {
 
 export const initialState: State = {
   autoSave: true,
+  collaborationStatus: 'idle',
   documentId: undefined,
   emoji: undefined,
+  isCollaborationSynced: false,
   // Start pending (read-only) so the editor never flashes editable before the
   // lock driver has resolved whether the page is free.
   isLockPending: true,

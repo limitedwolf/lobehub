@@ -125,6 +125,8 @@ export default {
     'Recent edits haven’t synced yet. They’ll resume saving once the connection recovers.',
   'pageEditor.editMode.lockLostTitle': 'Edit lock temporarily lost',
   'pageEditor.editMode.lockUnstable': 'Reconnecting edit lock…',
+  'pageEditor.collaboration.error': 'Collaboration offline',
+  'pageEditor.collaboration.syncing': 'Syncing collaboration…',
   'pageEditor.editorPlaceholder': 'Press "/" for AI and commands.',
   'pageEditor.empty.createNewDocument': 'Create New Page',
   'pageEditor.empty.importNotion': 'Import from Notion',

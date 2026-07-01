@@ -26,7 +26,6 @@ const DRAFT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 interface PageDraftPayload {
   documentId: string;
   editorData: unknown;
-  ownerId?: string;
   savedAt: string;
 }
 
@@ -73,11 +72,11 @@ export const readPageDraft = (documentId: string): PageDraftPayload | null => {
 
 /**
  * Persists a tab-local snapshot of the editor's in-memory content while the
- * collaborative lock is degraded (`unstable` / `lost`), so an accidental
- * refresh or navigation during the lock-loss window doesn't blow away unsaved
- * work. The snapshot is cleared once the lock recovers AND the document is no
- * longer dirty — at that point the server has the latest version and the
- * snapshot is stale by definition.
+ * collaboration provider is not fully synced, so an accidental refresh or
+ * navigation during a transport outage does not discard unsaved work. The
+ * snapshot is cleared once collaboration recovers AND the document is no longer
+ * dirty — at that point the server has the latest version and the snapshot is
+ * stale by definition.
  *
  * On open, if a recent draft exists and the local editor isn't dirty yet, the
  * user is prompted once to restore it. Declining drops the draft so there's no
@@ -86,9 +85,10 @@ export const readPageDraft = (documentId: string): PageDraftPayload | null => {
 export const usePageDraft = (): void => {
   const { t } = useTranslation('file');
   const documentId = usePageEditorStore((s) => s.documentId);
-  const lockHealth = usePageEditorStore((s) => s.lockHealth);
-  const lockOwnerId = usePageEditorStore((s) => s.lockOwnerId);
+  const collaborationStatus = usePageEditorStore((s) => s.collaborationStatus);
   const editor = usePageEditorStore((s) => s.editor);
+  const isCollaborationSynced = usePageEditorStore((s) => s.isCollaborationSynced);
+  const isWorkspacePage = usePageEditorStore((s) => s.isWorkspacePage);
 
   const editorData = useDocumentStore((s) =>
     documentId ? editorSelectors.editorData(documentId)(s) : undefined,
@@ -99,34 +99,43 @@ export const usePageDraft = (): void => {
 
   // Stable debounced writer; the latest payload always wins.
   const writer = useMemo(
-    () => debounce(writeDraft, DRAFT_WRITE_DEBOUNCE_MS, { leading: false, trailing: true }),
+    () =>
+      debounce(writeDraft, DRAFT_WRITE_DEBOUNCE_MS, {
+        leading: false,
+        trailing: true,
+      }),
     [],
   );
 
-  // Snapshot on every change while the lock isn't healthy AND there's unsaved
-  // work to protect. Skip otherwise — when healthy, the regular save path is
-  // the source of truth; when clean, there's nothing worth backing up.
+  const collaborationReady =
+    collaborationStatus === 'connected' &&
+    (isCollaborationSynced || isCollaborationSynced === undefined);
+
+  // Snapshot on every change while collaboration is not ready AND there is
+  // unsaved work to protect. Skip otherwise — when synced, the regular save path
+  // is the source of truth; when clean, there is nothing worth backing up.
   useEffect(() => {
     if (!documentId) return;
-    if (lockHealth === 'healthy' || !isDirty) return;
+    if (!isWorkspacePage) return;
+    if (collaborationReady || !isDirty) return;
     writer({
       documentId,
       editorData,
-      ownerId: lockOwnerId,
       savedAt: new Date().toISOString(),
     });
-  }, [documentId, lockHealth, isDirty, editorData, lockOwnerId, writer]);
+  }, [collaborationReady, documentId, editorData, isDirty, isWorkspacePage, writer]);
 
   // Drop the snapshot once we recover AND every change has been flushed. At
   // that point the server has the latest content; the snapshot is stale and a
   // leftover would re-prompt the user next time they open the page.
   useEffect(() => {
     if (!documentId) return;
-    if (lockHealth === 'healthy' && !isDirty) {
+    if (!isWorkspacePage) return;
+    if (collaborationReady && !isDirty) {
       writer.cancel?.();
       clearPageDraft(documentId);
     }
-  }, [documentId, lockHealth, isDirty, writer]);
+  }, [collaborationReady, documentId, isDirty, isWorkspacePage, writer]);
 
   // Cancel any pending write on unmount so a snapshot scheduled just before
   // leaving can't race a downstream clean-state clear.

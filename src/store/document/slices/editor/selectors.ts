@@ -27,6 +27,8 @@ const editorData = (id: string) => (s: DocumentStore) => s.documents[id]?.editor
 
 const sourceType = (id: string) => (s: DocumentStore) => s.documents[id]?.sourceType;
 
+const workspaceId = (id: string) => (s: DocumentStore) => s.documents[id]?.workspaceId;
+
 const lastUpdatedTime = (id: string) => (s: DocumentStore) =>
   s.documents[id]?.lastUpdatedTime?.toISOString();
 
@@ -108,6 +110,7 @@ export const editorSelectors = {
   saveBlockedByLock,
   saveStatus,
   sourceType,
+  workspaceId,
 
   // Editor
   canSave,

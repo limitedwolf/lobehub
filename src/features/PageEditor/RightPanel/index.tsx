@@ -113,11 +113,9 @@ const PageEditorRightPanel = memo(() => {
     s.updateSystemStatus,
   ]);
 
-  // The Page Agent (copilot) stays available even while another member holds the
-  // edit lock: a conflicting write is now rejected server-side (CONFLICT) rather
-  // than clobbering their edits, so there's no reason to hide it on a locked /
-  // read-only page. We only hide it from members without edit permission (a
-  // document-editing agent is useless to them); History stays available.
+  // The Page Agent (copilot) is part of the editable document surface. CRDT
+  // collaboration replaces lock-derived read-only mode, so we only hide it from
+  // members without edit permission; History stays available.
   const effectiveExpand = expand && (rightPanelMode === 'history' || hasEditPermission);
 
   return (

@@ -10,7 +10,7 @@ import { getElectronStoreState } from '@/store/electron';
 import { electronSyncSelectors } from '@/store/electron/selectors';
 import { useFileStore } from '@/store/file';
 
-import { type RightPanelMode, type State } from './initialState';
+import { type CollaborationStatus, type RightPanelMode, type State } from './initialState';
 import { initialState } from './initialState';
 
 const log = debug('page:editor');
@@ -26,6 +26,8 @@ export interface Action {
   handleTitleSubmit: () => Promise<void>;
   initMeta: (title?: string, emoji?: string) => void;
   performMetaSave: () => Promise<void>;
+  setCollaborationStatus: (status: CollaborationStatus) => void;
+  setCollaborationSynced: (synced: boolean) => void;
   setEmoji: (emoji: string | undefined) => void;
   /**
    * Mirror the lock health from {@link useEditLock} into the store so banners and
@@ -192,6 +194,14 @@ export const store: (initState?: Partial<State>) => StateCreator<Store> =
         }
       },
 
+      setCollaborationStatus: (status) => {
+        if (get().collaborationStatus !== status) set({ collaborationStatus: status });
+      },
+
+      setCollaborationSynced: (synced) => {
+        if (get().isCollaborationSynced !== synced) set({ isCollaborationSynced: synced });
+      },
+
       setEmoji: (emoji: string | undefined) => {
         const { lastSavedEmoji, metaReadOnly, triggerDebouncedMetaSave } = get();
 
@@ -224,7 +234,11 @@ export const store: (initState?: Partial<State>) => StateCreator<Store> =
           get().lockHolderOwnerId === holderOwnerId
         )
           return;
-        set({ lockExpiresAt: expiresAt, lockHolderId: holderId, lockHolderOwnerId: holderOwnerId });
+        set({
+          lockExpiresAt: expiresAt,
+          lockHolderId: holderId,
+          lockHolderOwnerId: holderOwnerId,
+        });
       },
 
       setRightPanelMode: (rightPanelMode) => {

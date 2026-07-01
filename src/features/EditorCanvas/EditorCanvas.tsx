@@ -1,7 +1,11 @@
 'use client';
 
 import { type IEditor, type SlashOptions } from '@lobehub/editor';
-import { type ChatInputActionsProps, type Editor } from '@lobehub/editor/react';
+import {
+  type ChatInputActionsProps,
+  type Editor,
+  type EditorCollaborationConfig,
+} from '@lobehub/editor/react';
 import { type CSSProperties } from 'react';
 import { memo } from 'react';
 
@@ -41,6 +45,11 @@ export interface EditorCanvasProps {
    * Only applies when documentId is provided.
    */
   autoSave?: boolean;
+
+  /**
+   * Optional Yjs collaboration configuration owned by the business shell.
+   */
+  collaboration?: false | EditorCollaborationConfig;
 
   disabled?: boolean;
 

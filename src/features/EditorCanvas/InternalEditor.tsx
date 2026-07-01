@@ -8,6 +8,7 @@ import {
   ReactLiteXmlPlugin,
   ReactTablePlugin,
   ReactToolbarPlugin,
+  useLexicalEditor,
 } from '@lobehub/editor';
 import { Editor, useEditorState } from '@lobehub/editor/react';
 import { createStaticStyles } from 'antd-style';
@@ -24,7 +25,10 @@ import { registerAttachmentClickOpen } from './registerAttachmentClickOpen';
 import { useFileUpload, useImageUpload } from './useImageUpload';
 
 const IMAGE_FILTERS = [
-  { extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif'], name: 'Images' },
+  {
+    extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif'],
+    name: 'Images',
+  },
 ];
 
 // Force the Lexical FileNode's outer `<span>` to render as its own block-
@@ -80,6 +84,34 @@ const isEditorInitReady = (editor: IEditor) => {
   };
 };
 
+const setPageCollaborationDebug = (value: Record<string, unknown>) => {
+  if (process.env.NODE_ENV !== 'development' || typeof window === 'undefined') return;
+
+  const target = window as typeof window & {
+    __PAGE_COLLABORATION_DEBUG__?: Record<string, unknown>;
+  };
+  target.__PAGE_COLLABORATION_DEBUG__ = {
+    ...target.__PAGE_COLLABORATION_DEBUG__,
+    ...value,
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+const PageEditorRuntimeProbePlugin = () => {
+  useLexicalEditor((lexicalEditor) => {
+    setPageCollaborationDebug({
+      runtimeProbeHasRootElement: Boolean(lexicalEditor.getRootElement()),
+      runtimeProbeMounted: true,
+    });
+
+    return () => {
+      setPageCollaborationDebug({ runtimeProbeMounted: false });
+    };
+  }, []);
+
+  return null;
+};
+
 export interface InternalEditorProps extends EditorCanvasProps {
   /**
    * Optional lock ref to suppress content-change callback during programmatic document hydration.
@@ -98,6 +130,7 @@ export interface InternalEditorProps extends EditorCanvasProps {
 const InternalEditor = memo<InternalEditorProps>(
   ({
     contentChangeLockRef,
+    collaboration,
     disabled,
     editable = true,
     editor,
@@ -116,6 +149,13 @@ const InternalEditor = memo<InternalEditorProps>(
     const editorState = useEditorState(editor);
     const handleImageUpload = useImageUpload();
     const handleFileUpload = useFileUpload();
+
+    useEffect(() => {
+      setPageCollaborationDebug({
+        internalEditorHasCollaboration: Boolean(collaboration),
+        internalEditorRoomId: collaboration ? collaboration.id : undefined,
+      });
+    }, [collaboration]);
 
     const handlePickFile = useCallback(async (): Promise<File | null> => {
       if (!isDesktop) return null;
@@ -148,9 +188,13 @@ const InternalEditor = memo<InternalEditorProps>(
       });
 
       // Build base plugins with optional extra plugins prepended
-      const basePlugins = extraPlugins
-        ? [...extraPlugins, ...STATIC_PLUGINS, imagePlugin, filePlugin]
-        : [...STATIC_PLUGINS, imagePlugin, filePlugin];
+      const basePlugins = [
+        PageEditorRuntimeProbePlugin,
+        ...(extraPlugins ?? []),
+        ...STATIC_PLUGINS,
+        imagePlugin,
+        filePlugin,
+      ];
 
       // Add toolbar only when the editor is actually editable — a locked /
       // read-only page must not surface the floating formatting toolbar on
@@ -173,6 +217,7 @@ const InternalEditor = memo<InternalEditorProps>(
 
       return basePlugins;
     }, [
+      collaboration,
       customPlugins,
       disabled,
       editable,
@@ -299,6 +344,7 @@ const InternalEditor = memo<InternalEditorProps>(
         }}
       >
         <Editor
+          collaboration={collaboration}
           content={''}
           editable={editable && !disabled}
           editor={editor}

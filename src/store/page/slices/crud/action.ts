@@ -389,15 +389,23 @@ export class CrudActionImpl {
         onData: (document) => {
           if (!document || !pageId) return;
 
-          // Auto-sync to documents array via internal dispatch
+          // Auto-sync direct page detail loads into the list cache as well.
+          // Workspace-page collaboration derives its room id from this store,
+          // and direct URL entry may not have loaded the sidebar list yet.
           const { documents } = this.#get();
-          if (documents?.some((doc) => doc.id === pageId)) {
-            this.#get().internal_dispatchDocuments({
-              document,
-              id: pageId,
-              type: 'updateDocument',
-            });
-          }
+          const exists = documents?.some((doc) => doc.id === pageId);
+          this.#get().internal_dispatchDocuments(
+            exists
+              ? {
+                  document,
+                  id: pageId,
+                  type: 'updateDocument',
+                }
+              : {
+                  document,
+                  type: 'addDocument',
+                },
+          );
         },
         revalidateOnFocus: true,
       },

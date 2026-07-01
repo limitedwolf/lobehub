@@ -60,7 +60,10 @@ export class EditorActionImpl {
     try {
       const markdown = (editor.getDocument('markdown') as unknown as string) || '';
       const editorData = editor.getDocument('json');
-      return { editorData, markdown: this.getPersistedMarkdown(activeDocumentId, markdown) };
+      return {
+        editorData,
+        markdown: this.getPersistedMarkdown(activeDocumentId, markdown),
+      };
     } catch (error) {
       console.error('[DocumentStore] Failed to get editor content:', error);
       return null;
@@ -179,7 +182,11 @@ export class EditorActionImpl {
     const { documents, internal_dispatchDocument } = this.#get();
     if (!documents[documentId]) return;
 
-    internal_dispatchDocument({ id: documentId, type: 'updateDocument', value: { isDirty: true } });
+    internal_dispatchDocument({
+      id: documentId,
+      type: 'updateDocument',
+      value: { isDirty: true },
+    });
   };
 
   /**
@@ -220,7 +227,11 @@ export class EditorActionImpl {
     }
 
     internal_dispatchDocument(
-      { id: documentId, type: 'updateDocument', value: value as Partial<typeof doc> },
+      {
+        id: documentId,
+        type: 'updateDocument',
+        value: value as Partial<typeof doc>,
+      },
       n('applyServerSnapshot'),
     );
   };
@@ -307,7 +318,11 @@ export class EditorActionImpl {
     if (!doc.isDirty && !hasMetadataChanges) return;
 
     // Update save status
-    internal_dispatchDocument({ id, type: 'updateDocument', value: { saveStatus: 'saving' } });
+    internal_dispatchDocument({
+      id,
+      type: 'updateDocument',
+      value: { saveStatus: 'saving' },
+    });
 
     try {
       const currentEditorMarkdown = (editor.getDocument('markdown') as unknown as string) || '';
@@ -316,7 +331,11 @@ export class EditorActionImpl {
 
       if (!isValidEditorData(currentEditorData)) {
         console.warn('[DocumentStore] Refusing to save invalid editorData:', currentEditorData);
-        internal_dispatchDocument({ id, type: 'updateDocument', value: { saveStatus: 'idle' } });
+        internal_dispatchDocument({
+          id,
+          type: 'updateDocument',
+          value: { saveStatus: 'idle' },
+        });
         return;
       }
 
@@ -327,7 +346,6 @@ export class EditorActionImpl {
         content: currentContent,
         editorData: JSON.stringify(currentEditorData),
         id,
-        lockOwnerId: doc.lockOwnerId,
         metadata: metadata?.emoji ? { emoji: metadata.emoji } : undefined,
         restoreFromHistoryId: options?.restoreFromHistoryId,
         saveSource: options?.saveSource,
@@ -351,16 +369,15 @@ export class EditorActionImpl {
         },
       });
     } catch (error) {
-      // The server rejects writes to a workspace document another collaborator is
-      // actively editing (CONFLICT). Surface it as a lock block so the editor can
-      // flip to read-only at once instead of silently dropping the edit, and keep
-      // `isDirty` so the unsaved content stays visible to copy out.
       const lockBlocked = (error as { data?: { code?: string } })?.data?.code === 'CONFLICT';
       if (!lockBlocked) console.error('[DocumentStore] Failed to save:', error);
       internal_dispatchDocument({
         id,
         type: 'updateDocument',
-        value: { saveBlockedByLock: lockBlocked || undefined, saveStatus: 'idle' },
+        value: {
+          saveBlockedByLock: lockBlocked || undefined,
+          saveStatus: 'idle',
+        },
       });
     }
   };
@@ -382,7 +399,11 @@ export class EditorActionImpl {
   clearSaveBlockedByLock = (id: string): void => {
     const { documents, internal_dispatchDocument } = this.#get();
     if (!documents[id]?.saveBlockedByLock) return;
-    internal_dispatchDocument({ id, type: 'updateDocument', value: { saveBlockedByLock: false } });
+    internal_dispatchDocument({
+      id,
+      type: 'updateDocument',
+      value: { saveBlockedByLock: false },
+    });
   };
 }
 

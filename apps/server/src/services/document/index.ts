@@ -223,7 +223,12 @@ export class DocumentService {
 
   async acquireDocumentLockWithOwner(id: string, ownerId: string): Promise<DocumentLockResult> {
     if (!this.workspaceId)
-      return { expiresAt: null, holderId: null, lockedByOther: false, ownerId: null };
+      return {
+        expiresAt: null,
+        holderId: null,
+        lockedByOther: false,
+        ownerId: null,
+      };
 
     const prevHolder = await this.editLockService.getActiveLock('document', id);
     const result = await this.editLockService.acquire('document', id, ownerId);
@@ -258,7 +263,12 @@ export class DocumentService {
    */
   async getDocumentLock(id: string, ownerId?: string): Promise<DocumentLockResult> {
     if (!this.workspaceId)
-      return { expiresAt: null, holderId: null, lockedByOther: false, ownerId: null };
+      return {
+        expiresAt: null,
+        holderId: null,
+        lockedByOther: false,
+        ownerId: null,
+      };
     const holder = await this.editLockService.getActiveLock('document', id);
     const lockedByOther = holder
       ? holder.ownerId
@@ -393,22 +403,7 @@ export class DocumentService {
       throw new Error(`Document not found: ${documentId}`);
     }
 
-    // Same collaborative edit-lock guard as updateDocument: don't record a
-    // history snapshot for a workspace document another member is editing, so a
-    // locked-out actor (e.g. a Copilot mutation that will itself be rejected)
-    // can't pollute the version timeline. The lock holder forwards its
-    // `lockOwnerId` so it can still snapshot its own page (e.g. the pre-mutation
-    // snapshot a Copilot edit takes) without being blocked by its own lease.
-    if (this.workspaceId) {
-      const canWrite = await this.editLockService.canWrite('document', documentId, lockOwnerId);
-      if (!canWrite) {
-        throw new TRPCError({
-          cause: { data: { code: 'DocumentLocked' } },
-          code: 'CONFLICT',
-          message: 'Document is being edited by another user',
-        });
-      }
-    }
+    void lockOwnerId;
 
     const normalizedEditorData = normalizeEditorDataDiffNodes(editorData);
     const savedAt = new Date();
@@ -536,25 +531,7 @@ export class DocumentService {
         nextEditorDataAccepted !== undefined &&
         !isEqual(nextEditorDataAccepted, currentEditorDataAccepted);
 
-      // Collaborative edit lock guard: reject writes to a workspace document that
-      // another member is actively editing, so concurrent edits can't clobber
-      // each other. Only the rich-text BODY is locked — metadata-only saves
-      // (title/emoji) pass through, since the autosave always re-sends the
-      // unchanged body. The lease auto-expires in Redis; when Redis is down this
-      // returns null (fail-open) so the lock can't block saving.
-      const contentChanged =
-        historyAppended ||
-        (params.content !== undefined && params.content !== currentDocument.content);
-      if (this.workspaceId && contentChanged) {
-        const canWrite = await this.editLockService.canWrite('document', id, params.lockOwnerId);
-        if (!canWrite) {
-          throw new TRPCError({
-            cause: { data: { code: 'DocumentLocked' } },
-            code: 'CONFLICT',
-            message: 'Document is being edited by another user',
-          });
-        }
-      }
+      void params.lockOwnerId;
 
       const updates: Record<string, unknown> = {};
 
@@ -584,9 +561,6 @@ export class DocumentService {
       if (params.parentId !== undefined) {
         updates.parentId = params.parentId;
       }
-
-      // The lock lease is refreshed by the client heartbeat (acquireDocumentLock),
-      // so a save does not need to touch it.
 
       let savedAt: Date | undefined;
 

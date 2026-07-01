@@ -33,7 +33,9 @@ const createValidMockEditor = () => ({
   getDocument: vi.fn((type: string) => {
     if (type === 'markdown') return '# Test';
     if (type === 'json') {
-      return { root: { children: [{ children: [], type: 'paragraph' }], type: 'root' } };
+      return {
+        root: { children: [{ children: [], type: 'paragraph' }], type: 'root' },
+      };
     }
     return null;
   }),
@@ -240,8 +242,14 @@ name: youtube-comment-retrieval-workflow
           children: [
             {
               children: [
-                { children: [{ text: 'origin', type: 'text' }], type: 'paragraph' },
-                { children: [{ text: 'modified', type: 'text' }], type: 'paragraph' },
+                {
+                  children: [{ text: 'origin', type: 'text' }],
+                  type: 'paragraph',
+                },
+                {
+                  children: [{ text: 'modified', type: 'text' }],
+                  type: 'paragraph',
+                },
               ],
               diffType: 'modify',
               type: 'diff',
@@ -748,14 +756,19 @@ name: skill-name
           documentId: 'doc-1',
           editor: mockEditor,
           editorData: {
-            root: { children: [{ children: [], type: 'paragraph' }], type: 'root' },
+            root: {
+              children: [{ children: [], type: 'paragraph' }],
+              type: 'root',
+            },
           },
           sourceType: 'page',
         });
       });
 
       await act(async () => {
-        await result.current.commitEditorMutation('doc-1', { saveSource: 'llm_call' });
+        await result.current.commitEditorMutation('doc-1', {
+          saveSource: 'llm_call',
+        });
       });
 
       expect(documentService.updateDocument).toHaveBeenCalledWith(
@@ -899,7 +912,7 @@ name: skill-name
       expect(result.current.documents['doc-1'].saveStatus).toBe('idle');
     });
 
-    it('passes the document lock owner id when saving', async () => {
+    it('does not pass the legacy document lock owner id when saving', async () => {
       const { result } = renderHook(() => useDocumentStore());
       const mockEditor = createValidMockEditor() as any;
 
@@ -923,7 +936,7 @@ name: skill-name
       });
 
       expect(documentService.updateDocument).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'doc-1', lockOwnerId: 'owner-1' }),
+        expect.not.objectContaining({ lockOwnerId: 'owner-1' }),
       );
     });
 
@@ -941,7 +954,9 @@ name: skill-name
         result.current.markDirty('doc-1');
       });
 
-      const lockError = Object.assign(new Error('locked'), { data: { code: 'CONFLICT' } });
+      const lockError = Object.assign(new Error('locked'), {
+        data: { code: 'CONFLICT' },
+      });
       vi.mocked(documentService.updateDocument).mockRejectedValueOnce(lockError);
       await act(async () => {
         await result.current.performSave('doc-1');
@@ -977,7 +992,9 @@ name: skill-name
         result.current.markDirty('doc-1');
       });
 
-      const lockError = Object.assign(new Error('locked'), { data: { code: 'CONFLICT' } });
+      const lockError = Object.assign(new Error('locked'), {
+        data: { code: 'CONFLICT' },
+      });
       vi.mocked(documentService.updateDocument).mockRejectedValueOnce(lockError);
       await act(async () => {
         await result.current.performSave('doc-1');
@@ -1056,14 +1073,25 @@ name: skill-name
           children: [
             {
               children: [
-                { children: [{ text: 'origin', type: 'text' }], type: 'paragraph' },
-                { children: [{ text: 'modified', type: 'text' }], type: 'paragraph' },
+                {
+                  children: [{ text: 'origin', type: 'text' }],
+                  type: 'paragraph',
+                },
+                {
+                  children: [{ text: 'modified', type: 'text' }],
+                  type: 'paragraph',
+                },
               ],
               diffType: 'modify',
               type: 'diff',
             },
             {
-              children: [{ children: [{ text: 'added', type: 'text' }], type: 'paragraph' }],
+              children: [
+                {
+                  children: [{ text: 'added', type: 'text' }],
+                  type: 'paragraph',
+                },
+              ],
               diffType: 'add',
               type: 'diff',
             },

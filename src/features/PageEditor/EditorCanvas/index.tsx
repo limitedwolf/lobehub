@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { EditorCanvas as SharedEditorCanvas } from '@/features/EditorCanvas';
 
 import { usePageEditorStore } from '../store';
+import { usePageCollaboration } from '../usePageCollaboration';
 import { usePageEditable } from '../usePageEditable';
 import { useAskCopilotItem } from './useAskCopilotItem';
 import { useSlashItems } from './useSlashItems';
@@ -21,6 +22,7 @@ interface EditorCanvasProps {
 const EditorCanvas = memo<EditorCanvasProps>(({ placeholder, style }) => {
   const { t } = useTranslation(['file', 'ui']);
   const editable = usePageEditable();
+  const collaboration = usePageCollaboration();
 
   const editor = usePageEditorStore((s) => s.editor);
   const documentId = usePageEditorStore((s) => s.documentId);
@@ -35,6 +37,7 @@ const EditorCanvas = memo<EditorCanvasProps>(({ placeholder, style }) => {
 
   return (
     <SharedEditorCanvas
+      collaboration={collaboration}
       documentId={documentId}
       editable={editable}
       editor={editor}

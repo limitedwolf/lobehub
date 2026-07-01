@@ -76,6 +76,10 @@ export interface EditorContentState {
    * Topic ID (for notebook documents, used for save routing)
    */
   topicId?: string;
+  /**
+   * Workspace owning this document. Personal documents keep this empty/null.
+   */
+  workspaceId?: null | string;
 }
 
 /**

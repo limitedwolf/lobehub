@@ -36,6 +36,7 @@ export interface InitDocumentParams {
 
   sourceType: DocumentSourceType;
   topicId?: string;
+  workspaceId?: null | string;
 }
 
 /**
@@ -148,6 +149,7 @@ export class DocumentActionImpl {
       editorData,
       sourceType,
       topicId,
+      workspaceId,
     } = params;
 
     const { internal_dispatchDocument } = this.#get();
@@ -171,6 +173,7 @@ export class DocumentActionImpl {
         sourceType,
         skillFrontmatter,
         topicId,
+        workspaceId,
       },
     });
 
@@ -249,6 +252,7 @@ export class DocumentActionImpl {
 
             sourceType,
             topicId: topicId ?? undefined,
+            workspaceId: document.workspaceId ?? null,
           });
 
           // Mirror page metadata (title/emoji) into pageStore so PageExplorer

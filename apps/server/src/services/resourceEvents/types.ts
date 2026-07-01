@@ -1,12 +1,17 @@
 /** Editable resource families that can broadcast realtime events. */
-export type ResourceType = 'agent' | 'chatGroup' | 'document' | 'task';
+export type ResourceType = 'agent' | 'chatGroup' | 'document' | 'documentCollaboration' | 'task';
 
 export interface ResourceRef {
   id: string;
   type: ResourceType;
 }
 
-export type ResourceEventType = 'doc.updated' | 'lock.changed';
+export type ResourceEventType =
+  | 'collaboration.awareness'
+  | 'collaboration.document.snapshot'
+  | 'collaboration.document.update'
+  | 'doc.updated'
+  | 'lock.changed';
 
 export interface ResourceEvent {
   /** User id that triggered the event; lets subscribers ignore self-originated events. */
