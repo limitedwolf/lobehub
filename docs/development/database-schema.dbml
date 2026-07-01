@@ -461,7 +461,8 @@ table ai_models {
   updated_at "timestamp with time zone" [not null, default: `now()`]
 
   indexes {
-    (id, provider_id, user_id) [pk]
+    (id, provider_id, user_id) [name: 'ai_models_id_provider_id_user_id_unique', unique]
+    (id, provider_id, user_id, workspace_id) [name: 'ai_models_id_provider_id_user_id_workspace_id_unique', unique]
     user_id [name: 'ai_models_user_id_idx']
     workspace_id [name: 'ai_models_workspace_id_idx']
   }
@@ -488,7 +489,8 @@ table ai_providers {
   updated_at "timestamp with time zone" [not null, default: `now()`]
 
   indexes {
-    (id, user_id) [pk]
+    (id, user_id) [name: 'ai_providers_id_user_id_unique', unique]
+    (id, user_id, workspace_id) [name: 'ai_providers_id_user_id_workspace_id_unique', unique]
     user_id [name: 'ai_providers_user_id_idx']
     workspace_id [name: 'ai_providers_workspace_id_idx']
   }
@@ -698,6 +700,7 @@ table user_connectors {
   id uuid [pk, not null, default: `gen_random_uuid()`]
   user_id text [not null]
   workspace_id text
+  agent_id text
   identifier varchar(255) [not null]
   name varchar(255) [not null]
   source_type text [not null]
@@ -716,9 +719,11 @@ table user_connectors {
 
   indexes {
     (user_id, identifier) [name: 'user_connectors_user_identifier_unique', unique]
+    (agent_id, identifier) [name: 'user_connectors_agent_identifier_unique', unique]
     user_id [name: 'user_connectors_user_id_idx']
     token_expires_at [name: 'user_connectors_token_expires_at_idx']
     workspace_id [name: 'user_connectors_workspace_id_idx']
+    agent_id [name: 'user_connectors_agent_id_idx']
   }
 }
 

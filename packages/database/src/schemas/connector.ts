@@ -1,4 +1,5 @@
 import type { CustomPluginParams, ToolManifest } from '@lobechat/types';
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   index,
@@ -12,6 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { timestamps, timestamptz, varchar255 } from './_helpers';
+import { agents } from './agent';
 import { users } from './user';
 import { workspaces } from './workspace';
 
@@ -123,6 +125,16 @@ export const userConnectors = pgTable(
       .notNull(),
     workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
 
+    /**
+     * Agent-scoped connector. When set, this connector belongs to a specific
+     * agent and takes priority over the workspace/personal connector of the
+     * same identifier at resolution time (Agent > Workspace > Personal). Null
+     * for personal/workspace connectors. Composio agent-specific accounts live
+     * on this row's `metadata`, so the whole agent dimension stays on this
+     * table (no `agent_id` on `user_installed_plugins`).
+     */
+    agentId: text('agent_id').references(() => agents.id, { onDelete: 'cascade' }),
+
     // ── Connector identity ────────────────────────────────────────────────
     /** Fixed slug for built-ins (e.g. "linear"); nanoid for custom ones */
     identifier: varchar('identifier', { length: 255 }).notNull(),
@@ -159,11 +171,29 @@ export const userConnectors = pgTable(
     ...timestamps,
   },
   (t) => [
-    uniqueIndex('user_connectors_user_identifier_unique').on(t.userId, t.identifier),
+    /**
+     * Personal / workspace connectors (`agent_id IS NULL`): one row per
+     * (user, identifier). Partial index preserves the pre-agent-dimension
+     * uniqueness exactly (NULL agent_id would otherwise be treated as distinct
+     * and let duplicate personal rows through).
+     */
+    uniqueIndex('user_connectors_user_identifier_unique')
+      .on(t.userId, t.identifier)
+      .where(sql`${t.agentId} IS NULL`),
+    /**
+     * Agent-scoped connectors (`agent_id IS NOT NULL`): one row per
+     * (agent, identifier). `agent_id` is globally unique, so an agent row
+     * coexists with the personal/workspace row of the same identifier — that
+     * coexistence is what enables the Agent > Workspace > Personal fallback.
+     */
+    uniqueIndex('user_connectors_agent_identifier_unique')
+      .on(t.agentId, t.identifier)
+      .where(sql`${t.agentId} IS NOT NULL`),
     index('user_connectors_user_id_idx').on(t.userId),
     /** Scanned by background token-refresh worker */
     index('user_connectors_token_expires_at_idx').on(t.tokenExpiresAt),
     index('user_connectors_workspace_id_idx').on(t.workspaceId),
+    index('user_connectors_agent_id_idx').on(t.agentId),
   ],
 );
 
