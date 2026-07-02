@@ -90,6 +90,28 @@ export default class ShellCommandCtr extends ControllerModule {
   }
 
   @IpcMethod()
+  async getStartupOrphans(): Promise<ScannedProcess[]> {
+    const [recovered, scanned] = await Promise.all([
+      this.app.recoveredShellProcesses,
+      this.scanOrphans().catch(() => [] as ScannedProcess[]),
+    ]);
+
+    const byPid = new Map<number, ScannedProcess>();
+    for (const meta of recovered) {
+      if (meta.pid === undefined) continue;
+      byPid.set(meta.pid, {
+        command: redactCommand(meta.command),
+        cwd: meta.cwd ? redactPath(meta.cwd) : undefined,
+        lobeProcessId: meta.processId,
+        pid: meta.pid,
+      });
+    }
+    for (const proc of scanned) byPid.set(proc.pid, proc);
+
+    return [...byPid.values()];
+  }
+
+  @IpcMethod()
   async scanOrphans(): Promise<ScannedProcess[]> {
     const scanned = await this.app.processScanner.scan();
     // Live tracked spawns (and their stamped descendants) are already visible

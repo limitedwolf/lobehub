@@ -327,3 +327,81 @@ describe('defineCommandBinary', () => {
     expect(spec.manage).toBe(manage);
   });
 });
+
+describe('session lifecycle', () => {
+  const lifecycleSpec = (
+    name: string,
+    lifecycle: BinarySpec['lifecycle'],
+    available = true,
+  ): BinarySpec => ({
+    detect: async () =>
+      available ? { available: true, path: `/fake/${name}` } : { available: false },
+    lifecycle,
+    name,
+  });
+
+  it('listAllSessions aggregates lifecycle binaries and omits empty ones', async () => {
+    const mgr = new BinaryManager(stubApp);
+    mgr.register(lifecycleSpec('with-sessions', { listSessions: async () => [{ id: 's1' }] }));
+    mgr.register(lifecycleSpec('empty', { listSessions: async () => [] }));
+    mgr.register({ detect: async () => ({ available: true, path: '/fake/plain' }), name: 'plain' });
+
+    expect(await mgr.listAllSessions()).toEqual({ 'with-sessions': [{ id: 's1' }] });
+  });
+
+  it('listBinarySessions returns [] when the binary is unavailable', async () => {
+    const mgr = new BinaryManager(stubApp);
+    const listSessions = vi.fn(async () => [{ id: 's1' }]);
+    mgr.register(lifecycleSpec('gone', { listSessions }, false));
+
+    expect(await mgr.listBinarySessions('gone')).toEqual([]);
+    expect(listSessions).not.toHaveBeenCalled();
+  });
+
+  it('listBinarySessions swallows lifecycle failures into []', async () => {
+    const mgr = new BinaryManager(stubApp);
+    mgr.register(
+      lifecycleSpec('broken', {
+        listSessions: async () => {
+          throw new Error('daemon unreachable');
+        },
+      }),
+    );
+
+    expect(await mgr.listBinarySessions('broken')).toEqual([]);
+  });
+
+  it('closeBinarySession resolves the binary path and delegates', async () => {
+    const mgr = new BinaryManager(stubApp);
+    const closeSession = vi.fn(async () => {});
+    mgr.register(lifecycleSpec('closable', { closeSession, listSessions: async () => [] }));
+
+    await mgr.closeBinarySession('closable', 'sess-1');
+
+    expect(closeSession).toHaveBeenCalledWith('/fake/closable', 'sess-1');
+  });
+
+  it('closeBinarySession throws when closing is unsupported', async () => {
+    const mgr = new BinaryManager(stubApp);
+    mgr.register(lifecycleSpec('list-only', { listSessions: async () => [] }));
+
+    await expect(mgr.closeBinarySession('list-only', 's')).rejects.toThrow(
+      /does not support closing/,
+    );
+  });
+
+  it('closeAllSessions only calls closeAll implementors and honors the timeout', async () => {
+    const mgr = new BinaryManager(stubApp);
+    const closeAll = vi.fn(async () => {});
+    const listSessions = vi.fn(async () => []);
+    mgr.register(lifecycleSpec('owned', { closeAll, listSessions }));
+    mgr.register(lifecycleSpec('hanging', { closeAll: () => new Promise(() => {}), listSessions }));
+    mgr.register(lifecycleSpec('unowned', { listSessions }));
+
+    const started = Date.now();
+    await mgr.closeAllSessions(100);
+
+    expect(closeAll).toHaveBeenCalledWith('/fake/owned');
+    expect(Date.now() - started).toBeLessThan(3000);
+  });
+});

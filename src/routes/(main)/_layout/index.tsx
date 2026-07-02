@@ -16,6 +16,7 @@ import { BANNER_HEIGHT } from '@/features/AlertBanner/CloudBanner';
 import DesktopFileMenuBridge from '@/features/DesktopFileMenuBridge';
 import DesktopNavigationBridge from '@/features/DesktopNavigationBridge';
 import AuthRequiredModal from '@/features/Electron/AuthRequiredModal';
+import OrphanCleanupNotification from '@/features/Electron/processes/OrphanCleanupNotification';
 import OverlayCaptureUploader from '@/features/Electron/ScreenCapture/OverlayCaptureUploader';
 import OverlayMessageDispatcher from '@/features/Electron/ScreenCapture/OverlayMessageDispatcher';
 import OverlaySnapshotPublisher from '@/features/Electron/ScreenCapture/OverlaySnapshotPublisher';
@@ -39,9 +40,7 @@ import RegisterHotkeys from './RegisterHotkeys';
 import { styles } from './style';
 
 const CloudBanner = dynamic(() => import('@/features/AlertBanner/CloudBanner'));
-const GlobalApprovalNotification = dynamic(
-  () => import('@/features/GlobalApprovalNotification'),
-);
+const GlobalApprovalNotification = dynamic(() => import('@/features/GlobalApprovalNotification'));
 
 const Layout: FC = () => {
   const { isPWA } = usePlatform();
@@ -59,6 +58,7 @@ const Layout: FC = () => {
           {isDesktop && <OverlaySnapshotPublisher />}
           {isDesktop && <OverlayCaptureUploader />}
           {isDesktop && <OverlayMessageDispatcher />}
+          {isDesktop && <OrphanCleanupNotification />}
           {showCloudPromotion && <CloudBanner />}
         </Suspense>
         {isDesktop && <AuthRequiredModal />}

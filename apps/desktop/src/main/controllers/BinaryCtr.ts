@@ -3,10 +3,15 @@ import { promisify } from 'node:util';
 
 import type {
   ClaudeAuthStatus,
+  CloseBinarySessionParams,
   DetectHeterogeneousAgentCommandParams,
 } from '@lobechat/electron-client-ipc';
 
-import type { BinaryCategory, BinaryStatus } from '@/core/infrastructure/BinaryManager';
+import type {
+  BinaryCategory,
+  BinarySession,
+  BinaryStatus,
+} from '@/core/infrastructure/BinaryManager';
 import { detectHeterogeneousCliCommand } from '@/modules/binaries';
 import { createLogger } from '@/utils/logger';
 
@@ -133,6 +138,17 @@ export default class BinaryCtr extends ControllerModule {
       name: spec.name,
       priority: spec.priority,
     }));
+  }
+
+  @IpcMethod()
+  async listAllSessions(): Promise<Record<string, BinarySession[]>> {
+    return this.manager.listAllSessions();
+  }
+
+  @IpcMethod()
+  async closeSession({ id, name }: CloseBinarySessionParams): Promise<void> {
+    logger.debug(`Closing session '${id}' of binary '${name}'`);
+    return this.manager.closeBinarySession(name, id);
   }
 
   /**

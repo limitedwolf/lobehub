@@ -1,4 +1,8 @@
-import { type ShellProcessMeta, useWatchBroadcast } from '@lobechat/electron-client-ipc';
+import {
+  type BinarySession,
+  type ShellProcessMeta,
+  useWatchBroadcast,
+} from '@lobechat/electron-client-ipc';
 import { ActionIcon, Flexbox, Icon, Tooltip } from '@lobehub/ui';
 import { Button, Popover } from '@lobehub/ui/base-ui';
 import { Activity, X } from 'lucide-react';
@@ -6,12 +10,22 @@ import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
 
+import { binaryService } from '@/services/electron/binary';
 import { shellCommandService } from '@/services/electron/shellCommand';
 
 import OrphanSection from './OrphanSection';
+import SessionsSection from './SessionsSection';
 import { styles } from './styles';
 
 const SWR_KEY = 'desktop-background-processes';
+
+const fetchBackgroundProcesses = async () => {
+  const [processes, sessions] = await Promise.all([
+    shellCommandService.listProcesses(),
+    binaryService.listAllSessions().catch(() => ({}) as Record<string, BinarySession[]>),
+  ]);
+  return { processes, sessions };
+};
 
 const formatAge = (startedAt: number) => {
   const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
@@ -54,14 +68,16 @@ const BackgroundProcessesIndicator = memo(() => {
   const [open, setOpen] = useState(false);
   const [killingIds, setKillingIds] = useState<Set<string>>(() => new Set());
 
-  const { data, mutate } = useSWR(SWR_KEY, () => shellCommandService.listProcesses(), {
+  const { data, mutate } = useSWR(SWR_KEY, fetchBackgroundProcesses, {
     refreshInterval: 10_000,
     revalidateOnFocus: true,
   });
 
   useWatchBroadcast('shellProcessesChanged', ({ processes }) => {
-    void mutate(processes, { revalidate: false });
+    void mutate((prev) => ({ processes, sessions: prev?.sessions ?? {} }), { revalidate: false });
   });
+
+  const revalidate = useCallback(() => void mutate(), [mutate]);
 
   const handleKill = useCallback(
     async (shellId: string) => {
@@ -80,9 +96,11 @@ const BackgroundProcessesIndicator = memo(() => {
     [mutate],
   );
 
-  const processes = (data ?? []).filter((process) => process.runInBackground);
+  const processes = (data?.processes ?? []).filter((process) => process.runInBackground);
+  const sessions = data?.sessions ?? {};
+  const count = processes.length + Object.values(sessions).flat().length;
 
-  if (processes.length === 0) return null;
+  if (count === 0) return null;
 
   const button = (
     <Button
@@ -91,7 +109,7 @@ const BackgroundProcessesIndicator = memo(() => {
       size={'small'}
       type={'text'}
     >
-      {processes.length}
+      {count}
     </Button>
   );
 
@@ -105,16 +123,19 @@ const BackgroundProcessesIndicator = memo(() => {
       content={
         <Flexbox>
           <div className={styles.title}>{t('backgroundProcesses.title')}</div>
-          <Flexbox className={styles.list}>
-            {processes.map((process) => (
-              <ProcessRow
-                key={process.shellId}
-                killing={killingIds.has(process.shellId)}
-                process={process}
-                onKill={handleKill}
-              />
-            ))}
-          </Flexbox>
+          {processes.length > 0 && (
+            <Flexbox className={styles.list}>
+              {processes.map((process) => (
+                <ProcessRow
+                  key={process.shellId}
+                  killing={killingIds.has(process.shellId)}
+                  process={process}
+                  onKill={handleKill}
+                />
+              ))}
+            </Flexbox>
+          )}
+          <SessionsSection sessions={sessions} onChanged={revalidate} />
           <OrphanSection />
         </Flexbox>
       }

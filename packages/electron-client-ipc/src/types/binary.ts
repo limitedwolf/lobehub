@@ -14,6 +14,18 @@ export interface BinaryStatus {
  */
 export type BinaryCategory = 'content-search' | 'custom' | 'file-search' | 'system';
 
+export interface BinarySession {
+  id: string;
+  meta?: Record<string, string>;
+  pid?: number;
+  startedAt?: number;
+}
+
+export interface CloseBinarySessionParams {
+  id: string;
+  name: string;
+}
+
 /**
  * Binary info for display
  */

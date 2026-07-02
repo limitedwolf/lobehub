@@ -60,6 +60,7 @@ const mockApp = {
   browserManager: mockBrowserManager,
   getController: vi.fn((c: unknown) => (c === CliCtr ? mockCliCtr : undefined)),
   processScanner: mockProcessScanner,
+  recoveredShellProcesses: Promise.resolve([]),
   shellProcessManager: mockShellProcessManager,
 } as unknown as App;
 
@@ -251,6 +252,52 @@ describe('ShellCommandCtr (thin wrapper)', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].pid).toBe(777);
+    });
+  });
+
+  describe('getStartupOrphans', () => {
+    it('merges recovered persisted entries with scanned orphans, deduped by pid', async () => {
+      const home = os.homedir();
+      (mockApp as any).recoveredShellProcesses = Promise.resolve([
+        {
+          command: `node ${home}/daemon.js`,
+          cwd: `${home}/proj`,
+          exitCode: null,
+          pid: 500,
+          processId: 'stamp-recovered',
+          runInBackground: true,
+          shellId: 'sh-9',
+          startedAt: 1_000,
+        },
+      ]);
+      mockShellProcessManager.list.mockReturnValue([]);
+      mockProcessScanner.scan.mockResolvedValue([
+        { command: 'sleep 999', lobeProcessId: 'stamp-scanned', pid: 501 },
+        { command: 'node daemon.js', lobeProcessId: 'stamp-recovered', pid: 500 },
+      ]);
+
+      try {
+        const result = await ctr.getStartupOrphans();
+
+        expect(result).toHaveLength(2);
+        const pids = result.map((p) => p.pid).sort();
+        expect(pids).toEqual([500, 501]);
+        const recovered = result.find((p) => p.pid === 500)!;
+        expect(recovered.command).not.toContain(home);
+      } finally {
+        (mockApp as any).recoveredShellProcesses = Promise.resolve([]);
+      }
+    });
+
+    it('returns scanned orphans alone when nothing was persisted', async () => {
+      mockShellProcessManager.list.mockReturnValue([]);
+      mockProcessScanner.scan.mockResolvedValue([
+        { command: 'sleep 1', lobeProcessId: 's-1', pid: 42 },
+      ]);
+
+      expect(await ctr.getStartupOrphans()).toEqual([
+        { command: 'sleep 1', lobeProcessId: 's-1', pid: 42 },
+      ]);
     });
   });
 

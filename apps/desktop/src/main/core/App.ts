@@ -37,6 +37,7 @@ import { LocalFileProtocolManager } from './infrastructure/LocalFileProtocolMana
 import { ProcessScanner } from './infrastructure/ProcessScanner';
 import { ProtocolManager } from './infrastructure/ProtocolManager';
 import { RendererUrlManager } from './infrastructure/RendererUrlManager';
+import type { RecoveredShellProcess } from './infrastructure/ShellProcessPersister';
 import { ShellProcessPersister } from './infrastructure/ShellProcessPersister';
 import { StaticFileServerManager } from './infrastructure/StaticFileServerManager';
 import { StoreManager } from './infrastructure/StoreManager';
@@ -71,6 +72,11 @@ export class App {
   shellProcessManager: ShellProcessManager;
   shellProcessPersister: ShellProcessPersister;
   processScanner: ProcessScanner;
+  /**
+   * Snapshot of the previous session's still-alive spawns, captured before this
+   * session's first register can overwrite the persisted file.
+   */
+  recoveredShellProcesses: Promise<RecoveredShellProcess[]>;
   screenCaptureManager: ScreenCaptureManager;
   chromeFlags: string[] = ['OverlayScrollbar', 'FluentOverlayScrollbar', 'FluentScrollbar'];
 
@@ -156,6 +162,7 @@ export class App {
     this.binaryManager = new BinaryManager(this);
     this.shellProcessManager = new ShellProcessManager();
     this.shellProcessPersister = new ShellProcessPersister(this.shellProcessManager);
+    this.recoveredShellProcesses = this.shellProcessPersister.recover().catch(() => []);
     this.processScanner = new ProcessScanner();
     this.screenCaptureManager = new ScreenCaptureManager(this);
 
@@ -505,7 +512,7 @@ export class App {
       await Promise.race([
         Promise.allSettled([
           this.shellProcessManager.cleanupAll(),
-          // binaryManager.closeAllSessions() — wired in PR-4 when BinaryManager.lifecycle ships
+          this.binaryManager.closeAllSessions(this.cleanupTimeoutMs),
         ]),
         new Promise<void>((resolve) => setTimeout(resolve, this.cleanupTimeoutMs)),
       ]);

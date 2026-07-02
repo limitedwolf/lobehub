@@ -1,8 +1,10 @@
 import {
   type BinaryCategory,
   type BinaryInfo,
+  type BinarySession,
   type BinaryStatus,
   type ClaudeAuthStatus,
+  type CloseBinarySessionParams,
   type DetectHeterogeneousAgentCommandParams,
 } from '@lobechat/electron-client-ipc';
 
@@ -93,6 +95,14 @@ class BinaryService {
    */
   getClaudeAuthStatus = async (command = 'claude'): Promise<ClaudeAuthStatus | null> => {
     return ensureElectronIpc().binary.getClaudeAuthStatus(command);
+  };
+
+  listAllSessions = async (): Promise<Record<string, BinarySession[]>> => {
+    return ensureElectronIpc().binary.listAllSessions();
+  };
+
+  closeSession = async (params: CloseBinarySessionParams): Promise<void> => {
+    return ensureElectronIpc().binary.closeSession(params);
   };
 }
 

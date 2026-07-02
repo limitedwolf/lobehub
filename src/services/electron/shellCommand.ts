@@ -8,6 +8,10 @@ import {
 import { ensureElectronIpc } from '@/utils/electron/ipc';
 
 class ShellCommandService {
+  getStartupOrphans = async (): Promise<ScannedProcess[]> => {
+    return ensureElectronIpc().shellCommand.getStartupOrphans();
+  };
+
   killProcess = async (params: KillProcessParams): Promise<KillCommandResult> => {
     return ensureElectronIpc().shellCommand.killProcess(params);
   };

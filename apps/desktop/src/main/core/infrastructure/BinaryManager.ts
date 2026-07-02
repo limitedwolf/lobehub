@@ -98,6 +98,28 @@ export interface BinaryManageSpec {
 }
 
 /**
+ * A long-lived session owned by a daemon-style binary (e.g. an agent-browser
+ * browser session). Timestamps are epoch ms so the shape crosses IPC cleanly.
+ */
+export interface BinarySession {
+  id: string;
+  meta?: Record<string, string>;
+  pid?: number;
+  startedAt?: number;
+}
+
+/**
+ * Optional session lifecycle for daemon-style binaries. `closeAll` should only
+ * be implemented when it is safe to close every session — for a user-global
+ * daemon (agent-browser) it would kill sessions started outside LobeHub.
+ */
+export interface BinaryLifecycleSpec {
+  closeAll?: (binPath: string) => Promise<void>;
+  closeSession?: (binPath: string, id: string) => Promise<void>;
+  listSessions?: (binPath: string) => Promise<BinarySession[]>;
+}
+
+/**
  * Specification for a binary the desktop app knows about — modules implement
  * this to register detection (and optional install/upgrade) logic.
  */
@@ -106,6 +128,8 @@ export interface BinarySpec {
   description?: string;
   /** Detection method */
   detect: () => Promise<BinaryStatus>;
+  /** Optional session lifecycle for daemon-style binaries */
+  lifecycle?: BinaryLifecycleSpec;
   /** Optional install/upgrade lifecycle */
   manage?: BinaryManageSpec;
   /** Binary name, e.g., 'rg', 'mdfind', 'agent-browser' */
@@ -388,6 +412,82 @@ export class BinaryManager {
       .map((name) => this.specs.get(name)!)
       .filter(Boolean)
       .sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
+  }
+
+  // ====================================================================
+  // Session lifecycle
+  // ====================================================================
+
+  /**
+   * List sessions of one binary. Returns [] when the binary is unregistered,
+   * not detected, has no lifecycle, or its lifecycle call fails — a missing
+   * daemon must not break the aggregate view.
+   */
+  async listBinarySessions(name: string): Promise<BinarySession[]> {
+    const spec = this.specs.get(name);
+    const listSessions = spec?.lifecycle?.listSessions;
+    if (!listSessions) return [];
+
+    const status = await this.detect(name);
+    if (!status.available || !status.path) return [];
+
+    try {
+      return await listSessions(status.path);
+    } catch (error) {
+      logger.warn(`listSessions failed for '${name}':`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Aggregate sessions across every registered binary with a lifecycle.
+   * Binaries without sessions are omitted from the result.
+   */
+  async listAllSessions(): Promise<Record<string, BinarySession[]>> {
+    const names = [...this.specs.entries()]
+      .filter(([, spec]) => spec.lifecycle?.listSessions)
+      .map(([name]) => name);
+
+    const result: Record<string, BinarySession[]> = {};
+    await Promise.all(
+      names.map(async (name) => {
+        const sessions = await this.listBinarySessions(name);
+        if (sessions.length > 0) result[name] = sessions;
+      }),
+    );
+    return result;
+  }
+
+  async closeBinarySession(name: string, id: string): Promise<void> {
+    const spec = this.specs.get(name);
+    const closeSession = spec?.lifecycle?.closeSession;
+    if (!closeSession) throw new Error(`Binary '${name}' does not support closing sessions`);
+
+    const status = await this.detect(name);
+    if (!status.available || !status.path) throw new Error(`Binary '${name}' is not available`);
+
+    await closeSession(status.path, id);
+  }
+
+  /**
+   * Close all sessions of binaries that opted into `closeAll`, bounded by a
+   * timeout — intended for the quit path. Binaries without `closeAll` are
+   * deliberately left alone (their sessions may not belong to LobeHub).
+   */
+  async closeAllSessions(timeoutMs = 3000): Promise<void> {
+    const closers = [...this.specs.entries()]
+      .filter(([, spec]) => spec.lifecycle?.closeAll)
+      .map(async ([name, spec]) => {
+        const status = await this.detect(name);
+        if (!status.available || !status.path) return;
+        await spec.lifecycle!.closeAll!(status.path);
+      });
+    if (closers.length === 0) return;
+
+    await Promise.race([
+      Promise.allSettled(closers),
+      new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+    ]);
   }
 
   /**
