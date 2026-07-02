@@ -34,6 +34,7 @@ import { BinaryManager } from './infrastructure/BinaryManager';
 import { I18nManager } from './infrastructure/I18nManager';
 import { IoCContainer } from './infrastructure/IoCContainer';
 import { LocalFileProtocolManager } from './infrastructure/LocalFileProtocolManager';
+import { ProcessScanner } from './infrastructure/ProcessScanner';
 import { ProtocolManager } from './infrastructure/ProtocolManager';
 import { RendererUrlManager } from './infrastructure/RendererUrlManager';
 import { ShellProcessPersister } from './infrastructure/ShellProcessPersister';
@@ -69,6 +70,7 @@ export class App {
   binaryManager: BinaryManager;
   shellProcessManager: ShellProcessManager;
   shellProcessPersister: ShellProcessPersister;
+  processScanner: ProcessScanner;
   screenCaptureManager: ScreenCaptureManager;
   chromeFlags: string[] = ['OverlayScrollbar', 'FluentOverlayScrollbar', 'FluentScrollbar'];
 
@@ -154,6 +156,7 @@ export class App {
     this.binaryManager = new BinaryManager(this);
     this.shellProcessManager = new ShellProcessManager();
     this.shellProcessPersister = new ShellProcessPersister(this.shellProcessManager);
+    this.processScanner = new ProcessScanner();
     this.screenCaptureManager = new ScreenCaptureManager(this);
 
     // Register built-in binary specs

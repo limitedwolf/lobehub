@@ -1,7 +1,6 @@
 import { type ShellProcessMeta, useWatchBroadcast } from '@lobechat/electron-client-ipc';
 import { ActionIcon, Flexbox, Icon, Tooltip } from '@lobehub/ui';
 import { Button, Popover } from '@lobehub/ui/base-ui';
-import { createStaticStyles } from 'antd-style';
 import { Activity, X } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,54 +8,10 @@ import useSWR from 'swr';
 
 import { shellCommandService } from '@/services/electron/shellCommand';
 
+import OrphanSection from './OrphanSection';
+import { styles } from './styles';
+
 const SWR_KEY = 'desktop-background-processes';
-
-const styles = createStaticStyles(({ css, cssVar }) => ({
-  command: css`
-    overflow: hidden;
-
-    font-family: ${cssVar.fontFamilyCode};
-    font-size: 12px;
-    color: ${cssVar.colorText};
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  list: css`
-    overflow-y: auto;
-    max-height: 320px;
-    padding: 4px;
-  `,
-  row: css`
-    padding-block: 6px;
-    padding-inline: 8px;
-    border-radius: ${cssVar.borderRadius};
-
-    &:hover {
-      background: ${cssVar.colorFillTertiary};
-    }
-  `,
-  sub: css`
-    overflow: hidden;
-
-    font-size: 12px;
-    color: ${cssVar.colorTextDescription};
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  title: css`
-    padding-block: 10px 6px;
-    padding-inline: 12px;
-    border-block-end: 1px solid ${cssVar.colorBorderSecondary};
-
-    font-size: 13px;
-    font-weight: 500;
-    color: ${cssVar.colorText};
-  `,
-  trigger: css`
-    font-size: ${cssVar.fontSizeSM};
-    color: ${cssVar.colorTextSecondary};
-  `,
-}));
 
 const formatAge = (startedAt: number) => {
   const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
@@ -160,6 +115,7 @@ const BackgroundProcessesIndicator = memo(() => {
               />
             ))}
           </Flexbox>
+          <OrphanSection />
         </Flexbox>
       }
       onOpenChange={setOpen}

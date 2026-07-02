@@ -8,6 +8,7 @@ import type {
   KillProcessParams,
   RunCommandParams,
   RunCommandResult,
+  ScannedProcess,
   ShellProcessMeta,
 } from '@lobechat/electron-client-ipc';
 import { runCommand } from '@lobechat/local-file-shell';
@@ -86,6 +87,29 @@ export default class ShellCommandCtr extends ControllerModule {
   @IpcMethod()
   async killProcess({ force, pid }: KillProcessParams): Promise<KillCommandResult> {
     return this.processManager.killByPid(pid, force);
+  }
+
+  @IpcMethod()
+  async scanOrphans(): Promise<ScannedProcess[]> {
+    const scanned = await this.app.processScanner.scan();
+    // Live tracked spawns (and their stamped descendants) are already visible
+    // and killable via the shell list; the app's own inherited stamp would list
+    // LobeHub itself when launched from a stamped shell in dev.
+    const liveTracked = new Set(this.processManager.list().map((meta) => meta.processId));
+    const inheritedStamp = process.env.LOBEHUB_PROCESS_ID;
+
+    return scanned
+      .filter(
+        (proc) =>
+          proc.pid !== process.pid &&
+          proc.lobeProcessId !== inheritedStamp &&
+          !liveTracked.has(proc.lobeProcessId),
+      )
+      .map((proc) => ({
+        ...proc,
+        command: redactCommand(proc.command),
+        cwd: proc.cwd ? redactPath(proc.cwd) : undefined,
+      }));
   }
 
   afterAppReady() {

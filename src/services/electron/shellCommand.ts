@@ -1,6 +1,7 @@
 import {
   type KillCommandResult,
   type KillProcessParams,
+  type ScannedProcess,
   type ShellProcessMeta,
 } from '@lobechat/electron-client-ipc';
 
@@ -17,6 +18,10 @@ class ShellCommandService {
 
   listProcesses = async (): Promise<ShellProcessMeta[]> => {
     return ensureElectronIpc().shellCommand.listProcesses();
+  };
+
+  scanOrphans = async (): Promise<ScannedProcess[]> => {
+    return ensureElectronIpc().shellCommand.scanOrphans();
   };
 }
 

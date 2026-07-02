@@ -12,3 +12,10 @@ export interface KillProcessParams {
   force?: boolean;
   pid: number;
 }
+
+export interface ScannedProcess {
+  command: string;
+  cwd?: string;
+  lobeProcessId: string;
+  pid: number;
+}

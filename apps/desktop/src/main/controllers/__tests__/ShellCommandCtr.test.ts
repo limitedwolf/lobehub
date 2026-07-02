@@ -52,9 +52,14 @@ const mockBrowserManager = {
   broadcastToAllWindows: vi.fn(),
 };
 
+const mockProcessScanner = {
+  scan: vi.fn(async () => []),
+};
+
 const mockApp = {
   browserManager: mockBrowserManager,
   getController: vi.fn((c: unknown) => (c === CliCtr ? mockCliCtr : undefined)),
+  processScanner: mockProcessScanner,
   shellProcessManager: mockShellProcessManager,
 } as unknown as App;
 
@@ -200,6 +205,52 @@ describe('ShellCommandCtr (thin wrapper)', () => {
 
       expect(mockShellProcessManager.killByPid).toHaveBeenCalledWith(4242, true);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('scanOrphans', () => {
+    it('filters self, inherited stamp and live tracked entries, then redacts', async () => {
+      const home = os.homedir();
+      vi.stubEnv('LOBEHUB_PROCESS_ID', 'inherited-stamp');
+      mockShellProcessManager.list.mockReturnValue([makeMeta({ processId: 'uuid-live' })]);
+      mockProcessScanner.scan.mockResolvedValue([
+        {
+          command: `node ${home}/daemon.js --token=abc123`,
+          cwd: `${home}/proj`,
+          lobeProcessId: 'stamp-orphan',
+          pid: 999,
+        },
+        { command: 'lobehub itself', lobeProcessId: 'anything', pid: process.pid },
+        { command: 'the app tree', lobeProcessId: 'inherited-stamp', pid: 4000 },
+        { command: 'tracked child', lobeProcessId: 'uuid-live', pid: 4001 },
+      ]);
+
+      try {
+        const result = await ctr.scanOrphans();
+
+        expect(result).toEqual([
+          {
+            command: 'node ~/daemon.js --token=***',
+            cwd: '~/proj',
+            lobeProcessId: 'stamp-orphan',
+            pid: 999,
+          },
+        ]);
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it('keeps orphans whose stamp matches an exited tracked entry', async () => {
+      mockShellProcessManager.list.mockReturnValue([]);
+      mockProcessScanner.scan.mockResolvedValue([
+        { command: 'survivor', lobeProcessId: 'stamp-of-dead-shell', pid: 777 },
+      ]);
+
+      const result = await ctr.scanOrphans();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].pid).toBe(777);
     });
   });
 
