@@ -1,3 +1,5 @@
+import os from 'node:os';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { App } from '@/core/App';
@@ -40,13 +42,34 @@ const mockCliCtr = {
 
 const mockShellProcessManager = {
   getOutput: vi.fn(),
+  killByPid: vi.fn(),
   killTree: vi.fn(),
+  list: vi.fn(() => []),
+  subscribe: vi.fn(),
+};
+
+const mockBrowserManager = {
+  broadcastToAllWindows: vi.fn(),
 };
 
 const mockApp = {
+  browserManager: mockBrowserManager,
   getController: vi.fn((c: unknown) => (c === CliCtr ? mockCliCtr : undefined)),
   shellProcessManager: mockShellProcessManager,
 } as unknown as App;
+
+const makeMeta = (overrides: Record<string, unknown> = {}) => ({
+  command: 'sleep 60',
+  cwd: '/workspace',
+  exitCode: null,
+  pgid: 100,
+  pid: 100,
+  processId: 'uuid-1',
+  runInBackground: true,
+  shellId: 'sh-1',
+  startedAt: 1_000,
+  ...overrides,
+});
 
 describe('ShellCommandCtr (thin wrapper)', () => {
   let ctr: ShellCommandCtr;
@@ -112,5 +135,95 @@ describe('ShellCommandCtr (thin wrapper)', () => {
     expect(mockRunCommand).not.toHaveBeenCalled();
     expect(mockShellProcessManager.getOutput).not.toHaveBeenCalled();
     expect(mockShellProcessManager.killTree).not.toHaveBeenCalled();
+  });
+
+  describe('listProcesses', () => {
+    it('maps manager metas to the IPC shape without pgid/exitCode', () => {
+      mockShellProcessManager.list.mockReturnValue([makeMeta()]);
+
+      expect(ctr.listProcesses()).toEqual([
+        {
+          command: 'sleep 60',
+          cwd: '/workspace',
+          pid: 100,
+          processId: 'uuid-1',
+          runInBackground: true,
+          shellId: 'sh-1',
+          startedAt: 1_000,
+        },
+      ]);
+    });
+
+    it('replaces the home directory with ~ in command and cwd', () => {
+      const home = os.homedir();
+      mockShellProcessManager.list.mockReturnValue([
+        makeMeta({ command: `tail -f ${home}/logs/app.log`, cwd: `${home}/projects` }),
+      ]);
+
+      const [meta] = ctr.listProcesses();
+
+      expect(meta.command).toBe('tail -f ~/logs/app.log');
+      expect(meta.cwd).toBe('~/projects');
+    });
+
+    it('masks secret-looking arguments in the command', () => {
+      mockShellProcessManager.list.mockReturnValue([
+        makeMeta({ command: 'curl --header token=abc123 --data password: hunter2 example.com' }),
+      ]);
+
+      const [meta] = ctr.listProcesses();
+
+      expect(meta.command).toContain('token=***');
+      expect(meta.command).toContain('password=***');
+      expect(meta.command).not.toContain('abc123');
+      expect(meta.command).not.toContain('hunter2');
+    });
+
+    it('caps the command at 120 characters', () => {
+      mockShellProcessManager.list.mockReturnValue([makeMeta({ command: 'x'.repeat(500) })]);
+
+      expect(ctr.listProcesses()[0].command).toHaveLength(120);
+    });
+
+    it('keeps cwd undefined when absent', () => {
+      mockShellProcessManager.list.mockReturnValue([makeMeta({ cwd: undefined })]);
+
+      expect(ctr.listProcesses()[0].cwd).toBeUndefined();
+    });
+  });
+
+  describe('killProcess', () => {
+    it('delegates to app.shellProcessManager.killByPid', async () => {
+      mockShellProcessManager.killByPid.mockResolvedValue({ success: true });
+
+      const result = await ctr.killProcess({ force: true, pid: 4242 });
+
+      expect(mockShellProcessManager.killByPid).toHaveBeenCalledWith(4242, true);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('afterAppReady', () => {
+    it('subscribes to process changes and broadcasts the redacted list', () => {
+      let listener: (() => void) | undefined;
+      mockShellProcessManager.subscribe.mockImplementation((fn: () => void) => {
+        listener = fn;
+        return () => {};
+      });
+      mockShellProcessManager.list.mockReturnValue([makeMeta()]);
+
+      ctr.afterAppReady();
+      expect(mockShellProcessManager.subscribe).toHaveBeenCalledTimes(1);
+      expect(mockBrowserManager.broadcastToAllWindows).not.toHaveBeenCalled();
+
+      listener!();
+
+      expect(mockBrowserManager.broadcastToAllWindows).toHaveBeenCalledWith(
+        'shellProcessesChanged',
+        {
+          processes: [expect.objectContaining({ command: 'sleep 60', pid: 100, shellId: 'sh-1' })],
+        },
+      );
+    });
   });
 });

@@ -53,6 +53,8 @@
   "audioPlayer.play": "播放音频",
   "availableAgents": "可用助理",
   "backToBottom": "跳转到最新",
+  "backgroundProcesses.stop": "结束进程",
+  "backgroundProcesses.title": "后台进程",
   "beforeUnload.confirmLeave": "你有正在生成中的请求，确定要离开吗？",
   "builtinCopilot": "内置 Copilot",
   "chatList.expandMessage": "展开消息",

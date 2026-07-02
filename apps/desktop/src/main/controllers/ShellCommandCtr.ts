@@ -1,10 +1,14 @@
+import os from 'node:os';
+
 import type {
   GetCommandOutputParams,
   GetCommandOutputResult,
   KillCommandParams,
   KillCommandResult,
+  KillProcessParams,
   RunCommandParams,
   RunCommandResult,
+  ShellProcessMeta,
 } from '@lobechat/electron-client-ipc';
 import { runCommand } from '@lobechat/local-file-shell';
 
@@ -17,6 +21,15 @@ const logger = createLogger('controllers:ShellCommandCtr');
 
 /** Prefix for a simple `lh`/`lobe`/`lobehub` invocation (keyword + boundary, args via slice). */
 const SIMPLE_LH_PREFIX = /^\s*(?:lh|lobe|lobehub)(?=\s|$)/;
+
+const MAX_UI_COMMAND_LENGTH = 120;
+
+const redactPath = (text: string) => text.replaceAll(os.homedir(), '~');
+
+const redactCommand = (command: string) =>
+  redactPath(command)
+    .replaceAll(/\b(token|key|secret|password|pwd)\s*[:=]\s*\S+/gi, '$1=***')
+    .slice(0, MAX_UI_COMMAND_LENGTH);
 
 export default class ShellCommandCtr extends ControllerModule {
   static override readonly groupName = 'shellCommand';
@@ -55,5 +68,31 @@ export default class ShellCommandCtr extends ControllerModule {
   @IpcMethod()
   async handleKillCommand({ shell_id }: KillCommandParams): Promise<KillCommandResult> {
     return this.processManager.killTree(shell_id);
+  }
+
+  @IpcMethod()
+  listProcesses(): ShellProcessMeta[] {
+    return this.processManager.list().map((meta) => ({
+      command: redactCommand(meta.command),
+      cwd: meta.cwd ? redactPath(meta.cwd) : undefined,
+      pid: meta.pid,
+      processId: meta.processId,
+      runInBackground: meta.runInBackground,
+      shellId: meta.shellId,
+      startedAt: meta.startedAt,
+    }));
+  }
+
+  @IpcMethod()
+  async killProcess({ force, pid }: KillProcessParams): Promise<KillCommandResult> {
+    return this.processManager.killByPid(pid, force);
+  }
+
+  afterAppReady() {
+    this.processManager.subscribe(() => {
+      this.app.browserManager.broadcastToAllWindows('shellProcessesChanged', {
+        processes: this.listProcesses(),
+      });
+    });
   }
 }

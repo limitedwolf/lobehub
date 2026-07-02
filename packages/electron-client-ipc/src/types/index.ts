@@ -10,6 +10,7 @@ export * from './proxy';
 export * from './proxyTRPCRequest';
 export * from './route';
 export * from './screenCapture';
+export * from './shellCommand';
 export * from './shortcut';
 export * from './system';
 export * from './topicPopup';

@@ -61,6 +61,8 @@ export default {
   'artifact.unknownTitle': 'Untitled Work',
   'availableAgents': 'Available Agents',
   'backToBottom': 'Jump to latest',
+  'backgroundProcesses.stop': 'End process',
+  'backgroundProcesses.title': 'Background processes',
   'beforeUnload.confirmLeave': 'A request is still running. Leave anyway?',
   'builtinCopilot': 'Built-in Copilot',
   'chatList.expandMessage': 'Expand Message',

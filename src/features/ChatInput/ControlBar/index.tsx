@@ -1,3 +1,4 @@
+import { isDesktop } from '@lobechat/const';
 import { Flexbox, Skeleton } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
 import { memo } from 'react';
@@ -9,6 +10,7 @@ import ContextWindow from '../ActionBar/Token';
 import { useAgentId } from '../hooks/useAgentId';
 import { useChatInputStore } from '../store';
 import ApprovalMode from './ApprovalMode';
+import BackgroundProcessesIndicator from './BackgroundProcessesIndicator';
 import ModeSelector from './ModeSelector';
 import WorkspaceControls from './WorkspaceControls';
 
@@ -68,6 +70,7 @@ const ControlBar = memo(() => {
       </Flexbox>
 
       <Flexbox horizontal align={'center'} className={styles.rightGroup} gap={4}>
+        {isDesktop && <BackgroundProcessesIndicator />}
         {enableAgentMode && <ApprovalMode />}
         {showContextWindow && <ContextWindow />}
       </Flexbox>
