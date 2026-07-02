@@ -125,8 +125,7 @@ export const DynamicInterventionConfigSchema = z.object({
  * Extended human intervention config that supports dynamic evaluation
  */
 export type ExtendedHumanInterventionConfig =
-  | HumanInterventionConfig
-  | { dynamic: DynamicInterventionConfig };
+  HumanInterventionConfig | { dynamic: DynamicInterventionConfig };
 
 export const ExtendedHumanInterventionConfigSchema = z.union([
   HumanInterventionConfigSchema,
@@ -246,6 +245,22 @@ export const BuiltinToolManifestSchema = z.object({
  * more tools migrate their context-based trimming here.
  */
 export interface BuiltinToolResolveContext {
+  /**
+   * IM platform the run originates from (bot conversations only). Lets platform-
+   * aware tools trim APIs the platform can't fulfil — e.g. the `lobe-message`
+   * tool drops `readMessages` on WeChat, which has no history-read API and would
+   * otherwise throw `PlatformUnsupportedError` after the model dutifully calls it.
+   */
+  botPlatform?: {
+    /** Platform id (e.g. `wechat`, `discord`). */
+    id: string;
+    /**
+     * `lobe-message` API names this platform does not support. Sourced from the
+     * platform definition (`PlatformDefinition.unsupportedMessageApis`) so the
+     * manifest trim stays in lock-step with the runtime that throws.
+     */
+    unsupportedMessageApis?: string[];
+  };
   /**
    * True when running inside a sub-agent execution. A nested sub-agent must not
    * be able to dispatch further sub-agents.

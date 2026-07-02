@@ -108,6 +108,7 @@ import {
   resolveAgentSelfIterationCapability,
 } from '@/server/services/agentSignal/featureGate';
 import { shouldSuppressSignal } from '@/server/services/agentSignal/suppressSignal';
+import { platformRegistry } from '@/server/services/bot/platforms';
 import { ComposioService } from '@/server/services/composio';
 import { deviceGateway } from '@/server/services/deviceGateway';
 import { getScopedOnlineDevices } from '@/server/services/deviceGateway/scopedDevices';
@@ -2406,8 +2407,18 @@ export class AiAgentService {
         // Context-aware builtin manifests: inside a sub-agent (or group) run,
         // lobe-agent drops `callSubAgent` so the model can't recurse into nested
         // sub-agents (which the runtime rejects, looping until the inactivity
-        // watchdog kills the op). Mirrors the frontend `createAgentToolsEngine`.
+        // watchdog kills the op). For bot conversations we also pass the IM
+        // platform so `lobe-message` can drop APIs the platform can't fulfil
+        // (e.g. WeChat has no `readMessages`). Mirrors the frontend
+        // `createAgentToolsEngine`.
         manifestContext: {
+          ...(botContext?.platform && {
+            botPlatform: {
+              id: botContext.platform,
+              unsupportedMessageApis: platformRegistry.getPlatform(botContext.platform)
+                ?.unsupportedMessageApis,
+            },
+          }),
           isSubAgent: appContext?.isSubAgent,
           scope: appContext?.scope ?? undefined,
         },
