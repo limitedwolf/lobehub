@@ -56,16 +56,18 @@ Common false positives (do NOT merge):
 Apply the **standard template**:
 
 ```
-{Topic + key conventions or scope}. Use when {scenarios — verbs + nouns}. Triggers on {`code-symbols`, 'natural phrases', '中文'}.
+{Topic + key conventions or scope}. Use when/for {scenarios — verbs + nouns, weaving the high-signal keywords (`code-symbols`, 'natural phrases', '中文') into the sentence}.
 ```
 
-Skills with `disable-model-invocation: true` (user-invoked only, slash commands) don't need `Triggers on` — they're never auto-routed.
+For skills that chronically undertrigger, an extra "pushy" sentence is fine: `Use whenever {doing X}, even if the user doesn't explicitly ask.`
+
+Skills with `disable-model-invocation: true` (user-invoked only, slash commands) don't need trigger phrasing — they're never auto-routed.
 
 Flag descriptions that:
 
-- ❌ Have NO `Use when` clause (model can't decide when to load it).
-- ❌ Have NO `Triggers on` clause (and aren't `disable-model-invocation`).
-- ❌ Use weird formats (numbered lists `(1)(2)(3)`, `Triggers:` colon instead of `Triggers on`, `MUST use when ...` as opening word).
+- ❌ Have NO `Use when/whenever/for` scenario sentence (model can't decide when to load it).
+- ❌ Still use a standalone `Triggers on {keyword list}` clause — deprecated style; fold the high-signal keywords into the scenario sentence instead.
+- ❌ Use weird formats (numbered lists `(1)(2)(3)`, `Triggers:` keyword dumps, `MUST use when ...` as opening word).
 - ❌ Are dramatically terse for a 200+ line body, or dramatically verbose for a 60-line body.
 - ❌ Reference deleted/renamed skills.
 

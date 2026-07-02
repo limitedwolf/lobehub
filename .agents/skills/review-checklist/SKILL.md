@@ -1,6 +1,6 @@
 ---
 name: review-checklist
-description: 'LobeHub code review checklist. Use when reviewing a PR, diff, or branch for console leftovers, return await, secrets, i18n, desktop router drift, UI imports, migrations, or cloud impact.'
+description: "LobeHub code review checklist. Use whenever reviewing a PR, diff, or branch — even if the user doesn't explicitly ask for a checklist — for console leftovers, return await, secrets, i18n, desktop router drift, UI imports, migrations, or cloud impact."
 user-invocable: false
 ---
 

@@ -1,15 +1,11 @@
 ---
 name: agent-testing
 description: >
-  Agentic end-to-end testing for LobeHub: backend verification via the CLI,
-  frontend verification via agent-browser (Electron), full-stack verification in
-  the browser, and bot-channel verification via osascript. Local-first today,
-  designed to extend to cloud automation. Triggers on 'cli test', 'test with cli',
-  'verify with cli', 'backend test with cli', 'local test', 'test in electron',
-  'test desktop', 'test bot', 'bot test', 'test in discord', 'test in telegram',
-  'test in slack', 'test in wechat', 'test in weixin', 'test in lark', 'test in feishu',
-  'test in qq', 'manual test', 'osascript', 'test report', or any local
-  end-to-end verification task.
+  Agentic end-to-end testing for LobeHub. Use for any local E2E verification or
+  manual test report: backend checks via the CLI ('cli test', 'backend test with
+  cli'), frontend/desktop checks via agent-browser in Electron ('test in
+  electron', 'test desktop'), full-stack checks in the browser, and bot-channel
+  checks via osascript ('test bot', 'test in discord/telegram/slack/wechat/lark/qq').
 ---
 
 # Agent Testing (Agentic End-to-End Verification)
@@ -183,8 +179,8 @@ So before the first `agent run`, start QStash in a separate terminal and gate on
 the preflight:
 
 ```bash
-./.agents/skills/agent-testing/scripts/init-dev-env.sh qstash      # terminal B — keep running
-./.agents/skills/agent-testing/scripts/init-dev-env.sh preflight    # exits non-zero if QStash (or Redis) is down
+./.agents/skills/agent-testing/scripts/init-dev-env.sh qstash    # terminal B — keep running
+./.agents/skills/agent-testing/scripts/init-dev-env.sh preflight # exits non-zero if QStash (or Redis) is down
 ```
 
 Default script env:
