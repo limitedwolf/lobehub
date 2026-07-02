@@ -1,3 +1,4 @@
+import { PLATFORM_UNSUPPORTED_MESSAGE_APIS } from '../messageCapabilities';
 import type { PlatformDefinition } from '../types';
 import { ImessageClientFactory } from './client';
 import { schema } from './schema';
@@ -15,5 +16,6 @@ export const imessage: PlatformDefinition = {
   showWebhookUrl: false,
   supportsMarkdown: false,
   supportsMessageEdit: false,
+  unsupportedMessageApis: PLATFORM_UNSUPPORTED_MESSAGE_APIS.imessage,
   clientFactory: new ImessageClientFactory(),
 };

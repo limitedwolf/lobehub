@@ -1,3 +1,4 @@
+import { PLATFORM_UNSUPPORTED_MESSAGE_APIS } from '../messageCapabilities';
 import type { PlatformDefinition } from '../types';
 import { TelegramClientFactory } from './client';
 import { schema } from './schema';
@@ -12,5 +13,6 @@ export const telegram: PlatformDefinition = {
     setupGuideUrl: 'https://lobehub.com/docs/usage/channels/telegram',
   },
   schema,
+  unsupportedMessageApis: PLATFORM_UNSUPPORTED_MESSAGE_APIS.telegram,
   clientFactory: new TelegramClientFactory(),
 };
