@@ -159,6 +159,9 @@ const openTurn = (state: MainAgentRunState, data: any, ctx: MainAgentReduceCtx):
   // spine assistant, not on the callback.
   if (!isSignalTurn) next.lastSpineMessageId = messageId;
   next.currentMainMessageId = mainMessageId;
+  // Carry the turn's signal so `recordUsage` can re-stamp it — the wholesale
+  // metadata overwrite there would otherwise wipe the callback's `metadata.signal`.
+  next.currentSignal = data?.externalSignal;
   next.accContent = '';
   next.accReasoning = '';
   next.lastTextSnapshotSeq = 0;
@@ -179,9 +182,7 @@ const streamInit = (state: MainAgentRunState, data: any): ReduceResult => {
   // provenance; `openTurn` owns it for every later turn. Only seed it once — a
   // later non-newStep stream_start must not clobber the open turn's id.
   const seedMainMessageId =
-    typeof data?.messageId === 'string' && !state.currentMainMessageId
-      ? data.messageId
-      : undefined;
+    typeof data?.messageId === 'string' && !state.currentMainMessageId ? data.messageId : undefined;
 
   if (Object.keys(update).length === 0 && !seedMainMessageId) return { intents: [], state };
 
@@ -334,6 +335,7 @@ const reduceTurnMetadata = (state: MainAgentRunState, data: any): ReduceResult =
         messageId: state.currentAssistantId,
         model: data?.model,
         provider: data?.provider,
+        signal: state.currentSignal,
         usage,
       },
     ],

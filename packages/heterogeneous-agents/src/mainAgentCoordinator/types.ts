@@ -79,6 +79,13 @@ export interface MainAgentRunState {
    * host-seeded first turn (which never opens via `newStep`, so can't fork).
    */
   currentMainMessageId: string | undefined;
+  /**
+   * External-signal context of the CURRENT turn (Monitor stdout pushes etc.),
+   * armed by `openTurn` for signal-tagged reactive turns and cleared on normal
+   * turns. Re-stamped onto the assistant by `recordUsage` so the wholesale
+   * metadata overwrite doesn't drop the callback's `metadata.signal`.
+   */
+  currentSignal: ExternalSignalContext | undefined;
   /** Set once a terminal event has been reduced (idempotent finalize). */
   ended: boolean;
   /**
@@ -124,6 +131,7 @@ export const createMainAgentRunState = (seedAssistantId: string): MainAgentRunSt
   accReasoning: '',
   currentAssistantId: seedAssistantId,
   currentMainMessageId: undefined,
+  currentSignal: undefined,
   ended: false,
   lastSpineMessageId: seedAssistantId,
   lastTextSnapshotSeq: 0,
@@ -250,6 +258,14 @@ export interface MainRecordUsageIntent {
   messageId: string;
   model?: string;
   provider?: string;
+  /**
+   * External-signal context of the turn usage lands on, re-stamped by the
+   * interpreter. `recordUsage` overwrites `metadata` wholesale, so a callback
+   * turn's `metadata.signal` (written by `createAssistant`) is wiped unless we
+   * carry it here — without it the collector stops treating the turn as a
+   * signal callback and it detaches from its SignalCallbacks accordion.
+   */
+  signal?: ExternalSignalContext;
   usage: unknown;
 }
 

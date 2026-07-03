@@ -1612,7 +1612,13 @@ describe('HeterogeneousPersistenceHandler', () => {
             chunkType: 'tools_calling',
             subagent: subagentCtx,
             toolsCalling: [
-              { apiName: 'Read', arguments: '{}', id: 'inner-tc', identifier: 'read', type: 'default' },
+              {
+                apiName: 'Read',
+                arguments: '{}',
+                id: 'inner-tc',
+                identifier: 'read',
+                type: 'default',
+              },
             ],
           }),
           buildEvent('step_complete', 2, {
@@ -1645,6 +1651,74 @@ describe('HeterogeneousPersistenceHandler', () => {
       expect(subUsageWrite[1].metadata).toMatchObject({
         heteroMessageId: 'sub-1',
         heteroSessionId: 'sess-A',
+        usage: { totalTokens: 2 },
+      });
+    });
+
+    it('keeps a callback turn signal + mainMessageId after usage overwrites metadata', async () => {
+      // A long-running task (Monitor) fires an out-of-band callback turn.
+      // createAssistant stamps `metadata.signal` (+ mainMessageId) on it; the
+      // turn's usage AND the batch content flush then overwrite metadata
+      // wholesale. If either drops `signal` the collector stops treating the turn
+      // as a signal callback and it detaches from its SignalCallbacks accordion —
+      // the "断链" bug.
+      const h = createHarness({
+        assistantMessageId: 'asst-init',
+        operationId: 'op-1',
+        topicId: 'topic-1',
+      });
+
+      const signal = {
+        sequence: 1,
+        sourceToolCallId: 'tc-1',
+        sourceToolName: 'Monitor',
+        type: 'tool-stdout',
+      };
+
+      await h.handler.ingest({
+        events: [
+          buildEvent('stream_start', 0, { sessionId: 'sess-A' }),
+          // Normal turn opens the spine + a tool the callback anchors on.
+          buildEvent('stream_start', 1, { messageId: 'cc-1', newStep: true, sessionId: 'sess-A' }),
+          buildEvent('stream_chunk', 2, {
+            chunkType: 'tools_calling',
+            toolsCalling: [
+              {
+                apiName: 'Monitor',
+                arguments: '{}',
+                id: 'tc-1',
+                identifier: 'monitor',
+                type: 'default',
+              },
+            ],
+          }),
+          // Callback turn: same session, carries externalSignal + text content.
+          buildEvent('stream_start', 3, {
+            externalSignal: signal,
+            messageId: 'cc-2',
+            newStep: true,
+            sessionId: 'sess-A',
+          }),
+          buildEvent('stream_chunk', 4, { chunkType: 'text', content: 'build passed' }),
+          // Usage lands on the callback assistant, overwriting its metadata.
+          buildEvent('step_complete', 5, {
+            phase: 'turn_metadata',
+            usage: { totalInputTokens: 1, totalOutputTokens: 1, totalTokens: 2 },
+          }),
+        ],
+        operationId: 'op-1',
+        topicId: 'topic-1',
+      });
+
+      // Final DB state (after usage + batch content flush) must still carry signal.
+      const callback = [...h.messages.values()].find((m) => m.metadata?.signal)!;
+      expect(callback).toBeDefined();
+      expect(callback.content).toBe('build passed');
+      expect(callback.metadata).toMatchObject({
+        heteroMessageId: 'cc-2',
+        heteroSessionId: 'sess-A',
+        mainMessageId: 'cc-2',
+        signal,
         usage: { totalTokens: 2 },
       });
     });

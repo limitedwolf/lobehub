@@ -1040,10 +1040,13 @@ export const executeHeterogeneousAgent = async (
 
       case 'recordUsage': {
         const update = {
-          // Wholesale metadata overwrite — re-stamp the provenance the
-          // createAssistant write put there, or usage would wipe it.
+          // Wholesale metadata overwrite — re-stamp what createAssistant put
+          // there, or usage would wipe it: the provenance AND a callback turn's
+          // `signal` (losing `metadata.signal` detaches it from its
+          // SignalCallbacks accordion).
           metadata: {
             ...heteroProvenance(mainState.currentMainMessageId),
+            ...(intent.signal ? { signal: intent.signal } : {}),
             usage: intent.usage as any,
           },
           ...(intent.model && { model: intent.model }),

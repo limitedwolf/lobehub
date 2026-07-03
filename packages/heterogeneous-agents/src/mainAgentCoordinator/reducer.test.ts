@@ -243,6 +243,44 @@ describe('main agent reducer', () => {
     expect(state.turnProvider).toBe('claude-code');
   });
 
+  // recordUsage overwrites the row's metadata wholesale, so a callback turn's
+  // `metadata.signal` (written by createAssistant) is dropped unless recordUsage
+  // re-stamps it — losing it detaches the turn from its SignalCallbacks accordion.
+  it('carries the callback turn signal on recordUsage so usage does not wipe it', () => {
+    const { steps, state } = run([
+      textEvent('watching build'),
+      toolsEvent([tool('t1')]), // Monitor → msg_1
+      newStepEvent(stdoutSignal(1)), // reactive callback turn → msg_2, metadata.signal set
+      textEvent('build started'),
+      turnMetaEvent('claude-opus-4-8', 'claude-code', { totalTokens: 9 }), // usage lands on msg_2
+    ]);
+    expect(ofKind(steps[4], 'recordUsage')[0]).toEqual({
+      kind: 'recordUsage',
+      messageId: 'msg_2',
+      model: 'claude-opus-4-8',
+      provider: 'claude-code',
+      signal: stdoutSignal(1),
+      usage: { totalTokens: 9 },
+    });
+    expect(state.currentSignal).toEqual(stdoutSignal(1));
+  });
+
+  // A normal turn following a callback burst must NOT inherit the stale signal —
+  // openTurn clears currentSignal so its usage stays untagged.
+  it('clears the signal on the next normal turn so its usage is not mis-tagged', () => {
+    const { steps } = run([
+      toolsEvent([tool('t1')]),
+      newStepEvent(stdoutSignal(1)), // callback turn → msg_2
+      newStepEvent(), // normal continuation → msg_3, no signal
+      turnMetaEvent('claude-opus-4-8', 'claude-code', { totalTokens: 4 }),
+    ]);
+    const usage = ofKind(steps[3], 'recordUsage')[0] as Extract<
+      MainAgentIntent,
+      { kind: 'recordUsage' }
+    >;
+    expect(usage.signal).toBeUndefined();
+  });
+
   it('flushes the open turn on a terminal event', () => {
     const { steps, state } = run([
       textEvent('final answer'),

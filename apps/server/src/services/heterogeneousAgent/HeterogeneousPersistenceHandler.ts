@@ -793,6 +793,25 @@ export class HeterogeneousPersistenceHandler {
     return out;
   }
 
+  /**
+   * The complete metadata for the current main assistant. Both `recordUsage`
+   * and `flushBatchContent` overwrite `metadata` WHOLESALE, so any write that
+   * carries only a subset silently drops the rest — a callback turn losing its
+   * `metadata.signal` detaches from its SignalCallbacks accordion, and the row
+   * loses the `mainMessageId` idempotency key `refreshMainStateFromDb` reads.
+   * Rebuild the full shape (accumulated turnMetadata + provenance + signal +
+   * mainMessageId) so every wholesale overwrite is complete.
+   */
+  private durableAssistantMetadata(state: OperationState): Record<string, any> {
+    const meta: Record<string, any> = {
+      ...state.main.turnMetadata,
+      ...this.heteroProvenance(state, state.main.currentMainMessageId),
+    };
+    if (state.main.currentSignal) meta.signal = state.main.currentSignal;
+    if (state.main.currentMainMessageId) meta.mainMessageId = state.main.currentMainMessageId;
+    return meta;
+  }
+
   private async applyMainIntent(state: OperationState, intent: MainAgentIntent) {
     switch (intent.kind) {
       case 'createAssistant': {
@@ -893,13 +912,11 @@ export class HeterogeneousPersistenceHandler {
       case 'recordUsage': {
         const update: Record<string, any> = {};
         if (intent.usage !== undefined) {
-          // This overwrites the row's metadata wholesale, so re-stamp the
-          // provenance the createAssistant write put there, or usage would wipe it.
-          update.metadata = {
-            ...state.main.turnMetadata,
-            ...this.heteroProvenance(state, state.main.currentMainMessageId),
-            usage: intent.usage,
-          };
+          // This overwrites the row's metadata wholesale, so rebuild the full
+          // shape (provenance + signal + mainMessageId) or usage would wipe it.
+          // `state.main.turnMetadata` still reflects the PRE-event state here
+          // (the reducer commits after applying intents), so add usage explicitly.
+          update.metadata = { ...this.durableAssistantMetadata(state), usage: intent.usage };
         }
         if (intent.model) update.model = intent.model;
         if (intent.provider) update.provider = intent.provider;
@@ -995,7 +1012,12 @@ export class HeterogeneousPersistenceHandler {
     const update: Record<string, any> = {};
     if (state.main.accContent) update.content = state.main.accContent;
     if (state.main.accReasoning) update.reasoning = { content: state.main.accReasoning };
-    if (Object.keys(state.main.turnMetadata).length > 0) update.metadata = state.main.turnMetadata;
+    // Wholesale metadata overwrite, same as recordUsage — rebuild the full shape
+    // (turnMetadata + provenance + signal + mainMessageId) so flushing a turn's
+    // content doesn't strip its callback `signal` / provenance. Runs after every
+    // batch, so this is the write that actually wipes a text-bearing callback turn.
+    const metadata = this.durableAssistantMetadata(state);
+    if (Object.keys(metadata).length > 0) update.metadata = metadata;
     await this.deps.messageModel.update(state.main.currentAssistantId, update);
   }
 

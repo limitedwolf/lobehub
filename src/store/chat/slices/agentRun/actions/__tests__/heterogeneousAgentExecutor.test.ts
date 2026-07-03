@@ -3617,6 +3617,49 @@ describe('heterogeneousAgentExecutor DB persistence', () => {
       // Step 3 post-Bash continuation — no signal.
       expect(assistantCreates[2][0].metadata?.signal).toBeUndefined();
     });
+
+    it('keeps metadata.signal on a callback turn after its usage write overwrites metadata', async () => {
+      // Regression: recordUsage overwrites the assistant's metadata wholesale.
+      // If it drops `signal`, the callback turn detaches from its
+      // SignalCallbacks accordion (the "断链" bug). The signal must ride on the
+      // usage write too.
+      mockCreateMessage.mockImplementation(async (params: any) => ({ id: params.id }));
+
+      await runWithEvents([
+        ccInit(),
+        ccMessageStart('msg_01'),
+        ccToolUse('msg_01', 'toolu_mon_0', 'Monitor', { shell: 'every 1s' }),
+        ccTaskStarted('task_a', 'toolu_mon_0'),
+        ccToolResult('toolu_mon_0', 'Monitor started'),
+        // Natural confirmation turn.
+        ccMessageStart('msg_02'),
+        ccText('msg_02', 'Monitor 已启动。'),
+        // Signal callback turn WITH text + authoritative usage on message_delta.
+        ccMessageStart('msg_03'),
+        ccText('msg_03', '第 1 次：12:00:01'),
+        ccMessageDelta({ input_tokens: 10, output_tokens: 5 }),
+        ccResult(),
+      ]);
+
+      // The callback assistant is the create carrying a tool-stdout signal.
+      const callbackCreate = mockCreateMessage.mock.calls.find(
+        ([p]: any) => p.role === 'assistant' && p.metadata?.signal?.type === 'tool-stdout',
+      );
+      expect(callbackCreate).toBeDefined();
+      const callbackId = callbackCreate![0].id;
+
+      // Its usage write must still carry the signal — not just {usage}.
+      const usageWrite = mockUpdateMessage.mock.calls.find(
+        ([id, val]: any) => id === callbackId && val.metadata?.usage?.totalTokens,
+      );
+      expect(usageWrite).toBeDefined();
+      expect(usageWrite![1].metadata.signal).toEqual({
+        sequence: 1,
+        sourceToolCallId: 'toolu_mon_0',
+        sourceToolName: 'Monitor',
+        type: 'tool-stdout',
+      });
+    });
   });
 
   // ────────────────────────────────────────────────────
