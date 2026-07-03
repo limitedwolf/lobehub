@@ -17,13 +17,16 @@ import {
   reduceMainAgent,
   type SubagentIntent,
 } from '@lobechat/heterogeneous-agents';
+import { formatContextSelections, formatPageSelections } from '@lobechat/prompts';
 import type {
   ChatMessageError,
   ChatToolPayload,
   ChatTopicStatus,
+  ContextSelection,
   ConversationContext,
   HeterogeneousProviderConfig,
   MessageMapScope,
+  PageSelection,
   UIChatMessage,
 } from '@lobechat/types';
 import {
@@ -193,15 +196,53 @@ const isRecoverableResumeError = (
 export interface HeterogeneousAgentExecutorParams {
   assistantMessageId: string;
   context: ConversationContext;
+  contextSelections?: ContextSelection[];
   heterogeneousProvider: HeterogeneousProviderConfig;
   /** Image attachments from user message — passed to Main for vision support */
   imageList?: Array<{ id: string; url: string }>;
   message: string;
   operationId: string;
+  pageSelections?: PageSelection[];
   /** CC session ID from previous execution in this topic (for --resume) */
   resumeSessionId?: string;
   workingDirectory?: string;
 }
+
+const buildLocalHeterogeneousSystemContext = ({
+  agentSystemContext,
+  contextSelections,
+  pageSelections,
+  workingDirectory,
+}: {
+  agentSystemContext?: string;
+  contextSelections?: ContextSelection[];
+  pageSelections?: PageSelection[];
+  workingDirectory?: string;
+}): string | undefined => {
+  const parts: string[] = [];
+
+  if (agentSystemContext?.trim()) parts.push(agentSystemContext.trim());
+
+  if (workingDirectory?.trim()) {
+    parts.push(
+      [
+        '## Workspace',
+        `You are running on the user's own machine. Your working directory is \`${workingDirectory.trim()}\`.`,
+      ].join('\n'),
+    );
+  }
+
+  const selectionContext =
+    contextSelections && contextSelections.length > 0
+      ? formatContextSelections(contextSelections)
+      : pageSelections && pageSelections.length > 0
+        ? formatPageSelections(pageSelections)
+        : '';
+
+  if (selectionContext) parts.push(selectionContext);
+
+  return parts.length > 0 ? parts.join('\n\n') : undefined;
+};
 
 /**
  * Map heterogeneousProvider.command to adapter type key.
@@ -344,11 +385,13 @@ export const executeHeterogeneousAgent = async (
 ): Promise<void> => {
   const {
     heterogeneousProvider,
+    contextSelections,
     assistantMessageId,
     context,
     imageList,
     message,
     operationId,
+    pageSelections,
     resumeSessionId,
     workingDirectory,
   } = params;
@@ -1483,8 +1526,25 @@ export const executeHeterogeneousAgent = async (
       },
     });
 
+    const systemContext = buildLocalHeterogeneousSystemContext({
+      agentSystemContext: heterogeneousProvider.systemContext,
+      contextSelections,
+      pageSelections,
+      workingDirectory,
+    });
+
     // Send the prompt — blocks until process exits
-    await heterogeneousAgentService.sendPrompt(agentSessionId, message, operationId, imageList);
+    if (systemContext) {
+      await heterogeneousAgentService.sendPrompt(
+        agentSessionId,
+        message,
+        operationId,
+        imageList,
+        systemContext,
+      );
+    } else {
+      await heterogeneousAgentService.sendPrompt(agentSessionId, message, operationId, imageList);
+    }
 
     // Persist heterogeneous-agent session id + the cwd it was created under,
     // for multi-turn resume. CC stores sessions per-cwd

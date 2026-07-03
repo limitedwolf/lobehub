@@ -235,6 +235,7 @@ export class ConversationLifecycleActionImpl {
     metadata,
     onlyAddUserMessage,
     context,
+    contextSelections,
     messages: inputMessages,
     parentId: inputParentId,
     pageSelections,
@@ -289,6 +290,7 @@ export class ConversationLifecycleActionImpl {
       messages: inputMessages,
       parentId: inputParentId,
       pageSelections,
+      contextSelections,
     });
 
     // /compact — directly compress context without sending any message
@@ -380,9 +382,13 @@ export class ConversationLifecycleActionImpl {
       ? await materializeLocalSystemToolSnapshots(localFileReferences)
       : [];
     const userMessageMetadata =
-      metadata || pageSelections?.length || localSystemToolSnapshots.length
+      metadata ||
+      contextSelections?.length ||
+      pageSelections?.length ||
+      localSystemToolSnapshots.length
         ? {
             ...metadata,
+            ...(contextSelections?.length ? { contextSelections } : undefined),
             ...(pageSelections?.length ? { pageSelections } : undefined),
             ...(localSystemToolSnapshots.length ? { localSystemToolSnapshots } : undefined),
           }
@@ -725,6 +731,7 @@ export class ConversationLifecycleActionImpl {
               editorData,
               files: fileIdList,
               metadata: userMessageMetadata,
+              contextSelections,
               pageSelections,
               parentId,
             },
@@ -852,6 +859,13 @@ export class ConversationLifecycleActionImpl {
         // may already be cleared by this point, so we read from DB instead)
         const userMsg = heteroData.messages.find((m: any) => m.id === heteroData.userMessageId);
         const persistedImageList = userMsg?.imageList;
+        const persistedMetadata = userMsg?.metadata as MessageMetadata | undefined;
+        const effectiveContextSelections = contextSelections?.length
+          ? contextSelections
+          : persistedMetadata?.contextSelections;
+        const effectivePageSelections = pageSelections?.length
+          ? pageSelections
+          : persistedMetadata?.pageSelections;
 
         // Read heterogeneous-agent session id from topic metadata for multi-turn
         // resume. `resolveHeteroResume` drops the sessionId when the saved cwd
@@ -871,10 +885,12 @@ export class ConversationLifecycleActionImpl {
         await executeHeterogeneousAgent(() => this.#get(), {
           assistantMessageId: heteroData.assistantMessageId,
           context: heteroContext,
+          contextSelections: effectiveContextSelections,
           heterogeneousProvider,
           imageList: persistedImageList?.length ? persistedImageList : undefined,
           message,
           operationId: heteroOpId,
+          pageSelections: effectivePageSelections,
           resumeSessionId,
           workingDirectory,
         });
@@ -1018,6 +1034,7 @@ export class ConversationLifecycleActionImpl {
             editorData,
             files: fileIdList,
             metadata: userMessageMetadata,
+            contextSelections,
             pageSelections,
             parentId,
           },
