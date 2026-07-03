@@ -17,8 +17,7 @@ const execFileMock = vi.mocked(childProcess.execFile);
 const callExecFile = (stdout: string) => {
   execFileMock.mockImplementationOnce(((...args: unknown[]) => {
     const callback = [...args].reverse().find((arg) => typeof arg === 'function') as
-      | ((error: Error | null, stdout: string) => void)
-      | undefined;
+      ((error: Error | null, stdout: string) => void) | undefined;
     callback?.(null, stdout);
     return {} as childProcess.ChildProcess;
   }) as typeof childProcess.execFile);
@@ -135,10 +134,11 @@ describe('spawnAgent', () => {
     expect(call.args.filter((a) => a === 'stream-json')).toHaveLength(2);
     expect(call.args).toContain('-p');
     // These tools are disabled at every spawn site so CC does not stall on
-    // built-in interactive Q&A or wakeup/monitor lifecycle calls.
+    // built-in interactive Q&A or the wakeup lifecycle call. `Monitor` is NOT
+    // disabled — its stdout-push callbacks are a supported (SignalCallbacks) flow.
     const disallowedIdx = call.args.indexOf('--disallowedTools');
     expect(disallowedIdx).toBeGreaterThan(-1);
-    expect(call.args[disallowedIdx + 1]).toBe('AskUserQuestion,Monitor,ScheduleWakeup');
+    expect(call.args[disallowedIdx + 1]).toBe('AskUserQuestion,ScheduleWakeup');
     // Partial deltas are opt-in — terminal/sandbox callers want fewer events.
     expect(call.args).not.toContain('--include-partial-messages');
     // Prompt MUST go through stdin as a stream-json user message — never as argv.

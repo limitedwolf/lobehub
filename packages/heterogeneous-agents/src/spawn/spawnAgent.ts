@@ -110,10 +110,15 @@ export interface SpawnAgentHandle {
  * `AskUserQuestion` is disabled because CC's CLI self-injects an
  * `is_error: "Answer questions?"` tool_result in `-p` mode before the host
  * can surface the questions, so the model falls back to plain-text prompting
- * anyway. `Monitor` and `ScheduleWakeup` are also disabled here because they
- * can hit the same stuck wakeup path in both desktop and sandbox runs.
+ * anyway. `ScheduleWakeup` is disabled because it hits a stuck wakeup path in
+ * both desktop and sandbox runs.
+ *
+ * `Monitor` stays ENABLED: its long-running stdout-push callbacks are a
+ * supported flow (the adapter tags them as external signals, rendered as
+ * SignalCallbacks) and the persistence path stamps + preserves their
+ * `metadata.signal` across usage/content overwrites.
  */
-const CLAUDE_CODE_DISALLOWED_TOOLS = ['AskUserQuestion', 'Monitor', 'ScheduleWakeup'] as const;
+const CLAUDE_CODE_DISALLOWED_TOOLS = ['AskUserQuestion', 'ScheduleWakeup'] as const;
 
 export const CLAUDE_CODE_BASE_ARGS = [
   '-p',
