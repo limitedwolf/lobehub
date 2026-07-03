@@ -1,3 +1,8 @@
+// Matches the sibling guide states (OverloadedState / AuthRequiredState / …): the
+// base-ui Button pulls createStaticStyles through its Tooltip, which the guide
+// unit test's antd-style mock doesn't provide. Keep the root Button until the
+// whole StatusGuide dir migrates together.
+// eslint-disable-next-line no-restricted-imports
 import { Button, Flexbox, Highlighter, Icon, Text } from '@lobehub/ui';
 import { Ban, Loader2, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

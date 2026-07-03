@@ -205,16 +205,6 @@ export interface GenerationAction {
   clearTTS: (messageId: string) => Promise<void>;
 
   /**
-   * Recover a heterogeneous (Claude Code / Codex) turn that died with a transient
-   * error (overloaded / interrupted) WITHOUT discarding the work already
-   * streamed: clear the error off the failed block, then `--resume` the same
-   * session and continue from where it stopped. The continuation chains a fresh
-   * assistant turn off the failed block (no synthetic user bubble). `messageId`
-   * is the failed block id.
-   */
-  continueHeteroAfterError: (messageId: string) => Promise<void>;
-
-  /**
    * Continue generation from a message
    */
   continueGeneration: (displayMessageId: string) => Promise<void>;
@@ -223,6 +213,16 @@ export interface GenerationAction {
    * Continue generation from a specific block
    */
   continueGenerationMessage: (displayMessageId: string, messageId: string) => Promise<void>;
+
+  /**
+   * Recover a heterogeneous (Claude Code / Codex) turn that died with a transient
+   * error (overloaded / interrupted) WITHOUT discarding the work already
+   * streamed: clear the error off the failed block, then `--resume` the same
+   * session and continue from where it stopped. The continuation chains a fresh
+   * assistant turn off the failed block (no synthetic user bubble). `messageId`
+   * is the failed block id.
+   */
+  continueHeteroAfterError: (messageId: string) => Promise<void>;
 
   /**
    * Delete and regenerate a message
