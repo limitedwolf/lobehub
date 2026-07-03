@@ -25,6 +25,7 @@ import type { TaskListViewOptions } from './listViewOptions';
 import { normalizeTaskListViewOptions } from './listViewOptions';
 import { shouldRenderTaskAgentPanelToggle } from './taskAgentPanelToggle';
 import TaskList from './TaskList';
+import TaskListVisibilityFilter from './TaskListVisibilityFilter';
 import TasksGroupConfig from './TasksGroupConfig';
 
 interface TaskCreateActionBehaviorParams {
@@ -60,7 +61,12 @@ const AgentTasksPage = memo<AgentTasksPageProps>(({ agentId }) => {
   const { allowed: canCreateTask, reason } = usePermission('create_content');
   const viewMode = useTaskStore(taskListSelectors.viewMode);
   const useFetchTaskList = useTaskStore((s) => s.useFetchTaskList);
-  useFetchTaskList(agentId ? { agentId } : { allAgents: true });
+  // Keep the SWR handle so a failed list fetch surfaces error + Retry instead of
+  // a permanent skeleton (the store only flips `isTaskListInit` on success — see
+  // LOBE-11181). `data` (undefined until first success) is the settled signal.
+  const { data, error, isLoading, mutate } = useFetchTaskList(
+    agentId ? { agentId } : { allAgents: true },
+  );
   const isEmptyHero = useTaskStore(taskListSelectors.isListEmpty);
   const rawViewOptions = useGlobalStore(systemStatusSelectors.taskListViewOptions);
   const viewOptions = useMemo(() => normalizeTaskListViewOptions(rawViewOptions), [rawViewOptions]);
@@ -117,6 +123,7 @@ const AgentTasksPage = memo<AgentTasksPageProps>(({ agentId }) => {
         left={<Breadcrumb />}
         right={
           <Flexbox horizontal align={'center'} gap={4}>
+            {!agentId && <TaskListVisibilityFilter />}
             {(inlineCollapsed || viewMode === 'kanban') && (
               <ActionIcon
                 disabled={createActionBehavior.disabled}
@@ -157,8 +164,12 @@ const AgentTasksPage = memo<AgentTasksPageProps>(({ agentId }) => {
         >
           {!inlineCollapsed && <CreateTaskInlineEntry agentId={agentId} lockAssignee={!!agentId} />}
           <TaskList
+            data={data}
+            error={error}
+            isLoading={isLoading}
             options={viewOptions}
             routeScope={routeScope}
+            onRetry={() => mutate()}
             onShowHiddenCompleted={handleShowHiddenCompleted}
           />
         </WideScreenContainer>

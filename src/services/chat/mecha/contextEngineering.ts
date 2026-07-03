@@ -70,6 +70,7 @@ import {
 import { ComposioServerStatus } from '@/store/tool/slices/composioStore';
 
 import {
+  getRuntimeModelDisplayName,
   getRuntimeModelKnowledgeCutoff,
   isCanUseAudio,
   isCanUseVideo,
@@ -706,6 +707,7 @@ export const contextEngineering = async ({
 
     // Model info
     model,
+    modelDisplayName: getRuntimeModelDisplayName(model, provider),
     modelKnowledgeCutoff: getRuntimeModelKnowledgeCutoff(model, provider),
     provider,
 
