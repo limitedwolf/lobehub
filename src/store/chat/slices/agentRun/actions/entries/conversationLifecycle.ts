@@ -455,7 +455,11 @@ export class ConversationLifecycleActionImpl {
     }
 
     if (onlyAddUserMessage) {
-      await this.#get().addUserMessage({ message, fileList: fileIdList });
+      await this.#get().addUserMessage({
+        message,
+        fileList: fileIdList,
+        metadata: userMessageMetadata,
+      });
 
       return;
     }
