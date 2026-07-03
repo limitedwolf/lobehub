@@ -17,6 +17,7 @@ import { AgentRuntimeErrorType } from '@lobechat/types';
 import { isRecord, pickNonEmptyString, toRecord } from '@lobechat/utils/object';
 
 import { messageService } from '@/services/message';
+import { workService } from '@/services/work';
 import { emitClientAgentSignalSourceEvent } from '@/store/chat/slices/agentRun/actions/lifecycle/agentSignalBridge';
 import type {
   AgentRunLifecycle,
@@ -669,6 +670,16 @@ export const createGatewayEventHandler = (
             fetchAndReplaceMessages(get, context).catch(console.error),
             dispatchOnAfterCall(data).catch(console.error),
           ]);
+          // Server-executed Linear tools register Works on the server
+          // (BuiltinToolsExecutor), so no client-side mutation ever invalidates
+          // the work SWR caches — the Works sidebar (list + version history)
+          // would stay frozen at its mount-time snapshot. Revalidate the whole
+          // work domain here; `mutate` only refetches currently-mounted keys,
+          // so this is a no-op when no work UI is open.
+          const identity = readToolPayload(unwrapToolPayload(data?.payload));
+          if (identity?.identifier === 'linear') {
+            await workService.refreshAll().catch(console.error);
+          }
         });
         break;
       }
