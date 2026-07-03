@@ -120,6 +120,28 @@ Symptom of a stale standalone install: the build/launch fails to resolve a
 recently added workspace package — `Rolldown failed to resolve import
 "@lobechat/<pkg>"` (Electron) or `Cannot find module '@lobechat/<pkg>'` (CLI).
 
+**Any dependency/version mismatch is a reinstall, never a blocker. Do NOT
+report it as "依赖不匹配" / "dependency mismatch" and stop.** When the app fails
+to load because a module doesn't resolve or a package doesn't export a symbol
+the code imports — e.g. the SPA white-screens with
+`does not provide an export named 'SplitButton'` from `@lobehub/ui/base-ui`,
+`Cannot find module`, `does not provide an export named`, or a stale Vite
+`optimizeDeps` cache — the installed `node_modules` is simply behind the code
+(common on `canary`, and why a sibling worktree runs fine while yours white-
+screens). Fix it in place, then re-launch and continue the test:
+
+```bash
+pnpm install                    # root workspace — pulls the version the code expects
+cd apps/desktop && pnpm install # + every standalone app the surface touches
+cd apps/cli && pnpm install
+rm -rf apps/desktop/node_modules/.vite # if a stale Vite optimize-deps cache persists
+```
+
+Reinstall (root + the standalone apps under test) and retry BEFORE writing a
+single test step, and again if a mismatch surfaces mid-run. Only after a clean
+reinstall still fails to resolve is it a real blocker worth reporting — and then
+report the unresolved symbol, not a vague "mismatch".
+
 ### 0.2 Run scripts from the repo root
 
 All paths in this skill (`./.agents/skills/agent-testing/...`) are
@@ -398,6 +420,17 @@ Reports live in `.records/reports/<timestamp>-<slug>/` (gitignored): `result.jso
 (the structured report — scenario/context/cases/summary), `report.md` (narrative
 tail), `assets/` (evidence). Format spec and evidence rules:
 [references/report.md](./references/report.md).
+
+**Every re-run MUST update the report — a stale report is worse than none.** If
+you re-run a verification (after a fix, an env unblock, a new repro, or the user
+says "重新跑一下" / "run it again"), do NOT leave the previous report or its
+published verify session standing with an outdated verdict. Regenerate
+`result.json` + `report.md` to reflect what THIS run observed (fresh evidence in
+`assets/`, corrected case statuses), then re-publish (Step 4) so the live
+`/verify/<id>` matches reality. A case that flipped (e.g. a `blocked` that a
+reinstall resolved) must be re-stated, not left as-is. Reuse the same report dir
+for a continued run, or scaffold a new one and supersede the old — but never
+finish a re-run with the report describing the previous run.
 
 Two hard rules worth front-loading:
 
