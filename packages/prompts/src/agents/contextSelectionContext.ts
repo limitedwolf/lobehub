@@ -1,11 +1,6 @@
 import type { ContextSelection } from '@lobechat/types';
 
-const escapeAttribute = (value: string): string =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('"', '&quot;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+import { escapeXmlAttr } from '../prompts/search/xmlEscape';
 
 const formatLineRange = (selection: ContextSelection): string => {
   const range = selection.lineRange;
@@ -17,14 +12,14 @@ const formatLineRange = (selection: ContextSelection): string => {
 const formatSelectionAttributes = (selection: ContextSelection): string => {
   const attrs = [`source="${selection.source}"`];
 
-  if (selection.title) attrs.push(`title="${escapeAttribute(selection.title)}"`);
-  if (selection.source === 'page') attrs.push(`pageId="${escapeAttribute(selection.pageId)}"`);
+  if (selection.title) attrs.push(`title="${escapeXmlAttr(selection.title)}"`);
+  if (selection.source === 'page') attrs.push(`pageId="${escapeXmlAttr(selection.pageId)}"`);
   if (selection.source === 'code') {
-    attrs.push(`filePath="${escapeAttribute(selection.filePath)}"`);
-    if (selection.language) attrs.push(`language="${escapeAttribute(selection.language)}"`);
+    attrs.push(`filePath="${escapeXmlAttr(selection.filePath)}"`);
+    if (selection.language) attrs.push(`language="${escapeXmlAttr(selection.language)}"`);
     if (selection.side) attrs.push(`side="${selection.side}"`);
     if (selection.workingDirectory) {
-      attrs.push(`workingDirectory="${escapeAttribute(selection.workingDirectory)}"`);
+      attrs.push(`workingDirectory="${escapeXmlAttr(selection.workingDirectory)}"`);
     }
   }
 
