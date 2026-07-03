@@ -131,12 +131,6 @@ app.post('/webapi/chat/:provider', async (c) =>
 app.post('/webapi/create-image/comfyui', async (c) =>
   (await import('~server/api-runtime/createImage')).comfyUICreateImageAPIHandler(c.req.raw),
 );
-app.post('/webapi/tts/edge', async (c) =>
-  (await import('~server/api-runtime/speech')).edgeTTSAPIHandler(c.req.raw),
-);
-app.post('/webapi/tts/microsoft', async (c) =>
-  (await import('~server/api-runtime/speech')).microsoftTTSAPIHandler(c.req.raw),
-);
 app.post('/webapi/tts/openai', async (c) =>
   (await import('~server/api-runtime/speech')).openAITTSAPIHandler(c.req.raw),
 );
