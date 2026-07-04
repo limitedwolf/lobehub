@@ -3,8 +3,8 @@ import { cssVar } from 'antd-style';
 import {
   Archive,
   CheckCircle2,
-  CircleAlert,
   CircleDot,
+  Hand,
   Loader,
   type LucideIcon,
   PauseCircle,
@@ -17,15 +17,16 @@ import { type GroupItemComponentProps } from '../GroupedAccordion';
 
 // Map each status-group id to its icon + color, mirroring the per-topic status
 // glyphs in `List/Item`. `pending` collapses the attention-needing states
-// (awaiting input / failed / unread completion) into one group; `favorite` is
-// the synthetic group split out by `buildGroupedTopics`, so it gets a star.
+// (awaiting input / failed / unread completion) into one group, so it reuses the
+// `waitingForHuman` hand glyph in info-blue; `favorite` is the synthetic group
+// split out by `buildGroupedTopics`, so it gets a neutral-grey star.
 const STATUS_ICON: Record<string, { color: string; icon: LucideIcon }> = {
   active: { color: cssVar.colorTextTertiary, icon: CircleDot },
   archived: { color: cssVar.colorTextDescription, icon: Archive },
   completed: { color: cssVar.colorTextDescription, icon: CheckCircle2 },
-  favorite: { color: cssVar.colorWarning, icon: Star },
+  favorite: { color: cssVar.colorTextTertiary, icon: Star },
   paused: { color: cssVar.colorTextDescription, icon: PauseCircle },
-  pending: { color: cssVar.colorWarning, icon: CircleAlert },
+  pending: { color: cssVar.colorInfo, icon: Hand },
   running: { color: cssVar.colorWarning, icon: Loader },
 };
 
