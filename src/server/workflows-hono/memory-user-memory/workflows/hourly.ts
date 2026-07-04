@@ -27,6 +27,19 @@ export const hourlyWorkflowHandler = async (
   context: WorkflowContext<MemoryExtractionHourlyWorkflowPayload>,
 ) => {
   const { cursor, dryRun } = context.requestPayload || {};
+
+  // NOTICE: Kill switch (止血). On by default; set MEMORY_USER_MEMORY_HOURLY_DISABLED=true to
+  // stop the hourly cron from fanning out across the whole user base (it otherwise re-runs the
+  // gatekeeper + layer LLM calls every hour without idempotency). Read per invocation so
+  // flipping the env takes effect on the next cron run without waiting for a cold start. Does
+  // not affect user-initiated extraction.
+  if (!parseMemoryExtractionConfig().hourlyEnabled) {
+    return {
+      message: 'Hourly memory extraction is disabled (MEMORY_USER_MEMORY_HOURLY_DISABLED=true).',
+      processedUsers: 0,
+    };
+  }
+
   await assertMemoryWorkflowContextAllowed(context, WORKFLOW_PATH);
 
   const baseUrl = resolveBaseUrl();

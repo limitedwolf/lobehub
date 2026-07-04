@@ -61,6 +61,17 @@ export interface MemoryExtractionPrivateConfig {
   featureFlags: {
     enableBenchmarkLoCoMo: boolean;
   };
+  /**
+   * Kill switch for the hourly all-user memory extraction cron.
+   *
+   * NOTICE:
+   * Defaults to ON to preserve behavior for self-hosted deployments. As an operational
+   * kill switch, set `MEMORY_USER_MEMORY_HOURLY_DISABLED=true` to stop the hourly cron
+   * from fanning out across the whole user base (e.g. when the workflow is re-running
+   * gatekeeper + layer LLM calls every hour without idempotency). Does not affect
+   * user-initiated extraction.
+   */
+  hourlyEnabled: boolean;
   observabilityS3?: {
     accessKeyId?: string;
     bucketName?: string;
@@ -243,6 +254,9 @@ export const parseMemoryExtractionConfig = (): MemoryExtractionPrivateConfig => 
   const featureFlags = {
     enableBenchmarkLoCoMo: process.env.MEMORY_USER_MEMORY_FEATURE_FLAG_BENCHMARK_LOCOMO === 'true',
   };
+  // Kill switch: the hourly all-user cron is ON by default (self-host friendly);
+  // set MEMORY_USER_MEMORY_HOURLY_DISABLED=true to stop the fan-out.
+  const hourlyEnabled = process.env.MEMORY_USER_MEMORY_HOURLY_DISABLED !== 'true';
   const concurrencyRaw = process.env.MEMORY_USER_MEMORY_CONCURRENCY;
   const concurrency =
     concurrencyRaw !== undefined
@@ -310,6 +324,7 @@ export const parseMemoryExtractionConfig = (): MemoryExtractionPrivateConfig => 
     embeddingPreferredModels,
     embeddingPreferredProviders,
     featureFlags,
+    hourlyEnabled,
     observabilityS3: extractorObservabilityS3,
     upstashWorkflowExtraHeaders,
     webhook: {

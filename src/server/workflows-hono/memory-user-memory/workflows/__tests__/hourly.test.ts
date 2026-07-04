@@ -5,6 +5,7 @@ import { hourlyWorkflowHandler } from '../hourly';
 const mocks = vi.hoisted(() => ({
   createExecutor: vi.fn(),
   getUsersForHourlyExtraction: vi.fn(),
+  hourlyEnabled: true,
   triggerHourly: vi.fn(),
   triggerProcessUsers: vi.fn(),
 }));
@@ -18,6 +19,7 @@ vi.mock('@/envs/app', () => ({
 
 vi.mock('@/server/globalConfig/parseMemoryExtractionConfig', () => ({
   parseMemoryExtractionConfig: () => ({
+    hourlyEnabled: mocks.hourlyEnabled,
     upstashWorkflowExtraHeaders: {},
     webhook: { baseUrl: 'https://app.example.com' },
   }),
@@ -42,11 +44,31 @@ vi.mock('../runGuard', () => ({
 describe('hourlyWorkflowHandler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hourlyEnabled = true;
     mocks.createExecutor.mockResolvedValue({
       getUsersForHourlyExtraction: mocks.getUsersForHourlyExtraction,
     });
     mocks.triggerHourly.mockResolvedValue({ workflowRunId: 'next-page-run' });
     mocks.triggerProcessUsers.mockResolvedValue({ workflowRunId: 'process-users-run' });
+  });
+
+  it('bails out before any fan-out when the hourly kill switch is disabled', async () => {
+    mocks.hourlyEnabled = false;
+
+    const context = {
+      requestPayload: { dryRun: false },
+      run: vi.fn((_name: string, callback: () => unknown) => callback()),
+    };
+
+    await expect(hourlyWorkflowHandler(context as never)).resolves.toMatchObject({
+      processedUsers: 0,
+    });
+    // No user listing, no per-user fan-out, no next-page scheduling.
+    expect(context.run).not.toHaveBeenCalled();
+    expect(mocks.createExecutor).not.toHaveBeenCalled();
+    expect(mocks.getUsersForHourlyExtraction).not.toHaveBeenCalled();
+    expect(mocks.triggerProcessUsers).not.toHaveBeenCalled();
+    expect(mocks.triggerHourly).not.toHaveBeenCalled();
   });
 
   it('continues pagination when Upstash restores the user batch cursor as JSON', async () => {
