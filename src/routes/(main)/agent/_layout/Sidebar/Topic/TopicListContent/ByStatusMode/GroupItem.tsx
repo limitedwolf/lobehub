@@ -1,33 +1,31 @@
 import { AccordionItem, Center, Flexbox, Icon, Text } from '@lobehub/ui';
 import { cssVar } from 'antd-style';
-import {
-  Archive,
-  CheckCircle2,
-  CircleDot,
-  Hand,
-  Loader,
-  type LucideIcon,
-  PauseCircle,
-  Star,
-} from 'lucide-react';
+import { CheckCircle2, Star } from 'lucide-react';
 import { memo } from 'react';
+
+import { STATUS_META, type StatusMeta } from '@/components/StatusIcon';
 
 import TopicItem from '../../List/Item';
 import { type GroupItemComponentProps } from '../GroupedAccordion';
 
-// Map each status-group id to its icon + color, mirroring the per-topic status
-// glyphs in `List/Item`. `pending` collapses the attention-needing states
-// (awaiting input / failed / unread completion) into one group, so it reuses the
-// `waitingForHuman` hand glyph in info-blue; `favorite` is the synthetic group
-// split out by `buildGroupedTopics`, so it gets a neutral-grey star.
-const STATUS_ICON: Record<string, { color: string; icon: LucideIcon }> = {
-  active: { color: cssVar.colorTextTertiary, icon: CircleDot },
-  archived: { color: cssVar.colorTextDescription, icon: Archive },
+// Topic status-group id → icon + color, drawn from the shared canonical status
+// map so headers stay in lockstep with task glyphs and per-topic rows. The
+// `pending` bucket (awaiting input / failed / unread completion) is the
+// `needsAttention` kind (blue hand). Two entries stay local: `favorite` is a
+// marker, not a status; `completed` still renders its legacy grey check until
+// the deferred completed/failed convergence lands.
+const LOCAL: Record<string, StatusMeta> = {
   completed: { color: cssVar.colorTextDescription, icon: CheckCircle2 },
   favorite: { color: cssVar.colorTextTertiary, icon: Star },
-  paused: { color: cssVar.colorTextDescription, icon: PauseCircle },
-  pending: { color: cssVar.colorInfo, icon: Hand },
-  running: { color: cssVar.colorWarning, icon: Loader },
+};
+
+const STATUS_ICON: Record<string, StatusMeta> = {
+  active: STATUS_META.active,
+  archived: STATUS_META.archived,
+  paused: STATUS_META.paused,
+  pending: STATUS_META.needsAttention,
+  running: STATUS_META.running,
+  ...LOCAL,
 };
 
 const GroupItem = memo<GroupItemComponentProps>(({ group, activeTopicId, activeThreadId }) => {
