@@ -207,6 +207,11 @@ const TopicCard = memo<TopicCardProps>(({ activity }) => {
           {activity.summary}
         </Text>
       )}
+      {activity.content && (
+        <Text fontSize={13} style={{ color: cssVar.colorTextTertiary, whiteSpace: 'pre-wrap' }}>
+          {activity.content}
+        </Text>
+      )}
     </Block>
   );
 });

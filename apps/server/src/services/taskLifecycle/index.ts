@@ -440,8 +440,13 @@ export class TaskLifecycleService {
         await this.topicModel.update(topicId, { title: handoff.title });
       }
 
-      // Store handoff in task_topics dedicated fields
-      await this.taskTopicModel.updateHandoff(taskId, topicId, handoff);
+      // Store handoff in task_topics dedicated fields. `content` carries the raw
+      // last assistant message (LOBE-11396) so the run card can show the actual
+      // output alongside the LLM-synthesized summary.
+      await this.taskTopicModel.updateHandoff(taskId, topicId, {
+        ...handoff,
+        content: lastAssistantContent,
+      });
 
       log('handoff generated for topic %s: title=%s', topicId, handoff.title);
     } catch (e) {
