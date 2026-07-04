@@ -1,0 +1,1 @@
+ALTER TABLE "task_topics" ADD COLUMN IF NOT EXISTS "trigger" text;

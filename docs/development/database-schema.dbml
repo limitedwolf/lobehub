@@ -2008,6 +2008,7 @@ table task_topics {
   seq integer [not null]
   operation_id text
   status text [not null, default: 'running']
+  trigger text
   handoff jsonb
   review_passed integer
   review_score integer
