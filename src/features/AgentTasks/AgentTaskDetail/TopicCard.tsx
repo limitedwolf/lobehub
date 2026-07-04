@@ -15,15 +15,17 @@ import {
 import { confirmModal } from '@lobehub/ui/base-ui';
 import { useSize } from 'ahooks';
 import { cssVar } from 'antd-style';
-import { CircleDot, CircleStop, Copy, ExternalLink, MoreHorizontal } from 'lucide-react';
+import { CircleDot, CircleStop, Copy, ExternalLink, MoreHorizontal, SquarePen } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AgentProfilePopup from '@/features/AgentProfileCard/AgentProfilePopup';
 import { useActivityTime } from '@/hooks/useActivityTime';
 import { useTaskStore } from '@/store/task';
+import { taskDetailSelectors } from '@/store/task/selectors';
 
 import { styles } from '../shared/style';
+import CommentInput from './CommentInput';
 import TopicStatusIcon from './TopicStatusIcon';
 
 const formatDuration = (ms: number): string => {
@@ -70,6 +72,8 @@ const TopicCard = memo<TopicCardProps>(({ activity }) => {
   const { t } = useTranslation('chat');
   const openTopicDrawer = useTaskStore((s) => s.openTopicDrawer);
   const cancelTopic = useTaskStore((s) => s.cancelTopic);
+  const activeTaskId = useTaskStore(taskDetailSelectors.activeTaskId);
+  const [commenting, setCommenting] = useState(false);
   const isRunning = activity.status === 'running';
 
   const finalDuration =
@@ -233,11 +237,32 @@ const TopicCard = memo<TopicCardProps>(({ activity }) => {
       </Flexbox>
 
       {activity.summary && (
-        <Text fontSize={13} style={{ color: cssVar.colorTextSecondary, whiteSpace: 'pre-wrap' }}>
+        <Text fontSize={13} style={{ color: cssVar.colorTextDescription, whiteSpace: 'pre-wrap' }}>
           {activity.summary}
         </Text>
       )}
       {activity.content && <RunContent content={activity.content} />}
+      {activeTaskId && (
+        <Flexbox horizontal justify={'flex-end'} onClick={stopPropagation}>
+          {commenting ? (
+            <Flexbox style={{ width: '100%' }}>
+              <CommentInput
+                placeholder={t('taskDetail.runFollowUpPlaceholder')}
+                taskId={activeTaskId}
+                topicId={activity.id}
+                onSent={() => setCommenting(false)}
+              />
+            </Flexbox>
+          ) : (
+            <ActionIcon
+              icon={SquarePen}
+              size={'small'}
+              title={t('taskDetail.runFollowUp')}
+              onClick={() => setCommenting(true)}
+            />
+          )}
+        </Flexbox>
+      )}
     </Block>
   );
 });
