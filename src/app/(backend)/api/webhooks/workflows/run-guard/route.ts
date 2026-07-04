@@ -103,16 +103,18 @@ export const POST = async (request: Request) => {
       },
     });
 
-    let qstash;
+    let qstashPromise: ReturnType<typeof cancelWorkflowRunsByGuardPolicy> | undefined;
 
     if (policy?.cancelQstash && scope.type === 'path') {
       if (!appUrl) throw new Error('App URL is not configured');
 
-      qstash = await cancelWorkflowRunsByGuardPolicy({
+      qstashPromise = cancelWorkflowRunsByGuardPolicy({
         appUrl,
         workflowPath: scope.workflowPath,
       });
     }
+
+    const qstash = await qstashPromise;
 
     return NextResponse.json({ guard, qstash, success: true });
   } catch (error) {

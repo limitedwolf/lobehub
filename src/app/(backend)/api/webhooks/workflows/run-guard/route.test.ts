@@ -167,10 +167,17 @@ describe('workflow run guard webhook route', () => {
    */
   it('cancels qstash runs for path guards when policy requests it', async () => {
     process.env.MEMORY_USER_MEMORY_WEBHOOK_BASE_URL = 'https://internal.lobehub.com';
-    redis.set.mockResolvedValue('OK');
-    mockCancelWorkflowRunsByGuardPolicy.mockResolvedValue({
-      cancelled: 1,
-      workflowUrlPrefix: 'https://internal.lobehub.com/api/workflows/memory-user-memory',
+    const calls: string[] = [];
+    redis.set.mockImplementation(async () => {
+      calls.push('redis:set');
+      return 'OK';
+    });
+    mockCancelWorkflowRunsByGuardPolicy.mockImplementation(async () => {
+      calls.push('qstash:cancel');
+      return {
+        cancelled: 1,
+        workflowUrlPrefix: 'https://internal.lobehub.com/api/workflows/memory-user-memory',
+      };
     });
 
     const response = await POST(
@@ -200,6 +207,7 @@ describe('workflow run guard webhook route', () => {
       appUrl: 'https://internal.lobehub.com',
       workflowPath: 'api/workflows/memory-user-memory',
     });
+    expect(calls).toEqual(['redis:set', 'qstash:cancel']);
   });
 
   /**
