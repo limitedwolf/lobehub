@@ -178,8 +178,8 @@ const TopicCard = memo<TopicCardProps>(({ activity }) => {
     <Block
       clickable={!!activity.id}
       gap={8}
-      paddingBlock={8}
-      paddingInline={8}
+      paddingBlock={12}
+      paddingInline={12}
       style={{ borderRadius: cssVar.borderRadiusLG }}
       variant={'outlined'}
       onClick={activity.id ? handleOpen : undefined}
