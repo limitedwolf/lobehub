@@ -391,9 +391,12 @@ describe('FileService', () => {
       mockFileModel.create = vi.fn();
     });
 
-    it('should return proxy URL format ${APP_URL}/f/:id', async () => {
+    it('should return an already-readable file URL instead of the auth-gated proxy URL', async () => {
       mockFileModel.checkHash.mockResolvedValue({ isExist: false });
       mockFileModel.create.mockResolvedValue({ id: 'new-file-id' });
+      vi.mocked(service['impl'].getFullFileUrl).mockResolvedValue(
+        'https://s3.example.com/presigned/test.png',
+      );
 
       const result = await service.createFileRecord({
         fileHash: 'test-hash',
@@ -405,13 +408,17 @@ describe('FileService', () => {
 
       expect(result).toEqual({
         fileId: 'new-file-id',
-        url: 'https://lobehub.com/f/new-file-id',
+        url: 'https://s3.example.com/presigned/test.png',
       });
+      expect(service['impl'].getFullFileUrl).toHaveBeenCalledWith('files/test.png', undefined);
     });
 
     it('should use custom id when provided', async () => {
       mockFileModel.checkHash.mockResolvedValue({ isExist: true });
       mockFileModel.create.mockResolvedValue({ id: 'custom-id' });
+      vi.mocked(service['impl'].getFullFileUrl).mockResolvedValue(
+        'https://s3.example.com/presigned/custom.png',
+      );
 
       const result = await service.createFileRecord({
         fileHash: 'test-hash',
@@ -424,7 +431,7 @@ describe('FileService', () => {
 
       expect(result).toEqual({
         fileId: 'custom-id',
-        url: 'https://lobehub.com/f/custom-id',
+        url: 'https://s3.example.com/presigned/custom.png',
       });
     });
 

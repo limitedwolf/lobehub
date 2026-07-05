@@ -31,7 +31,7 @@ class CloudSandboxService {
   /**
    * Export a file from sandbox and upload to S3, then create a persistent file record
    * This is a single call that combines: getUploadUrl + callTool(exportFile) + createFileRecord
-   * Returns a permanent /f/:id URL instead of a temporary pre-signed URL
+   * Returns the readable access URL for the created file record
    * @param path - The file path in the sandbox
    * @param filename - The name of the file to export
    * @param topicId - The topic ID for organizing files

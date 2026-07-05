@@ -26,14 +26,14 @@ import { createStreamEventManager } from '@/server/modules/AgentRuntime/factory'
 import { AgentRuntimeService } from '@/server/services/agentRuntime';
 import { AiAgentService } from '@/server/services/aiAgent';
 import { AiChatService } from '@/server/services/aiChat';
-import { getFileProxyUrl } from '@/server/services/file';
+import { FileService } from '@/server/services/file';
 import { HeterogeneousAgentService } from '@/server/services/heterogeneousAgent';
 
 const log = debug('lobe-server:ai-agent-router');
 
-const createUiMessageFileUrlResolver = () => {
+const createUiMessageFileUrlResolver = (fileService: FileService) => {
   return async (path: string | null, file: { fileType: string; id?: string | null }) =>
-    file.id ? getFileProxyUrl(file.id) : (path ?? '');
+    file.id && path ? fileService.getFileAccessUrl({ id: file.id, url: path }) : (path ?? '');
 };
 
 const extractTaskErrorMessage = (error: unknown): string | undefined => {
@@ -470,6 +470,7 @@ const aiAgentProcedure = wsCompatProcedure.use(serverDatabase).use(async (opts) 
       heterogeneousAgentService: new HeterogeneousAgentService(ctx.serverDB, ctx.userId, {
         workspaceId: wsId,
       }),
+      fileService: new FileService(ctx.serverDB, ctx.userId, wsId),
       messageModel: new MessageModel(ctx.serverDB, ctx.userId, wsId),
       threadModel: new ThreadModel(ctx.serverDB, ctx.userId, wsId),
       topicModel: new TopicModel(ctx.serverDB, ctx.userId, wsId),
@@ -543,7 +544,7 @@ export const aiAgentRouter = router({
 
         // 3. Query thread messages and main chat messages in parallel
         const messageQueryOptions = {
-          postProcessUrl: createUiMessageFileUrlResolver(),
+          postProcessUrl: createUiMessageFileUrlResolver(ctx.fileService),
         };
         const [threadMessages, messages] = await Promise.all([
           // Thread messages (messages within this thread)
@@ -636,7 +637,7 @@ export const aiAgentRouter = router({
 
         // 3. Query thread messages and main chat messages in parallel
         const messageQueryOptions = {
-          postProcessUrl: createUiMessageFileUrlResolver(),
+          postProcessUrl: createUiMessageFileUrlResolver(ctx.fileService),
         };
         const [threadMessages, messages] = await Promise.all([
           // Thread messages (messages within this thread)
@@ -1111,7 +1112,7 @@ export const aiAgentRouter = router({
       const threadMessages = await ctx.messageModel.query(
         { threadId },
         {
-          postProcessUrl: createUiMessageFileUrlResolver(),
+          postProcessUrl: createUiMessageFileUrlResolver(ctx.fileService),
         },
       );
       const sortedMessages = threadMessages.sort(

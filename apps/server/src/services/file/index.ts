@@ -6,14 +6,10 @@ import { sha256 } from 'js-sha256';
 import { serverDBEnv } from '@/config/db';
 import { FileModel } from '@/database/models/file';
 import { type FileItem } from '@/database/schemas';
-import { appEnv } from '@/envs/app';
 import { TempFileManager } from '@/server/utils/tempFileManager';
-import { isDev } from '@/utils/env';
 
 import { createFileServiceModule } from './impls';
 import type { FileServiceImpl, PreSignedUpload } from './impls/type';
-
-export const getFileProxyUrl = (fileId: string): string => `${appEnv.APP_URL}/f/${fileId}`;
 
 export interface FileAccessUrlItem {
   fileId?: string | null;
@@ -122,16 +118,13 @@ export class FileService {
 
   /**
    * Resolve a file URL for consumers that need to read the file.
-   * Production uses the stable file proxy URL; local development falls back to
-   * the storage URL so remote model providers can download local test files.
+   *
+   * Access control is enforced before this method is called through the scoped
+   * model/router path. Return an already-readable storage URL so plain image
+   * and download consumers do not depend on Better Auth cookies when fetching
+   * `/f/:id`.
    */
   public async getFileAccessUrl(file: FileAccessUrlItem): Promise<string> {
-    const fileId = file.fileId || file.id;
-
-    if (!isDev && fileId) {
-      return getFileProxyUrl(fileId);
-    }
-
     return this.getFullFileUrl(file.url);
   }
 
