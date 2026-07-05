@@ -665,7 +665,7 @@ export const marketRouter = router({
   /**
    * Export a file from sandbox and upload to S3, then create a persistent file record
    * This combines the previous getExportFileUploadUrl + execInSandbox + createFileRecord flow
-   * Returns the readable access URL for the created file record
+   * Returns a permanent /f/:id URL instead of a temporary pre-signed URL
    */
   exportAndUploadFile: marketToolProcedure
     .input(exportAndUploadFileSchema)

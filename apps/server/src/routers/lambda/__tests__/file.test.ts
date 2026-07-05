@@ -6,7 +6,7 @@ import { fileRouter } from '@/server/routers/lambda/file';
 import { AsyncTaskStatus } from '@/types/asyncTask';
 import { TransferErrorCode } from '@/types/transferError';
 
-const buildMockFileAccessUrl = ({ id }: { id: string }) => `https://files.example.com/access/${id}`;
+const buildMockFileAccessUrl = ({ id }: { id: string }) => `https://lobehub.com/f/${id}`;
 
 const routerMocks = vi.hoisted(() => {
   const transactionClient = {};
@@ -106,6 +106,12 @@ function createCallerWithCtx(partialCtx: any = {}) {
 vi.mock('@/config/db', () => ({
   serverDBEnv: {
     REMOVE_GLOBAL_FILE: false,
+  },
+}));
+
+vi.mock('@/envs/app', () => ({
+  appEnv: {
+    APP_URL: 'https://lobehub.com',
   },
 }));
 
@@ -317,7 +323,7 @@ describe('fileRouter', () => {
       ).rejects.toThrow();
     });
 
-    it('should return the readable URL resolved by FileService', async () => {
+    it('should return proxy URL format ${APP_URL}/f/:id', async () => {
       mockFileModelCheckHash.mockResolvedValue({ isExist: false });
       mockFileModelCreate.mockResolvedValue({ id: 'new-file-id' });
 
@@ -332,7 +338,7 @@ describe('fileRouter', () => {
 
       expect(result).toEqual({
         id: 'new-file-id',
-        url: 'https://files.example.com/access/new-file-id',
+        url: 'https://lobehub.com/f/new-file-id',
       });
     });
 
@@ -498,7 +504,7 @@ describe('fileRouter', () => {
 
       expect(result).toEqual({
         id: 'new-file-id',
-        url: 'https://files.example.com/access/new-file-id',
+        url: 'https://lobehub.com/f/new-file-id',
       });
 
       // Verify create was called with input size as fallback
@@ -581,12 +587,12 @@ describe('fileRouter', () => {
       await expect(caller.findById({ id: 'invalid-id' })).rejects.toThrow(TRPCError);
     });
 
-    it('should return the readable URL resolved by FileService', async () => {
+    it('should return proxy URL format ${APP_URL}/f/:id', async () => {
       mockFileModelFindById.mockResolvedValue(mockFile);
 
       const result = await caller.findById({ id: 'test-id' });
 
-      expect(result.url).toBe('https://files.example.com/access/test-id');
+      expect(result.url).toBe('https://lobehub.com/f/test-id');
     });
   });
 
@@ -597,12 +603,12 @@ describe('fileRouter', () => {
       await expect(caller.getFileItemById({ id: 'invalid-id' })).rejects.toThrow(TRPCError);
     });
 
-    it('should return the readable URL resolved by FileService', async () => {
+    it('should return proxy URL format ${APP_URL}/f/:id', async () => {
       mockFileModelFindById.mockResolvedValue(mockFile);
 
       const result = await caller.getFileItemById({ id: 'test-id' });
 
-      expect(result?.url).toBe('https://files.example.com/access/test-id');
+      expect(result?.url).toBe('https://lobehub.com/f/test-id');
     });
   });
 
@@ -613,7 +619,7 @@ describe('fileRouter', () => {
       await expect(caller.getFiles({})).rejects.toThrow();
     });
 
-    it('should return the readable URL resolved by FileService for each file', async () => {
+    it('should return proxy URL format ${APP_URL}/f/:id for each file', async () => {
       const files = [
         { ...mockFile, id: 'file-1' },
         { ...mockFile, id: 'file-2' },
@@ -627,8 +633,8 @@ describe('fileRouter', () => {
       const result = await caller.getFiles({});
 
       expect(result).toHaveLength(2);
-      expect(result[0].url).toBe('https://files.example.com/access/file-1');
-      expect(result[1].url).toBe('https://files.example.com/access/file-2');
+      expect(result[0].url).toBe('https://lobehub.com/f/file-1');
+      expect(result[1].url).toBe('https://lobehub.com/f/file-2');
     });
   });
 
@@ -676,7 +682,7 @@ describe('fileRouter', () => {
         finishEmbedding: true,
         id: 'file-1',
         sourceType: 'file',
-        url: 'https://files.example.com/access/file-1',
+        url: 'https://lobehub.com/f/file-1',
       });
       expect(result.items[1]).toMatchObject({
         chunkCount: null,

@@ -8,13 +8,13 @@ import { buildWorkspaceWhere } from '@/database/utils/workspace';
  * Walks a serialized Lexical editor state, collects every URL referenced by
  * image / file nodes, and resolves them to fileIds.
  *
- * Two resolution paths because editor data may contain different URL forms:
+ * Two resolution paths because `getFileAccessUrl` returns different URL forms:
  *
- *   - Historical `${APP_URL}/f/{fileId}` proxy URLs — fileId recovered by regex
- *     without touching the DB.
- *   - Storage access URLs whose path contains the file's object key. fileId is
- *     recovered by querying `files` where `url` matches the key extracted from
- *     the URL pathname.
+ *   - **Prod / non-dev**: `${APP_URL}/f/{fileId}` proxy URL — fileId recovered
+ *     by regex without touching the DB.
+ *   - **Local dev** (and historical cloud data): pre-signed storage URLs whose
+ *     path contains the file's S3 key. fileId recovered by querying `files`
+ *     where `url` matches the key extracted from the URL pathname.
  *
  * Permissive about `status`: real-world editor nodes (cloud + historical data)
  * frequently omit the field, so we treat a missing `status` as uploaded.
