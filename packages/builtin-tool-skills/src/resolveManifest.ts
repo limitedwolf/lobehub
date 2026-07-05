@@ -18,11 +18,13 @@ const EXEC_API_NAMES = new Set<string>([
 ]);
 
 /**
- * Per-environment description preambles for the exec-class APIs.
+ * Per-environment description preambles for the exec-class APIs. Descriptions
+ * carry tool semantics only (where it runs, what credentials it has);
+ * cross-tool arbitration lives in `EXEC_ENV_FACTS`.
  *
- * - `device`: a local device is online — the sandbox is the FALLBACK, local
- *   execution is the default. Credential fact: `injectCredsToSandbox` only
- *   injects into the sandbox; devices deliberately get nothing.
+ * - `device`: a local device is online — the sandbox is the FALLBACK.
+ *   Credential fact: `injectCredsToSandbox` only injects into the sandbox;
+ *   devices deliberately get nothing.
  * - `device-unrouted`: the user chose their local device but it is offline —
  *   the model must disclose the degradation instead of silently running
  *   machine-specific commands in the sandbox.
@@ -35,21 +37,26 @@ const EXEC_ENV_PREAMBLES: Partial<
   Record<NonNullable<BuiltinToolResolveContext['executionEnv']>, string>
 > = {
   'device':
-    "Fallback execution environment: an isolated cloud sandbox, not the user's machine. Default to `lobe-local-system` runCommand; fall back here when the local run fails for a missing tool or credential (the sandbox has LobeHub-managed credentials injected, e.g. `GITHUB_TOKEN`), or the task needs isolation.",
+    "Fallback execution environment: an isolated cloud sandbox, not the user's machine (LobeHub-managed credentials injected, e.g. `GITHUB_TOKEN`).",
   'device-unrouted':
     'Fallback execution environment: an isolated cloud sandbox. The user chose their local device but it is offline — say so before running commands that assume their machine.',
   'sandbox': "Execution environment: an isolated cloud sandbox, not the user's machine.",
 };
 
 /**
- * Environment fact appended to the tool systemRole when the run degraded from
- * a bound device to the sandbox. The API-description preamble alone can be
- * skimmed over once the tool list is long; this line rides the tool system
- * role into the prompt so the degradation is stated as run state, not tool
- * fine print.
+ * Environment facts appended to the tool systemRole. Cross-tool arbitration
+ * (which runCommand to default to) belongs here, not in the API descriptions:
+ * descriptions get skimmed once the tool list is long, and a "prefer the
+ * other tool" rule written on the tool NOT to pick is read too late — only
+ * when the model is already considering it.
  */
-const DEVICE_OFFLINE_FACT =
-  'Bound device offline; shell commands execute in the cloud sandbox this run.';
+const EXEC_ENV_FACTS: Partial<
+  Record<NonNullable<BuiltinToolResolveContext['executionEnv']>, string>
+> = {
+  'device':
+    'A local device is online. Default shell execution to `lobe-local-system` runCommand; use the skills exec APIs only when the local run lacks a required tool, the task needs LobeHub-managed credentials, or the task needs isolation.',
+  'device-unrouted': 'Bound device offline; shell commands execute in the cloud sandbox this run.',
+};
 
 /**
  * Context-aware manifest for the lobe-skills tool: prefixes the exec-class API
@@ -60,6 +67,8 @@ export const resolveSkillsManifest: BuiltinManifestResolver = (context) => {
   const preamble = context.executionEnv && EXEC_ENV_PREAMBLES[context.executionEnv];
   if (!preamble) return SkillsManifest;
 
+  const fact = context.executionEnv && EXEC_ENV_FACTS[context.executionEnv];
+
   return {
     ...SkillsManifest,
     api: SkillsManifest.api.map((api) =>
@@ -67,8 +76,8 @@ export const resolveSkillsManifest: BuiltinManifestResolver = (context) => {
         ? { ...api, description: `${preamble} ${api.description}` }
         : api,
     ),
-    ...(context.executionEnv === 'device-unrouted' && {
-      systemRole: `${SkillsManifest.systemRole}\n<execution_environment>\n${DEVICE_OFFLINE_FACT}\n</execution_environment>\n`,
+    ...(fact && {
+      systemRole: `${SkillsManifest.systemRole}\n<execution_environment>\n${fact}\n</execution_environment>\n`,
     }),
   };
 };

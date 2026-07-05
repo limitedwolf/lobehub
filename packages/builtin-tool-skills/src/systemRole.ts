@@ -52,7 +52,7 @@ export const systemPrompt = `You have access to a Skills tool that can activate 
 <runcommand_vs_execscript>
 **When to use runCommand vs execScript:**
 
-- **runCommand (Default for most commands)**:
+- **runCommand (default of the two)**:
   - Use for general shell commands and CLI tools (e.g., \`lh kb list\`, \`npm install\`)
   - Use for platform tool commands (LobeHub CLI, etc.)
   - No skill context needed — just provide the command

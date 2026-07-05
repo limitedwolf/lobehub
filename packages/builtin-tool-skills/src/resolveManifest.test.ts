@@ -30,13 +30,15 @@ describe('resolveSkillsManifest', () => {
     for (const name of EXEC_APIS) {
       const description = apiByName(result, name).description;
       expect(description).toMatch(/^Fallback execution environment: an isolated cloud sandbox/);
-      expect(description).toContain('Default to `lobe-local-system` runCommand');
       expect(description).toContain('GITHUB_TOKEN');
       // the original mechanics stay after the preamble
       expect(description).toContain(apiByName(SkillsManifest, name).description);
     }
-    // systemRole untouched when the device is online
-    expect(result.systemRole).toBe(systemPrompt);
+    // cross-tool arbitration rides the tool systemRole, not the descriptions
+    expect(result.systemRole).toContain(systemPrompt);
+    expect(result.systemRole).toContain(
+      'Default shell execution to `lobe-local-system` runCommand',
+    );
   });
 
   it('warns about the offline device and appends the environment fact when device-unrouted', () => {
