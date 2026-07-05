@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm run build:raw && pnpm run db:migrate",
+  "buildCommand": "pnpm run build:raw",
   "headers": [
     {
       "source": "/_spa/(.*)",
