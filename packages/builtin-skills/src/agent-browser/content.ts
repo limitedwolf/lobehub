@@ -16,6 +16,8 @@ agent-browser snapshot -i    # 4. re-snapshot after any page change
 
 Refs become **stale on every page change** (click that navigates, form submit, dynamic re-render, dialog open). Always re-snapshot before the next ref interaction.
 
+When the task is done, run \`agent-browser close\` — the browser it launched stays open on the user's machine otherwise.
+
 ## Dynamic pages & anti-bot escalation
 
 When scraping dynamic or anti-bot pages, escalate from cheap to heavy and stop at the first rung that yields real content:
