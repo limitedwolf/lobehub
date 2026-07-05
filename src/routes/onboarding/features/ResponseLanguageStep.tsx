@@ -44,8 +44,7 @@ const ResponseLanguageStep = memo<ResponseLanguageStepProps>(({ onBack, onNext }
       // This write is the sole gate for the whole onboarding flow
       // (`commonStepsCompleted` keys off `responseLanguage`), so it must be able
       // to fail: on error reset the navigating lock so the user can retry
-      // instead of being stuck with both buttons permanently disabled
-      // (LOBE-11154).
+      // instead of being stuck with both buttons permanently disabled.
       await setSettings({ general: { responseLanguage: value } });
       await onNext();
     } catch {

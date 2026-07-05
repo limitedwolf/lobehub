@@ -298,8 +298,8 @@ const TaskList = memo<TaskListProps>((props) => {
     );
 
   // Error is gated ahead of empty by AsyncBoundary, so a failed fetch shows a
-  // Retry block instead of the "no tasks" empty (LOBE-11181). `data` is the SWR
-  // result — undefined until the first fetch settles.
+  // Retry block instead of the "no tasks" empty. `data` is the SWR result —
+  // undefined until the first fetch settles.
   return (
     <AsyncBoundary
       data={data}

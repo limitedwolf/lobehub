@@ -22,11 +22,11 @@ export interface SaveStateHandle {
  * <AutoSaveHint saveStatus={status} lastUpdatedTime={lastSavedAt} onRetry={retry} />
  * ```
  *
- * The whole point (LOBE-11078 write-side): a failed save resolves to `failed`,
- * never `idle`, so it can't render as a clean "Latest version loaded". Errors
- * are swallowed after being surfaced via `status` so fire-and-forget autosave
- * callers don't produce unhandled rejections; use the store-level `runMutation`
- * when a caller needs the error to propagate (e.g. keep a modal open).
+ * A failed save resolves to `failed`, never `idle`, so it can't render as a
+ * clean "Latest version loaded". Errors are swallowed after being surfaced via
+ * `status` so fire-and-forget autosave callers don't produce unhandled
+ * rejections; use the store-level `runMutation` when a caller needs the error
+ * to propagate (e.g. keep a modal open).
  */
 export const useSaveState = (): SaveStateHandle => {
   const [status, setStatus] = useState<SaveStatus>('idle');

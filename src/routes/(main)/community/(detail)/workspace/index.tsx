@@ -154,9 +154,9 @@ const WorkspaceDetailPage = memo<WorkspaceDetailPageProps>(({ mobile }) => {
   if ((isWorkspaceProfileLoading || isUserProfileLoading) && !fallbackProfile) return <Loading />;
   if (!contextConfig) {
     // A transient profile fetch failure must not masquerade as "workspace not
-    // found" — offer Reload. Only a resolved-empty profile is a real 404
-    // (LOBE-11223). `fallbackProfile` would have yielded a contextConfig, so
-    // reaching here with an error means we have nothing to show.
+    // found" — offer Reload. Only a resolved-empty profile is a real 404.
+    // `fallbackProfile` would have yielded a contextConfig, so reaching here
+    // with an error means we have nothing to show.
     if (userProfileError)
       return (
         <Center flex={1} padding={48} width={'100%'}>

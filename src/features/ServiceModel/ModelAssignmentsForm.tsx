@@ -71,8 +71,8 @@ const ModelAssignmentsForm = memo(() => {
   }, [defaultAgent.config.model, defaultAgent.config.provider, loadingKey]);
 
   if (!isUserStateInit) {
-    // A failed user-state init must show error + Retry, not a permanent skeleton
-    // (LOBE-11118).
+    // A failed user-state init must show error + Retry, not a permanent skeleton.
+    // The `isUserStateInit` flag is only set on success.
     if (isUserStateInitError)
       return (
         <AsyncError

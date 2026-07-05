@@ -62,8 +62,8 @@ const AgentTasksPage = memo<AgentTasksPageProps>(({ agentId }) => {
   const viewMode = useTaskStore(taskListSelectors.viewMode);
   const useFetchTaskList = useTaskStore((s) => s.useFetchTaskList);
   // Keep the SWR handle so a failed list fetch surfaces error + Retry instead of
-  // a permanent skeleton (the store only flips `isTaskListInit` on success — see
-  // LOBE-11181). `data` (undefined until first success) is the settled signal.
+  // a permanent skeleton (the store only flips `isTaskListInit` on success).
+  // `data` (undefined until first success) is the settled signal.
   const { data, error, isLoading, mutate } = useFetchTaskList(
     agentId ? { agentId } : { allAgents: true },
   );

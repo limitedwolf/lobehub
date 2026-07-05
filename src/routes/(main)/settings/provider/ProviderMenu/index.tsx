@@ -95,8 +95,7 @@ const ProviderMenu = ({
   );
 
   // Own the provider-list fetch here so a failed load surfaces error + Retry
-  // instead of a permanent skeleton — `initAiProviderList` only flips on success
-  // (LOBE-11117).
+  // instead of a permanent skeleton — `initAiProviderList` only flips on success.
   const { error, mutate } = useFetchAiProviderList();
 
   // Search overrides everything (matches prior behavior); otherwise gate the

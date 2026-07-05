@@ -148,11 +148,11 @@ export class TaskTopicModel {
   }
 
   /**
-   * Patch the raw run output into `handoff.content` (LOBE-11396) without
-   * disturbing other handoff keys. Uses `jsonb_set` so it is order-independent
-   * with respect to `updateHandoff` — critically, this lets the caller persist
-   * the last message even when the (separate) handoff-summary LLM call fails, so
-   * the run card always has a result to show.
+   * Patch the raw run output into `handoff.content` without disturbing other
+   * handoff keys. Uses `jsonb_set` so it is order-independent with respect to
+   * `updateHandoff` — critically, this lets the caller persist the last message
+   * even when the (separate) handoff-summary LLM call fails, so the run card
+   * always has a result to show.
    */
   async updateHandoffContent(taskId: string, topicId: string, content: string): Promise<void> {
     await this.db

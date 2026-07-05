@@ -41,8 +41,7 @@ const HomePage = memo(() => {
   });
 
   // Gate each section independently so a failure in one featured list surfaces a
-  // Retry there instead of leaving the whole page on a permanent skeleton
-  // (LOBE-11223).
+  // Retry there instead of leaving the whole page on a permanent skeleton.
   return (
     <>
       <CreatorRewardBanner />

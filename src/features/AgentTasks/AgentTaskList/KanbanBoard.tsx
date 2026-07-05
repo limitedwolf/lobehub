@@ -89,8 +89,7 @@ const KanbanBoard = memo<KanbanBoardProps>(({ agentId, routeScope }) => {
 
   const useFetchTaskGroupList = useTaskStore((s) => s.useFetchTaskGroupList);
   // Surface a failed group fetch as error + Retry instead of a permanent
-  // skeleton board (LOBE-11181). `data` (undefined until first success) is the
-  // settled signal.
+  // skeleton board. `data` (undefined until first success) is the settled signal.
   const { data, error, isLoading, mutate } = useFetchTaskGroupList(
     agentId ? { agentId } : { allAgents: true },
   );
@@ -279,8 +278,9 @@ const KanbanBoard = memo<KanbanBoardProps>(({ agentId, routeScope }) => {
   );
 
   // Error gated ahead of empty by AsyncBoundary so a failed fetch shows Retry
-  // instead of the "no tasks" empty (LOBE-11181). `data` is the SWR result —
-  // undefined until the first fetch settles.
+  // instead of the "no tasks" empty (the store's init flag only flips on success —
+  // Task Workspace UX audit: list/kanban fetch failure = permanent skeleton).
+  // `data` is the SWR result — undefined until the first fetch settles.
   return (
     <AsyncBoundary
       data={data}
