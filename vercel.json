@@ -1,5 +1,5 @@
 {
-  "buildCommand": "bun run build:vercel",
+  "buildCommand": "pnpm run build:raw && pnpm run db:migrate",
   "headers": [
     {
       "source": "/_spa/(.*)",
