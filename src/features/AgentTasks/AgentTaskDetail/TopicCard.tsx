@@ -25,7 +25,7 @@ import { useTaskStore } from '@/store/task';
 import { taskDetailSelectors } from '@/store/task/selectors';
 
 import { styles } from '../shared/style';
-import CommentInput from './CommentInput';
+import RunReplyEditor from './RunReplyEditor';
 import TopicStatusIcon from './TopicStatusIcon';
 
 const formatDuration = (ms: number): string => {
@@ -72,6 +72,7 @@ const TopicCard = memo<TopicCardProps>(({ activity }) => {
   const { t } = useTranslation('chat');
   const openTopicDrawer = useTaskStore((s) => s.openTopicDrawer);
   const cancelTopic = useTaskStore((s) => s.cancelTopic);
+  const addComment = useTaskStore((s) => s.addComment);
   const activeTaskId = useTaskStore(taskDetailSelectors.activeTaskId);
   const [commenting, setCommenting] = useState(false);
   const isRunning = activity.status === 'running';
@@ -178,8 +179,8 @@ const TopicCard = memo<TopicCardProps>(({ activity }) => {
     <Block
       clickable={!!activity.id}
       gap={8}
-      paddingBlock={12}
-      paddingInline={12}
+      paddingBlock={8}
+      paddingInline={8}
       style={{ borderRadius: cssVar.borderRadiusLG }}
       variant={'outlined'}
       onClick={activity.id ? handleOpen : undefined}
@@ -236,33 +237,40 @@ const TopicCard = memo<TopicCardProps>(({ activity }) => {
         </Flexbox>
       </Flexbox>
 
-      {activity.summary && (
-        <Text fontSize={13} style={{ color: cssVar.colorTextDescription, whiteSpace: 'pre-wrap' }}>
-          {activity.summary}
-        </Text>
+      {(activity.summary || activity.content) && (
+        <Flexbox gap={8} paddingBlock={4} paddingInline={8}>
+          {activity.summary && (
+            <Text
+              fontSize={13}
+              style={{ color: cssVar.colorTextDescription, whiteSpace: 'pre-wrap' }}
+            >
+              {activity.summary}
+            </Text>
+          )}
+          {activity.content && <RunContent content={activity.content} />}
+        </Flexbox>
       )}
-      {activity.content && <RunContent content={activity.content} />}
-      {activeTaskId && (
-        <Flexbox horizontal justify={'flex-end'} onClick={stopPropagation}>
-          {commenting ? (
-            <Flexbox style={{ width: '100%' }}>
-              <CommentInput
-                placeholder={t('taskDetail.runFollowUpPlaceholder')}
-                taskId={activeTaskId}
-                topicId={activity.id}
-                onSent={() => setCommenting(false)}
-              />
-            </Flexbox>
-          ) : (
+      {activeTaskId &&
+        (commenting ? (
+          <Flexbox onClick={stopPropagation}>
+            <RunReplyEditor
+              onCancel={() => setCommenting(false)}
+              onSubmit={async (text) => {
+                await addComment(activeTaskId, text, { topicId: activity.id });
+                setCommenting(false);
+              }}
+            />
+          </Flexbox>
+        ) : (
+          <Flexbox horizontal justify={'flex-end'} onClick={stopPropagation}>
             <ActionIcon
               icon={SquarePen}
               size={'small'}
               title={t('taskDetail.runFollowUp')}
               onClick={() => setCommenting(true)}
             />
-          )}
-        </Flexbox>
-      )}
+          </Flexbox>
+        ))}
     </Block>
   );
 });
