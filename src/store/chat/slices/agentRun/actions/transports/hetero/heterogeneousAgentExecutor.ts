@@ -39,6 +39,7 @@ import { message as antdMessage } from '@/components/AntdStaticMethods';
 import { heterogeneousAgentService } from '@/services/electron/heterogeneousAgent';
 import { messageService } from '@/services/message';
 import { threadService } from '@/services/thread';
+import { topicSelectors } from '@/store/chat/selectors';
 import {
   mergeQueuedMessages,
   reconstructUploadFilesFromQueue,
@@ -49,7 +50,7 @@ import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
 import { buildRunLifecycle } from '../../lifecycle/buildRunLifecycle';
 import type { RunScope } from '../../lifecycle/types';
-import { createGatewayEventHandler } from '../gateway/gatewayEventHandler';
+import { createGatewayEventHandler, isCompletedRuntimeEnd } from '../gateway/gatewayEventHandler';
 
 /** Mirrors `idGenerator('threads', 16)` on the server so sync-allocated ids have the same shape. */
 const generateThreadId = () => `thd_${createNanoId(16)()}`;
@@ -105,8 +106,7 @@ const maybeClassifyCliAuthRequiredError = (
 
 const shouldSuppressTerminalErrorEcho = (content: string, error: ChatMessageError): boolean => {
   const errorBody = error.body as
-    | (HeterogeneousAgentSessionError & { clearEchoedContent?: boolean })
-    | undefined;
+    (HeterogeneousAgentSessionError & { clearEchoedContent?: boolean }) | undefined;
   if (
     !errorBody?.clearEchoedContent &&
     errorBody?.code !== HeterogeneousAgentSessionErrorCode.AuthRequired
@@ -189,6 +189,28 @@ const isRecoverableResumeError = (
     error.code === HeterogeneousAgentSessionErrorCode.ResumeThreadNotFound
   );
 };
+
+/**
+ * How long the terminal callbacks wait for the persist queue to drain before
+ * proceeding regardless. Bounds the one place a completed run could otherwise
+ * hang forever — a queued DB write whose desktop-IPC reply never arrives — so op
+ * completion, the terminal forward, and the desktop notification still run.
+ * Topic status is reset ahead of this wait, so the sidebar spinner never depends
+ * on it at all.
+ */
+const PERSIST_DRAIN_TIMEOUT = 10_000;
+
+/** Await `queue`, but give up after `ms`; pending work is abandoned, not cancelled. */
+const drainWithTimeout = (queue: Promise<unknown>, ms: number): Promise<void> =>
+  new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    void Promise.resolve(queue)
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+  });
 
 export interface HeterogeneousAgentExecutorParams {
   assistantMessageId: string;
@@ -1367,10 +1389,38 @@ export const executeHeterogeneousAgent = async (
         if (completed) return;
         completed = true;
 
-        // Wait for all tool persistence to finish before writing final state
-        await persistQueue.catch(console.error);
-
         const isErrorTerminal = deferredTerminalEvent?.type === 'error';
+
+        // Reset the sidebar "running" status BEFORE draining the persist queue.
+        // Topic status is independent of message persistence, so a stalled queue
+        // (e.g. a subagent-heavy run whose final DB write never settles) must not
+        // strand the topic spinning after the CLI has exited — the stuck-spinner
+        // this guards against. Content persistence + the terminal forward still
+        // wait for the (now bounded) drain below.
+        {
+          const reason = (deferredTerminalEvent?.data as { reason?: string } | undefined)?.reason;
+          if (isErrorTerminal) {
+            writeTopicStatus('failed');
+          } else if (!isAborted() && isCompletedRuntimeEnd(reason)) {
+            // Clean completion: the viewer sees 'active'; a background topic gets
+            // the unread badge (markTopicUnread self-guards on activeTopicId).
+            if (get().activeTopicId === context.topicId) writeTopicStatus('active');
+            else
+              get().markTopicUnread?.({
+                agentId: context.agentId,
+                groupId: context.groupId,
+                topicId: context.topicId,
+              });
+          } else {
+            // Cancel / deferred-tool park — back to a neutral 'active'.
+            writeTopicStatus('active');
+          }
+        }
+
+        // Bounded: a persist that never settles must not block op completion,
+        // the terminal forward, or the completion notification below.
+        await drainWithTimeout(persistQueue, PERSIST_DRAIN_TIMEOUT);
+
         // Snapshot the final content BEFORE the terminal reduce resets the
         // accumulator — used for the completion notification body below.
         const finalContent = mainState.accContent;
@@ -1413,12 +1463,10 @@ export const executeHeterogeneousAgent = async (
         pendingSubagentFlush.clear();
 
         if (!isErrorTerminal) {
-          // A clean completion the user isn't watching is owned by the gateway
-          // handler's markTopicUnread (status: 'unread'); only clear back to
-          // 'active' when the user is viewing so the two writes don't race.
-          if (get().activeTopicId === context.topicId) writeTopicStatus('active');
-          // NOW forward the deferred terminal event — handler will
-          // fetchAndReplaceMessages and pick up the final persisted state.
+          // Topic status was already reset ahead of the drain (top of
+          // onComplete); forward the deferred terminal only so the handler runs
+          // the final fetchAndReplaceMessages + completeOperation against the
+          // now-persisted state.
           eventHandler(terminalEvent);
         }
 
@@ -1445,7 +1493,12 @@ export const executeHeterogeneousAgent = async (
         if (retryWithoutResume(error)) return;
         completed = true;
 
-        await persistQueue.catch(console.error);
+        // Reset status ahead of the drain (see onComplete) so a stalled queue
+        // can't strand the spinner; persistTerminalError below re-asserts 'failed'
+        // with the full error UI.
+        writeTopicStatus(isAborted() ? 'active' : 'failed');
+
+        await drainWithTimeout(persistQueue, PERSIST_DRAIN_TIMEOUT);
 
         const deferredMessageError =
           deferredTerminalEvent?.type === 'error'
@@ -1594,6 +1647,32 @@ export const executeHeterogeneousAgent = async (
     unsubscribe?.();
     // Don't stopSession here — keep it alive for multi-turn resume.
     // Session cleanup happens on topic deletion or Electron quit.
+
+    // Backstop: if neither onComplete nor onError ever ran (e.g. the
+    // heteroAgentSessionComplete IPC was missed, or its listener was torn down
+    // before it landed), the status reset above never happened. The CLI has
+    // exited by the time this linear path resolves, so a topic still persisted
+    // as 'running' would spin forever — reconcile it. Both terminal callbacks
+    // reset status ahead of their drain, so reaching here still 'running' means
+    // neither ran. Skipped on the resume-retry path, whose recursive run owns
+    // the lifecycle.
+    if (!resumeFallbackTriggered && context.topicId) {
+      // Best-effort: a finally must never throw (it would mask the real flow),
+      // and the topic map may be absent in edge/test states.
+      try {
+        const stuckRunning =
+          topicSelectors.getTopicById(context.topicId)(get())?.status === 'running';
+        if (stuckRunning) {
+          // Cast: TS narrows the closure-mutated `deferredTerminalEvent` back to
+          // `null` in this linear-flow scope (it can't see the async IPC writes).
+          const terminal = deferredTerminalEvent as AgentStreamEvent | null;
+          writeTopicStatus(terminal?.type === 'error' ? 'failed' : 'active');
+          get().completeOperation(operationId);
+        }
+      } catch (err) {
+        console.error('[HeterogeneousAgent] status reconcile backstop failed:', err);
+      }
+    }
   }
 
   if (fallbackPromise) {
