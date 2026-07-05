@@ -125,8 +125,7 @@ export const DynamicInterventionConfigSchema = z.object({
  * Extended human intervention config that supports dynamic evaluation
  */
 export type ExtendedHumanInterventionConfig =
-  | HumanInterventionConfig
-  | { dynamic: DynamicInterventionConfig };
+  HumanInterventionConfig | { dynamic: DynamicInterventionConfig };
 
 export const ExtendedHumanInterventionConfigSchema = z.union([
   HumanInterventionConfigSchema,
@@ -246,6 +245,16 @@ export const BuiltinToolManifestSchema = z.object({
  * more tools migrate their context-based trimming here.
  */
 export interface BuiltinToolResolveContext {
+  /**
+   * Where this run executes, mirroring the resolved `ExecutionPlan.kind`
+   * (`device` / `device-unrouted` / `sandbox` / `none`) plus `local` for the
+   * desktop in-process engine. Lets exec-capable tools (e.g. lobe-skills)
+   * rewrite their API descriptions per environment — most notably
+   * `device-unrouted`, where the user picked their local device but it is
+   * offline and commands silently fall back to the cloud sandbox. Kept as a
+   * plain union to avoid coupling the tool layer to the execution-plan types.
+   */
+  executionEnv?: 'device' | 'device-unrouted' | 'local' | 'none' | 'sandbox';
   /**
    * True when running inside a sub-agent execution. A nested sub-agent must not
    * be able to dispatch further sub-agents.
