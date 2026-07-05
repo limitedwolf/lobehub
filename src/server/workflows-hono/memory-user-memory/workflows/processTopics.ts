@@ -5,7 +5,7 @@ import {
 } from '@lobechat/observability-otel/modules/upstash-workflow';
 import { LayersEnum, MemorySourceType } from '@lobechat/types';
 import { type WorkflowContext } from '@upstash/workflow';
-import { WorkflowAbort } from '@upstash/workflow';
+import { WorkflowAbort, WorkflowNonRetryableError } from '@upstash/workflow';
 
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { getServerDB } from '@/database/server';
@@ -116,28 +116,45 @@ export const processTopicsHandler = (context: WorkflowContext<MemoryExtractionPa
         // Delegate per-topic extraction to dedicated workflow for better isolation.
         for (const [index, topicId] of payload.topicIds.entries()) {
           const stepName = `memory:user-memory:extract:users:${userId}:topics:${topicId}:invoke:${index}`;
-          await context.invoke(stepName, {
-            body: {
-              ...payload,
-              layers: payload.layers.length ? payload.layers : [...CEPA_LAYERS, ...IDENTITY_LAYERS],
-              topicIds: [topicId],
-              userId,
-              userIds: [userId],
-            },
-            // CEPA: run in parallel across the batch
-            //
-            // NOTICE: if modified the parallelism of CEPA_LAYERS
-            // or added new memory layer, make sure to update the number below.
-            //
-            // Currently, CEPA (context, experience, preference, activity) + identity = 5 layers.
-            // and since identity requires sequential processing, we set parallelism to 5.
-            flowControl: {
-              key: `memory-user-memory.pipelines.chat-topic.process-topic.user.${userId}.topic.${topicId}`,
-              parallelism: 5,
-            },
-            headers: upstashWorkflowExtraHeaders,
-            workflow: processTopicWorkflow,
-          });
+          try {
+            await context.invoke(stepName, {
+              body: {
+                ...payload,
+                layers: payload.layers.length
+                  ? payload.layers
+                  : [...CEPA_LAYERS, ...IDENTITY_LAYERS],
+                topicIds: [topicId],
+                userId,
+                userIds: [userId],
+              },
+              // CEPA: run in parallel across the batch
+              //
+              // NOTICE: if modified the parallelism of CEPA_LAYERS
+              // or added new memory layer, make sure to update the number below.
+              //
+              // Currently, CEPA (context, experience, preference, activity) + identity = 5 layers.
+              // and since identity requires sequential processing, we set parallelism to 5.
+              flowControl: {
+                key: `memory-user-memory.pipelines.chat-topic.process-topic.user.${userId}.topic.${topicId}`,
+                parallelism: 5,
+              },
+              headers: upstashWorkflowExtraHeaders,
+              workflow: processTopicWorkflow,
+            });
+          } catch (error) {
+            // NOTICE: Upstash throws WorkflowAbort after a step executes to persist state — it must
+            // bubble up, never be swallowed here.
+            if (error instanceof WorkflowAbort) throw error;
+            // A child process-topic that FAILED (e.g. a bad model config makes extraction always
+            // fail) must NOT fail this batch. If it propagated, this whole process-topics run would
+            // become retryable and, on every retry replay, re-invoke the same topic forever —
+            // piling up hundreds of thousands of flow-control messages on a single (user, topic).
+            // Record it and move on to the next topic (per-topic isolation).
+            console.error(
+              `[process-topics] invoke failed for user ${userId} topic ${topicId}; skipping topic`,
+              error instanceof Error ? error.message : error,
+            );
+          }
         }
 
         // Trigger user persona update after topic processing using the workflow client.
@@ -167,7 +184,12 @@ export const processTopicsHandler = (context: WorkflowContext<MemoryExtractionPa
           message: error instanceof Error ? error.message : 'process-topics workflow failed',
         });
 
-        throw error;
+        // NOTICE: Make process-topics non-retryable (aligning with process-topic). A retryable
+        // failure here re-runs the whole run — including its context.invoke steps — which is exactly
+        // how one bad topic snowballed into a retry storm. Fail fast instead of looping.
+        throw new WorkflowNonRetryableError(
+          error instanceof Error ? error.message : 'process-topics workflow failed',
+        );
       } finally {
         span.end();
       }
