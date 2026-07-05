@@ -17,7 +17,7 @@
     "@lobechat/const": "workspace:*",
     "@lobechat/ssrf-safe-fetch": "workspace:*",
     "@lobechat/types": "workspace:*",
-    "@vercel/functions": "^3.7.4",
+    "@vercel/functions": "^3.7.5",
     "brotli-wasm": "^3.0.1",
     "chroma-js": "^3.2.0",
     "countries-and-timezones": "^3.9.0",
