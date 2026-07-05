@@ -3,7 +3,7 @@ export const systemPrompt = `<agent_browser_guides>
 
 \`agent-browser\` is a fast browser automation CLI for AI agents — drives Chrome/Chromium via CDP and serves accessibility-tree snapshots with compact \`@eN\` element refs (so you act on the page in a few hundred tokens, not raw HTML).
 
-LobeHub desktop bundles \`agent-browser\` natively — no install needed. Outside LobeHub, install with \`npm i -g agent-browser\` (or \`brew install agent-browser\` / \`cargo install agent-browser\`), then run \`agent-browser install\` once to fetch the bundled Chrome.
+LobeHub desktop bundles \`agent-browser\` natively — no install needed. \`agent-browser\` lives on the user's device: when \`lobe-local-system\` runCommand is available, run all \`agent-browser\` commands through it — never through the skills exec APIs (their cloud sandbox has no browser and no \`agent-browser\` binary). Outside LobeHub, install with \`npm i -g agent-browser\` (or \`brew install agent-browser\` / \`cargo install agent-browser\`), then run \`agent-browser install\` once to fetch the bundled Chrome.
 
 ## The core loop
 
